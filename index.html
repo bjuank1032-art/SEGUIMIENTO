@@ -3,17 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Seguimiento Pro AI - v10.1 (Optimized)</title>
+    <title>Seguimiento Pro AI - v9.8 (Color UI Fix)</title>
     <!-- Configuración para App iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://img.icons8.com/color/96/cannabis.png">
-    
-    <!-- Librería para Arrastrar y Soltar (Liviana y compatible con Touch) -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <style>
         :root {
+            /* Variables de Tema Oscuro Permanente (OLED Black) */
             --bg-color: #000000;
             --card-bg: #1c1c1e;
             --text-main: #ffffff;
@@ -24,6 +22,7 @@
             --accent-blue: #007aff;
             --warning-orange: #ff9500;
             --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --juez-accent: #ff3b30;
         }
 
         /* SCROLLBAR INTEGRADO */
@@ -43,8 +42,9 @@
         #statusText { font-size: 13px; color: var(--text-secondary); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 
         .btn-circle { background: var(--card-bg); border: none; width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); font-size: 22px; cursor: pointer; transition: all 0.2s; color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-circle:active { transform: scale(0.9); opacity: 0.8; }
 
-        /* ZONA DE AGREGAR METAS */
+        /* ZONA DE AGREGAR METAS (Botonera Central) */
         .add-meta-trigger {
             background: rgba(255, 255, 255, 0.02);
             border: 2px dashed var(--border-color);
@@ -72,10 +72,11 @@
 
         /* CARDS */
         .card { background: var(--card-bg); border-radius: 30px; padding: 25px; position: relative; margin-bottom: 18px; box-shadow: var(--shadow); border: 1px solid var(--border-color); transition: all 0.3s; cursor: pointer; overflow: hidden; }
+        .card:active { transform: scale(0.96); }
         .card h3 { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 700; color: var(--text-main); }
         .card-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px; }
         
-        .btn-undo { position: absolute; top: 22px; right: 22px; width: 36px; height: 36px; background: var(--bg-color); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text-secondary); transition: 0.2s; border: 1px solid var(--border-color); z-index: 10; }
+        .btn-undo { position: absolute; top: 22px; right: 22px; width: 36px; height: 36px; background: var(--bg-color); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text-secondary); transition: 0.2s; border: 1px solid var(--border-color); }
 
         /* MODALES */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
@@ -84,56 +85,45 @@
         .modal-title { font-size: 26px; margin-bottom: 25px; letter-spacing: -1.2px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
         
         .btn-main-action { background: var(--text-main); color: var(--card-bg); border: none; padding: 18px; border-radius: 20px; width: 100%; font-weight: 800; margin-top: 15px; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        .btn-main-action:active { transform: scale(0.98); }
 
         /* INPUTS */
         .input-group { margin-bottom: 20px; }
         .input-label { font-size: 10px; font-weight: 900; color: var(--text-secondary); display: block; margin-bottom: 10px; letter-spacing: 1px; text-transform: uppercase; }
         
         input[type="text"], input[type="date"], input[type="number"] {
-            width: 100%; padding: 16px; border-radius: 18px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 16px; outline: none;
+            width: 100%; padding: 16px; padding-right: 16px; border-radius: 18px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 16px; outline: none; transition: 0.2s;
         }
 
-        /* COLOR SELECTOR */
+        /* SELECTOR DE COLOR CENTRADO */
         .color-selector { display: flex; justify-content: center; padding: 10px 0; gap: 12px; flex-wrap: wrap; }
-        .color-swatch { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; display: flex; align-items: center; justify-content: center; position: relative; }
-        .color-swatch.active { border-color: white; transform: scale(1.1); }
-        .color-swatch.plus-trigger { background: #2c2c2e; border: 1px dashed var(--text-secondary); color: var(--text-secondary); font-weight: bold; }
+        .color-swatch { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; }
+        .color-swatch.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 10px rgba(255,255,255,0.2); }
+        .color-swatch.plus-trigger { background: #2c2c2e; border: 1px dashed var(--text-secondary); color: var(--text-secondary); font-size: 18px; font-weight: bold; }
+
+        /* INPUT DE COLOR OCULTO PERO ACCESIBLE PARA MOBILE */
         .hidden-color-input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; top: 0; left: 0; }
 
-        /* GESTOR DE RANKING (DRAG & DROP) */
-        .manager-item { 
-            background: var(--bg-color); 
-            padding: 20px; 
-            border-radius: 24px; 
-            margin-bottom: 12px; 
-            border: 1px solid var(--border-color); 
-            cursor: grab;
-            transition: transform 0.2s;
-        }
-        .manager-item:active { cursor: grabbing; transform: scale(1.02); background: #2c2c2e; }
-        .sortable-ghost { opacity: 0.3; background: var(--accent-blue) !important; }
-        
-        .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .drag-handle { color: var(--text-secondary); font-size: 20px; margin-right: 10px; }
-
+        /* SYNC SECTION (Migration Wizard) */
         .sync-box { background: rgba(0, 122, 255, 0.05); padding: 25px; border-radius: 28px; margin-bottom: 25px; border: 1px solid rgba(0, 122, 255, 0.2); }
         .sync-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .sync-input-mini { width: 80px !important; padding: 10px !important; text-align: center; }
+        .btn-sync-locked { color: var(--success-green); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; text-align: center; width: 100%; }
 
         footer { text-align: center; font-size: 11px; color: var(--text-secondary); margin-top: 50px; opacity: 0.5; font-weight: 700; padding-bottom: 50px; }
     </style>
 </head>
 <body>
 
-<!-- MODAL JUEZ IA -->
-<div id="hardcoreModal" class="modal-overlay" style="display: none; z-index: 2000;">
-    <div class="modal-panel" style="text-align: center;">
+<!-- MODAL JUEZ -->
+<div id="hardcoreModal" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.95);">
+    <div class="modal-panel" style="background: #1c1c1e; border-color: rgba(255,255,255,0.1); text-align: center;">
         <h2 style="font-size: 11px; color: var(--danger-red); letter-spacing: 5px; margin-bottom: 10px;">JURISPRUDENCIA</h2>
-        <h1 style="margin-bottom: 15px;">Acceso Suspendido</h1>
-        <p style="color: var(--text-secondary); margin-bottom: 25px;">Inactividad crítica detectada. El tribunal exige tu declaración de honestidad.</p>
-        <textarea id="reflectionArea" placeholder="Presenta tu defensa ante el Juez..." style="width: 100%; background: #2c2c2e; border: 1px solid #3a3a3c; border-radius: 20px; padding: 20px; color: white; margin-bottom: 20px; outline: none;" rows="4"></textarea>
+        <h1 style="color: white; margin-bottom: 15px;">Acceso Suspendido</h1>
+        <p style="color: #8e8e93; margin-bottom: 25px;">Inactividad crítica (+7 días). El tribunal exige una declaración de honestidad.</p>
+        <textarea id="reflectionArea" placeholder="Presenta tu defensa..." style="width: 100%; background: #2c2c2e; border: 1px solid #3a3a3c; border-radius: 20px; padding: 20px; color: white; margin-bottom: 20px; outline: none;" rows="4"></textarea>
         <div id="aiFeedback" style="display: none; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 15px; color: #a2a2a7; font-size: 14px; margin-bottom: 20px; font-style: italic;"></div>
-        <button class="btn-main-action" id="btnUnlock" onclick="consultarAlJuez()">PRESENTAR AUDIENCIA</button>
+        <button class="btn-main-action" style="background: white; color: black;" id="btnUnlock" onclick="consultarAlJuez()">PRESENTAR AUDIENCIA</button>
     </div>
 </div>
 
@@ -141,18 +131,22 @@
 <div id="addHabitModal" class="modal-overlay" onclick="toggleAddModal()">
     <section class="modal-panel" onclick="event.stopPropagation()">
         <div class="modal-title">Nueva Meta <span style="font-size: 14px; color: var(--text-secondary); cursor: pointer;" onclick="toggleAddModal()">Cerrar</span></div>
+        
         <div class="input-group">
             <label class="input-label">Nombre de la meta</label>
             <input type="text" id="hName" placeholder="Ej: No fumar" enterkeyhint="next">
         </div>
+
         <div class="input-group">
             <label class="input-label">Emoji / Icono</label>
             <input type="text" id="hIcon" placeholder="🚭" enterkeyhint="done">
         </div>
+
         <div class="input-group">
             <label class="input-label">Color de Enfoque</label>
             <div class="color-selector" id="mainColorSelector"></div>
         </div>
+
         <button class="btn-main-action" onclick="addHabit()">AÑADIR AHORA</button>
     </section>
 </div>
@@ -160,29 +154,35 @@
 <!-- MODAL AJUSTES -->
 <div id="settingsModal" class="modal-overlay" onclick="toggleSettings()">
     <section class="modal-panel" onclick="event.stopPropagation()">
-        <div class="modal-title">Gestionar <span style="font-size: 14px; color: var(--text-secondary); cursor: pointer;" onclick="toggleSettings()">Cerrar</span></div>
+        <div class="modal-title">Ajustes <span style="font-size: 14px; color: var(--text-secondary); cursor: pointer;" onclick="toggleSettings()">Cerrar</span></div>
         
-        <div id="syncSection" class="sync-box"></div>
-        
-        <p style="font-size: 10px; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Mantén presionado para reordenar:</p>
+        <!-- SECCIÓN DE TRASLADO / SINCRONIZACIÓN -->
+        <div id="syncSection" class="sync-box">
+            <!-- Dinámico -->
+        </div>
+
         <div id="managerList"></div>
 
         <div style="background: rgba(255, 59, 48, 0.05); padding: 25px; border-radius: 28px; margin-top: 30px; border: 1px solid rgba(255,59,48,0.2); text-align: center;">
-            <button onclick="borrarTodo()" style="background:none; color:var(--danger-red); border:1px solid var(--danger-red); padding:14px; border-radius:16px; font-weight:800; width:100%; font-size:11px; cursor:pointer;">REINICIAR MEMORIA TOTAL</button>
+            <strong style="color: var(--danger-red); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;">Zona de Peligro</strong>
+            <button onclick="borrarTodo()" style="background:none; color:var(--danger-red); border:1px solid var(--danger-red); padding:14px; border-radius:16px; font-weight:800; width:100%; margin-top:10px; font-size:11px; cursor:pointer;">Reiniciar Memoria</button>
         </div>
-        <button class="btn-main-action" onclick="toggleSettings()">LISTO</button>
+
+        <button class="btn-main-action" onclick="toggleSettings()">CERRAR PANEL</button>
     </section>
 </div>
 
 <div class="app-container">
     <header>
         <div><h1>Seguimiento</h1><p id="statusText">Consistencia Activa</p></div>
-        <button class="btn-circle" onclick="toggleSettings()">⚙️</button>
+        <div class="header-btns">
+            <button class="btn-circle" onclick="toggleSettings()">⚙️</button>
+        </div>
     </header>
 
     <div class="global-card">
         <div class="global-header">
-            <span style="font-size: 11px; font-weight: 800; color: var(--text-secondary)">LOGRO GLOBAL</span>
+            <span style="font-size: 13px; font-weight: 800; color: var(--text-secondary)">LOGRO GLOBAL</span>
             <span id="globalPerc" class="global-perc">0%</span>
         </div>
         <div class="bar-bg"><div id="globalBar" class="bar-fill"></div></div>
@@ -190,20 +190,20 @@
 
     <div class="add-meta-trigger" onclick="toggleAddModal()">
         <div class="plus-icon">+</div>
-        <span>Nueva Meta</span>
+        <span>Agregar Metas</span>
     </div>
 
     <main id="habitsContainer"></main>
-    <footer>v10.1 • Drag & Drop AI Edition</footer>
+    <footer>v9.8 • Premium Migration Edition</footer>
 </div>
 
 <script>
-    const API_KEY = ""; // Entorno gestiona la clave
-    const APP_VER = "10.1";
-    const KEY_H = 'res_v10_habits';
-    const KEY_S = 'res_v10_start';
-    const KEY_M = 'res_v10_mock';
-    const KEY_SYNCED = 'res_v10_is_synced';
+    const API_KEY_INTERNA = "AIzaSyBcEYRrKA_dIp7iTMiztuAnqujvqa6-9EI"; 
+    const APP_VER = "9.8";
+    const KEY_H = 'res_v98_habits';
+    const KEY_S = 'res_v98_start';
+    const KEY_M = 'res_v98_mock';
+    const KEY_SYNCED = 'res_v98_is_synced';
 
     const PRESET_COLORS = ["#007aff", "#34c759", "#ff3b30", "#ff9500", "#af52de", "#ff2d55"];
     let selectedAddColor = PRESET_COLORS[0];
@@ -211,59 +211,12 @@
 
     let habits = JSON.parse(localStorage.getItem(KEY_H)) || [];
     let startDate = localStorage.getItem(KEY_S) || new Date().toISOString().split('T')[0];
+    let geminiKey = API_KEY_INTERNA.trim(); 
+
+    const MODEL_PRIORITY = ["gemini-1.5-flash", "gemini-2.0-flash"];
 
     // -------------------------------------------------------------------------
-    // LÓGICA DE IA (RESTORED)
-    // -------------------------------------------------------------------------
-    async function fetchFromAI(prompt) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseMimeType: "application/json" }
-                })
-            });
-            if (response.ok) {
-                const data = await response.json();
-                return JSON.parse(data.candidates[0].content.parts[0].text);
-            }
-        } catch (e) { console.warn("Error IA:", e); }
-        throw new Error("Sin conexión");
-    }
-
-    async function consultarAlJuez() {
-        const area = document.getElementById('reflectionArea');
-        const feedback = document.getElementById('aiFeedback');
-        const btn = document.getElementById('btnUnlock');
-        
-        if (area.value.trim().length < 20) return;
-        
-        btn.innerText = "DELIBERANDO..."; btn.disabled = true;
-        feedback.style.display = 'block'; feedback.innerText = "El tribunal analiza tu caso...";
-        
-        const prompt = `Actúa como un Juez implacable. Usuario inactivo 7+ días. Explicación: "${area.value}". Responde estrictamente un JSON: { "valid": boolean, "verdict": "mensaje potente" }`;
-        
-        try {
-            const result = await fetchFromAI(prompt);
-            feedback.innerText = result.verdict;
-            btn.disabled = false;
-            if (result.valid) {
-                btn.innerText = "VOLVER AL CAMINO"; btn.style.background = "var(--success-green)";
-                btn.onclick = () => { localStorage.removeItem(KEY_M); location.reload(); };
-            } else {
-                btn.innerText = "ACEPTAR SENTENCIA"; btn.style.background = "var(--danger-red)";
-                btn.onclick = () => { borrarTodo(); };
-            }
-        } catch (e) {
-            btn.innerText = "ERROR - REINTENTAR"; btn.disabled = false;
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // RENDERIZADO Y UI
+    // RENDER COLOR SELECTOR (Refined for Mobile)
     // -------------------------------------------------------------------------
     function renderColorSelector(containerId, isManager = false, habitId = null) {
         const container = document.getElementById(containerId);
@@ -271,118 +224,157 @@
         container.innerHTML = "";
         
         let colorsToShow = [...PRESET_COLORS];
-        if (customColorPicked && !colorsToShow.includes(customColorPicked)) colorsToShow.push(customColorPicked);
+        
+        // Si el usuario eligió un color personalizado que no está en presets, añadirlo
+        if (customColorPicked && !colorsToShow.includes(customColorPicked)) {
+            colorsToShow.push(customColorPicked);
+        }
 
         colorsToShow.forEach(color => {
             const swatch = document.createElement("div");
             swatch.className = "color-swatch";
             swatch.style.backgroundColor = color;
-            let isActive = (isManager && habits.find(x => x.id === habitId)?.color === color) || (!isManager && selectedAddColor === color);
+            
+            let isActive = false;
+            if (isManager && habitId) {
+                const h = habits.find(x => x.id === habitId);
+                if (h && h.color === color) isActive = true;
+            } else if (!isManager && selectedAddColor === color) {
+                isActive = true;
+            }
+            
             if (isActive) swatch.classList.add("active");
-            swatch.onclick = (e) => {
-                e.stopPropagation();
-                if (isManager) { updateHabitDetail(habitId, 'color', color); renderManager(); }
-                else { selectedAddColor = color; renderColorSelector(containerId); }
+
+            swatch.onclick = () => {
+                if (isManager) { 
+                    updateHabitDetail(habitId, 'color', color); 
+                    renderManager(); 
+                } else { 
+                    selectedAddColor = color; 
+                    renderColorSelector(containerId); 
+                }
             };
             container.appendChild(swatch);
         });
 
+        // Botón + con el input de color real "encima" para que el toque siempre funcione en iPhone
         const plusTrigger = document.createElement("div");
         plusTrigger.className = "color-swatch plus-trigger";
-        plusTrigger.innerHTML = `+<input type="color" class="hidden-color-input" onchange="handleCustomColorSelection(this.value, ${isManager}, '${habitId || ''}', '${containerId}')">`;
+        plusTrigger.innerHTML = `
+            +
+            <input type="color" class="hidden-color-input" 
+                onchange="handleCustomColorSelection(this.value, ${isManager}, '${habitId || ''}', '${containerId}')">
+        `;
         container.appendChild(plusTrigger);
     }
 
     function handleCustomColorSelection(val, isManager, habitId, containerId) {
         customColorPicked = val;
-        if (isManager && habitId) { updateHabitDetail(habitId, 'color', val); renderManager(); }
-        else { selectedAddColor = val; renderColorSelector(containerId); }
-    }
-
-    function renderManager() {
-        const m = document.getElementById('managerList'); 
-        m.innerHTML = '';
-        habits.forEach((h) => { 
-            const div = document.createElement('div');
-            div.className = 'manager-item';
-            div.setAttribute('data-id', h.id);
-            div.innerHTML = `
-                <div class="item-header">
-                    <div style="display:flex; align-items:center;">
-                        <span class="drag-handle">≡</span>
-                        <span style="font-weight:700">${h.icon} ${h.name}</span>
-                    </div>
-                    <button onclick="removeHabit('${h.id}')" style="border:none; color:var(--danger-red); background:none; font-weight:800; font-size:10px; cursor:pointer;">BORRAR</button>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:10px;" onclick="event.stopPropagation()">
-                    <input type="text" style="padding:12px; font-size:14px; border-radius:14px;" value="${h.icon}" onchange="updateHabitDetail('${h.id}', 'icon', this.value)" placeholder="Icono">
-                    <div class="color-selector" id="color-sel-${h.id}"></div>
-                </div>`;
-            m.appendChild(div);
-            renderColorSelector(`color-sel-${h.id}`, true, h.id);
-        });
-
-        new Sortable(m, {
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            onEnd: function () {
-                const newOrder = Array.from(m.children).map(el => el.getAttribute('data-id'));
-                habits = newOrder.map(id => habits.find(h => h.id === id));
-                saveAll();
-                renderHabits();
-            }
-        });
+        if (isManager && habitId) {
+            updateHabitDetail(habitId, 'color', val);
+            renderManager();
+        } else {
+            selectedAddColor = val;
+            renderColorSelector(containerId);
+        }
     }
 
     // -------------------------------------------------------------------------
-    // LÓGICA DE TRASLADO / MIGRACIÓN
+    // LÓGICA DE TRASLADO (Sincronización Inteligente)
     // -------------------------------------------------------------------------
     function renderSyncMenu() {
         const container = document.getElementById('syncSection');
         const isSynced = localStorage.getItem(KEY_SYNCED);
+
         if (isSynced) {
-            container.innerHTML = `<div style="color:var(--success-green); font-weight:800; font-size:12px; text-align:center;">Migración Finalizada ✅</div>`;
-            return;
+            container.innerHTML = `<div class="btn-sync-locked">Traslado Finalizado ✅</div>
+                                   <p style="font-size:11px; color:var(--accent-blue); margin-top:8px; text-align:center;">Tus datos históricos están sellados.</p>`;
+        } else if (habits.length === 0) {
+            container.innerHTML = `<p style="font-size:12px; color:gray; text-align:center;">Primero crea tus metas (No fumar, Ejercicio, etc.) para poder migrarlas.</p>`;
+        } else {
+            let html = `
+                <label class="input-label">Traslado de Historial</label>
+                <p style="font-size:11px; color:gray; margin-bottom:15px;">Migra todas tus metas del Excel de un solo golpe aquí.</p>
+                <div class="input-group">
+                    <label style="font-size:9px; color:gray; display:block; margin-bottom:5px;">FECHA DE INICIO EN EL EXCEL</label>
+                    <input type="date" id="syncStartDate" value="2026-01-01" onchange="updateSyncDaysLabel()">
+                </div>
+                <p id="syncDaysLabel" style="font-size:11px; color:var(--text-secondary); margin-bottom:15px;"></p>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; padding:0 5px;">
+                    <span style="font-size:9px; color:gray; text-transform:uppercase; letter-spacing:1px;">Meta</span>
+                    <span style="font-size:9px; color:gray; text-transform:uppercase; letter-spacing:1px;">Victorias (checks)</span>
+                </div>
+                <div id="syncHabitsList">`;
+            
+            habits.forEach(h => {
+                html += `
+                    <div class="sync-row">
+                        <span style="font-size:13px; font-weight:700;">${h.icon} ${h.name}</span>
+                        <input type="number" class="sync-input-mini" id="syncVal_${h.id}" placeholder="0" min="0">
+                    </div>`;
+            });
+
+            html += `</div>
+                <button onclick="ejecutarSincronizacion()" class="btn-main-action" style="background:var(--accent-blue); color:white; margin:15px 0 0 0">CONFIRMAR TODO</button>
+                <p style="font-size:10px; color:var(--warning-orange); margin-top:10px; text-align:center;">Asegúrate de haber añadido todas tus metas antes de confirmar.</p>`;
+            
+            container.innerHTML = html;
+            updateSyncDaysLabel();
         }
-        if (habits.length === 0) {
-            container.innerHTML = `<p style="font-size:11px; color:gray; text-align:center;">Crea tus metas primero para migrar.</p>`;
-            return;
-        }
-        let html = `<label class="input-label">Migrar Historial Inicial</label>
-                    <input type="date" id="syncStartDate" value="2026-01-01" style="margin-bottom:10px; width:100%;">
-                    <div id="syncHabitsList">`;
-        habits.forEach(h => {
-            html += `<div class="sync-row"><span>${h.icon} ${h.name}</span><input type="number" class="sync-input-mini" id="syncVal_${h.id}" placeholder="0"></div>`;
-        });
-        html += `</div><button onclick="ejecutarSincronizacion()" class="btn-main-action" style="background:var(--accent-blue); color:white;">MIGRAR AHORA</button>`;
-        container.innerHTML = html;
+    }
+
+    function updateSyncDaysLabel() {
+        const dateInput = document.getElementById('syncStartDate');
+        if (!dateInput) return;
+        const start = new Date(dateInput.value);
+        const today = new Date();
+        const diff = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
+        document.getElementById('syncDaysLabel').innerText = `Rango detectado: ${diff} días totales en el historial.`;
     }
 
     function ejecutarSincronizacion() {
-        const start = new Date(document.getElementById('syncStartDate').value);
+        const dateInput = document.getElementById('syncStartDate');
+        const migrationStart = new Date(dateInput.value);
         const today = new Date();
-        const diff = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
-        if (diff < 1) return;
-        if (!confirm("¿Confirmas el traslado de victorias?")) return;
+        const totalDaysInRange = Math.floor((today - migrationStart) / (1000 * 60 * 60 * 24)) + 1;
 
+        if (totalDaysInRange < 1) {
+            alert("La fecha debe ser anterior a hoy.");
+            return;
+        }
+
+        if (!confirm(`¿Confirmas el traslado de todas estas metas? Esta opción se bloqueará para siempre.`)) return;
+
+        let error = false;
         habits.forEach(h => {
-            const wins = parseInt(document.getElementById(`syncVal_${h.id}`).value) || 0;
-            h.history = [];
-            let curr = new Date(start);
-            for (let i = 0; i < Math.min(wins, diff); i++) {
-                h.history.push(curr.toISOString().split('T')[0]);
-                curr.setUTCDate(curr.getUTCDate() + 1);
+            const valInput = document.getElementById(`syncVal_${h.id}`);
+            const wins = parseInt(valInput.value) || 0;
+
+            if (wins > totalDaysInRange) {
+                alert(`Error: ${h.name} no puede tener más victorias (${wins}) que días totales (${totalDaysInRange}).`);
+                error = true;
+            } else {
+                h.history = [];
+                let current = new Date(migrationStart);
+                for (let i = 0; i < wins; i++) {
+                    const dateStr = current.toISOString().split('T')[0];
+                    h.history.push(dateStr);
+                    current.setUTCDate(current.getUTCDate() + 1);
+                }
             }
         });
 
-        startDate = document.getElementById('syncStartDate').value;
+        if (error) return;
+
+        startDate = dateInput.value;
         localStorage.setItem(KEY_SYNCED, "true");
-        saveAll(); renderHabits(); toggleSettings();
+        saveAll();
+        renderHabits();
+        renderSyncMenu();
+        alert("Traslado exitoso. El sistema ha sellado tu historial global.");
+        toggleSettings();
     }
 
-    // -------------------------------------------------------------------------
-    // LÓGICA CORE
-    // -------------------------------------------------------------------------
     function toggleAddModal() {
         const el = document.getElementById('addHabitModal');
         el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
@@ -399,11 +391,16 @@
     }
 
     function addHabit() {
-        const nInput = document.getElementById('hName'), iInput = document.getElementById('hIcon');
-        if (!nInput.value || !iInput.value) return; 
-        habits.push({ id: 'h'+Date.now(), name: nInput.value, icon: iInput.value, color: selectedAddColor, history: [] });
+        const nInput = document.getElementById('hName');
+        const iInput = document.getElementById('hIcon');
+        const n = nInput.value, i = iInput.value;
+        if (!n || !i) return; 
+        
+        habits.push({ id: 'h'+Date.now(), name: n, icon: i, color: selectedAddColor, history: [] });
         nInput.value = ""; iInput.value = "";
-        toggleAddModal(); saveAll(); renderHabits();
+        toggleAddModal();
+        saveAll(); 
+        renderHabits();
     }
 
     function renderHabits() {
@@ -413,15 +410,81 @@
             const porc = calcularPorc(h);
             card.innerHTML = `<h3>${h.icon} ${h.name}</h3><div class="btn-undo" onclick="deshacer('${h.id}', event)">✕</div>
                 <div style="background:var(--bg-color); height:12px; border-radius:12px; margin-top:15px; overflow:hidden"><div style="background:${h.color}; width:${porc}%; height:100%; transition:1.4s cubic-bezier(0.1, 0.5, 0.1, 1)"></div></div>
-                <div class="card-meta"><span>Días logrados: ${h.history.length}</span><span>${porc}% Éxito</span></div>`;
+                <div class="card-meta"><span>Victorias: ${h.history.length}</span><span>${porc}% Éxito</span></div>`;
             cont.appendChild(card);
         });
         actualizarGlobal();
     }
 
+    function renderManager() {
+        const m = document.getElementById('managerList'); 
+        m.innerHTML = '<h3 style="font-size:12px; margin-bottom:15px; color:gray; font-weight:800; text-transform:uppercase; letter-spacing:1px;">Editar Metas:</h3>';
+        habits.forEach((h) => { 
+            const habitSelectorId = `color-sel-${h.id}`;
+            m.innerHTML += `
+                <div style="background:var(--bg-color); padding:20px; border-radius:24px; margin-bottom:12px; border:1px solid var(--border-color);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <span style="font-weight:700">${h.icon} ${h.name}</span>
+                        <button onclick="removeHabit('${h.id}')" style="border:none; color:var(--danger-red); background:none; cursor:pointer; font-weight:800; font-size:10px;">ELIMINAR</button>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <input type="text" class="mini-input" value="${h.icon}" onchange="updateHabitDetail('${h.id}', 'icon', this.value)" placeholder="Icono">
+                        <div class="color-selector" id="${habitSelectorId}"></div>
+                    </div>
+                </div>`; 
+            setTimeout(() => renderColorSelector(habitSelectorId, true, h.id), 0);
+        });
+    }
+
     function updateHabitDetail(id, field, value) {
         const h = habits.find(h => h.id === id);
         if (h) { h[field] = value; saveAll(); renderHabits(); }
+    }
+
+    async function fetchFromAI(prompt, key) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_PRIORITY[0]}:generateContent?key=${key}`;
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const rawText = data.candidates[0].content.parts[0].text;
+                const match = rawText.match(/\{[\s\S]*\}/);
+                return JSON.parse(match ? match[0] : rawText);
+            }
+        } catch (e) { console.warn(`Error en IA: ${e}`); }
+        throw new Error("Sin conexión.");
+    }
+
+    async function consultarAlJuez() {
+        const reflectionArea = document.getElementById('reflectionArea');
+        const reflection = reflectionArea.value.trim();
+        const feedback = document.getElementById('aiFeedback');
+        const btn = document.getElementById('btnUnlock');
+        if (reflection.length < 20) return;
+        btn.innerText = "DELIBERANDO..."; btn.disabled = true;
+        feedback.style.display = 'block'; feedback.innerText = "El tribunal está analizando tu caso...";
+        const prompt = `Actúa como un Juez implacable. Usuario inactivo 7+ días. Explicación: "${reflection}". Responde estrictamente un JSON: { "valid": boolean, "verdict": "mensaje potente" }`;
+        try {
+            const result = await fetchFromAI(prompt, geminiKey);
+            feedback.innerText = result.verdict;
+            btn.disabled = false;
+            if (result.valid) {
+                btn.innerText = "VOLVER AL CAMINO"; btn.style.background = "var(--success-green)";
+                btn.onclick = () => { localStorage.removeItem(KEY_M); location.reload(); };
+            } else {
+                btn.innerText = "ACEPTAR SENTENCIA"; btn.style.background = "var(--danger-red)";
+                btn.onclick = () => { localStorage.removeItem(KEY_M); fullReset(); location.reload(); };
+            }
+        } catch (e) {
+            btn.disabled = false; btn.innerText = "DESBLOQUEO MANUAL (ERROR)";
+            btn.onclick = () => { localStorage.removeItem(KEY_M); location.reload(); };
+        }
     }
 
     function marcar(id) {
@@ -455,18 +518,32 @@
         }
         const diff = Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24));
         if (diff > 7) document.getElementById('hardcoreModal').style.display = 'flex';
-        else updateStatus("Consistencia activa", "var(--success-green)");
+        else updateStatus("Enfoque activo", "var(--success-green)");
     }
 
     function saveAll() { localStorage.setItem(KEY_H, JSON.stringify(habits)); localStorage.setItem(KEY_S, startDate); }
-    function borrarTodo() { localStorage.clear(); location.reload(); }
+    function borrarTodo() { if(confirm("¿Eliminar todo?")) { localStorage.clear(); location.reload(); } }
     function removeHabit(id) { if(confirm("¿Borrar meta?")) { habits = habits.filter(h => h.id !== id); saveAll(); renderManager(); renderHabits(); } }
     function updateStatus(m, c) { document.getElementById("statusText").innerText = m; document.getElementById("statusText").style.color = c; }
 
     window.onload = () => { 
-        renderHabits(); checkStatus(); 
-        document.getElementById('hName').addEventListener('keypress', (e) => { if(e.key === 'Enter') document.getElementById('hIcon').focus(); });
-        document.getElementById('hIcon').addEventListener('keypress', (e) => { if(e.key === 'Enter') addHabit(); });
+        renderHabits(); 
+        checkStatus(); 
+
+        const hNameInput = document.getElementById('hName');
+        const hIconInput = document.getElementById('hIcon');
+        const reflectionArea = document.getElementById('reflectionArea');
+
+        hNameInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') hIconInput.focus(); });
+        hIconInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') { addHabit(); hIconInput.blur(); } });
+        
+        reflectionArea.addEventListener('keypress', (e) => { 
+            if(e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                consultarAlJuez(); 
+                reflectionArea.blur();
+            } 
+        });
     };
 </script>
 </body>
