@@ -100,8 +100,14 @@
         }
         input:focus { border-color: var(--accent-blue); }
 
-        /* SELECTOR DE COLOR CUSTOM */
-        .color-selector { display: flex; justify-content: space-between; padding: 10px 0; gap: 8px; flex-wrap: wrap; }
+        /* SELECTOR DE COLOR CUSTOM - CENTRADO */
+        .color-selector { 
+            display: flex; 
+            justify-content: center; 
+            padding: 10px 0; 
+            gap: 12px; 
+            flex-wrap: wrap; 
+        }
         .color-swatch {
             width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold;
@@ -211,7 +217,7 @@
 </div>
 
 <script>
-    const API_KEY_INTERNA = "AIzaSyBcEYRrKA_dIp7iTMiztuAnqujvqa6-9EI"; 
+    const API_KEY_INTERNA = ""; // Clave gestionada por el entorno
     const APP_VER = "9.3";
     const KEY_H = 'res_v93_habits';
     const KEY_S = 'res_v93_start';
