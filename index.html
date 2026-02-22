@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Seguimiento Pro AI - v9.7 (Multi-Sync Edition)</title>
+    <title>Seguimiento Pro AI - v9.8 (Color UI Fix)</title>
     <!-- Configuración para App iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -95,11 +95,14 @@
             width: 100%; padding: 16px; padding-right: 16px; border-radius: 18px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 16px; outline: none; transition: 0.2s;
         }
 
-        /* SELECTOR DE COLOR */
+        /* SELECTOR DE COLOR CENTRADO */
         .color-selector { display: flex; justify-content: center; padding: 10px 0; gap: 12px; flex-wrap: wrap; }
-        .color-swatch { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-        .color-swatch.active { border-color: white; transform: scale(1.1); }
+        .color-swatch { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; }
+        .color-swatch.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 10px rgba(255,255,255,0.2); }
         .color-swatch.plus-trigger { background: #2c2c2e; border: 1px dashed var(--text-secondary); color: var(--text-secondary); font-size: 18px; font-weight: bold; }
+
+        /* INPUT DE COLOR OCULTO PERO ACCESIBLE PARA MOBILE */
+        .hidden-color-input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; top: 0; left: 0; }
 
         /* SYNC SECTION (Migration Wizard) */
         .sync-box { background: rgba(0, 122, 255, 0.05); padding: 25px; border-radius: 28px; margin-bottom: 25px; border: 1px solid rgba(0, 122, 255, 0.2); }
@@ -131,18 +134,17 @@
         
         <div class="input-group">
             <label class="input-label">Nombre de la meta</label>
-            <input type="text" id="hName" placeholder="Ej: No fumar">
+            <input type="text" id="hName" placeholder="Ej: No fumar" enterkeyhint="next">
         </div>
 
         <div class="input-group">
             <label class="input-label">Emoji / Icono</label>
-            <input type="text" id="hIcon" placeholder="🚭">
+            <input type="text" id="hIcon" placeholder="🚭" enterkeyhint="done">
         </div>
 
         <div class="input-group">
             <label class="input-label">Color de Enfoque</label>
             <div class="color-selector" id="mainColorSelector"></div>
-            <input type="color" id="customColorInput" style="display: none;" onchange="handleCustomColorSelection(this.value)">
         </div>
 
         <button class="btn-main-action" onclick="addHabit()">AÑADIR AHORA</button>
@@ -192,26 +194,90 @@
     </div>
 
     <main id="habitsContainer"></main>
-    <footer>v9.7 • Premium Migration Edition</footer>
+    <footer>v9.8 • Premium Migration Edition</footer>
 </div>
 
 <script>
     const API_KEY_INTERNA = "AIzaSyBcEYRrKA_dIp7iTMiztuAnqujvqa6-9EI"; 
-    const APP_VER = "9.7";
-    const KEY_H = 'res_v97_habits';
-    const KEY_S = 'res_v97_start';
-    const KEY_M = 'res_v97_mock';
-    const KEY_SYNCED = 'res_v97_is_synced';
+    const APP_VER = "9.8";
+    const KEY_H = 'res_v98_habits';
+    const KEY_S = 'res_v98_start';
+    const KEY_M = 'res_v98_mock';
+    const KEY_SYNCED = 'res_v98_is_synced';
 
     const PRESET_COLORS = ["#007aff", "#34c759", "#ff3b30", "#ff9500", "#af52de", "#ff2d55"];
     let selectedAddColor = PRESET_COLORS[0];
-    let isCustomMode = false;
+    let customColorPicked = null;
 
     let habits = JSON.parse(localStorage.getItem(KEY_H)) || [];
     let startDate = localStorage.getItem(KEY_S) || new Date().toISOString().split('T')[0];
     let geminiKey = API_KEY_INTERNA.trim(); 
 
     const MODEL_PRIORITY = ["gemini-1.5-flash", "gemini-2.0-flash"];
+
+    // -------------------------------------------------------------------------
+    // RENDER COLOR SELECTOR (Refined for Mobile)
+    // -------------------------------------------------------------------------
+    function renderColorSelector(containerId, isManager = false, habitId = null) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = "";
+        
+        let colorsToShow = [...PRESET_COLORS];
+        
+        // Si el usuario eligió un color personalizado que no está en presets, añadirlo
+        if (customColorPicked && !colorsToShow.includes(customColorPicked)) {
+            colorsToShow.push(customColorPicked);
+        }
+
+        colorsToShow.forEach(color => {
+            const swatch = document.createElement("div");
+            swatch.className = "color-swatch";
+            swatch.style.backgroundColor = color;
+            
+            let isActive = false;
+            if (isManager && habitId) {
+                const h = habits.find(x => x.id === habitId);
+                if (h && h.color === color) isActive = true;
+            } else if (!isManager && selectedAddColor === color) {
+                isActive = true;
+            }
+            
+            if (isActive) swatch.classList.add("active");
+
+            swatch.onclick = () => {
+                if (isManager) { 
+                    updateHabitDetail(habitId, 'color', color); 
+                    renderManager(); 
+                } else { 
+                    selectedAddColor = color; 
+                    renderColorSelector(containerId); 
+                }
+            };
+            container.appendChild(swatch);
+        });
+
+        // Botón + con el input de color real "encima" para que el toque siempre funcione en iPhone
+        const plusTrigger = document.createElement("div");
+        plusTrigger.className = "color-swatch plus-trigger";
+        plusTrigger.innerHTML = `
+            +
+            <input type="color" class="hidden-color-input" 
+                onchange="handleCustomColorSelection(this.value, ${isManager}, '${habitId || ''}', '${containerId}')">
+        `;
+        container.appendChild(plusTrigger);
+    }
+
+    function handleCustomColorSelection(val, isManager, habitId, containerId) {
+        customColorPicked = val;
+        if (isManager && habitId) {
+            updateHabitDetail(habitId, 'color', val);
+            renderManager();
+        } else {
+            selectedAddColor = val;
+            renderColorSelector(containerId);
+        }
+    }
 
     // -------------------------------------------------------------------------
     // LÓGICA DE TRASLADO (Sincronización Inteligente)
@@ -309,49 +375,13 @@
         toggleSettings();
     }
 
-    // -------------------------------------------------------------------------
-    // RENDERIZADO Y UI
-    // -------------------------------------------------------------------------
-    function renderColorSelector(containerId, isManager = false, habitId = null) {
-        const container = document.getElementById(containerId);
-        container.innerHTML = "";
-        PRESET_COLORS.forEach(color => {
-            const swatch = document.createElement("div");
-            swatch.className = "color-swatch";
-            swatch.style.backgroundColor = color;
-            if (isManager && habitId) {
-                const h = habits.find(x => x.id === habitId);
-                if (h && h.color === color) swatch.classList.add("active");
-            } else if (!isManager && !isCustomMode && selectedAddColor === color) {
-                swatch.classList.add("active");
-            }
-            swatch.onclick = () => {
-                if (isManager) { updateHabitDetail(habitId, 'color', color); renderManager(); }
-                else { selectedAddColor = color; isCustomMode = false; renderColorSelector(containerId); }
-            };
-            container.appendChild(swatch);
-        });
-        const plus = document.createElement("div");
-        plus.className = "color-swatch plus-trigger";
-        plus.innerHTML = "+";
-        plus.onclick = () => {
-            const input = document.getElementById('customColorInput');
-            input.dataset.targetHabit = isManager ? habitId : "";
-            input.click();
-        };
-        container.appendChild(plus);
-    }
-
-    function handleCustomColorSelection(val) {
-        const targetId = document.getElementById('customColorInput').dataset.targetHabit;
-        if (targetId) { updateHabitDetail(targetId, 'color', val); renderManager(); }
-        else { selectedAddColor = val; isCustomMode = true; renderColorSelector('mainColorSelector'); }
-    }
-
     function toggleAddModal() {
         const el = document.getElementById('addHabitModal');
         el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
-        if(el.style.display === 'flex') renderColorSelector('mainColorSelector');
+        if(el.style.display === 'flex') {
+            document.getElementById('hName').focus();
+            renderColorSelector('mainColorSelector');
+        }
     }
 
     function toggleSettings() {
@@ -361,10 +391,13 @@
     }
 
     function addHabit() {
-        const n = document.getElementById('hName').value, i = document.getElementById('hIcon').value;
+        const nInput = document.getElementById('hName');
+        const iInput = document.getElementById('hIcon');
+        const n = nInput.value, i = iInput.value;
         if (!n || !i) return; 
+        
         habits.push({ id: 'h'+Date.now(), name: n, icon: i, color: selectedAddColor, history: [] });
-        document.getElementById('hName').value = ""; document.getElementById('hIcon').value = "";
+        nInput.value = ""; iInput.value = "";
         toggleAddModal();
         saveAll(); 
         renderHabits();
@@ -429,7 +462,8 @@
     }
 
     async function consultarAlJuez() {
-        const reflection = document.getElementById('reflectionArea').value.trim();
+        const reflectionArea = document.getElementById('reflectionArea');
+        const reflection = reflectionArea.value.trim();
         const feedback = document.getElementById('aiFeedback');
         const btn = document.getElementById('btnUnlock');
         if (reflection.length < 20) return;
@@ -500,13 +534,14 @@
         const hIconInput = document.getElementById('hIcon');
         const reflectionArea = document.getElementById('reflectionArea');
 
-        hNameInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') addHabit(); });
-        hIconInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') addHabit(); });
+        hNameInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') hIconInput.focus(); });
+        hIconInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') { addHabit(); hIconInput.blur(); } });
         
         reflectionArea.addEventListener('keypress', (e) => { 
             if(e.key === 'Enter' && !e.shiftKey) { 
                 e.preventDefault(); 
                 consultarAlJuez(); 
+                reflectionArea.blur();
             } 
         });
     };
