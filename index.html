@@ -106,7 +106,7 @@
 
         /* SYNC SECTION (Migration Wizard) */
         .sync-box { background: rgba(0, 122, 255, 0.05); padding: 25px; border-radius: 28px; margin-bottom: 25px; border: 1px solid rgba(0, 122, 255, 0.2); }
-        .sync-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .sync-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .sync-input-mini { width: 80px !important; padding: 10px !important; text-align: center; }
         .btn-sync-locked { color: var(--success-green); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; text-align: center; width: 100%; }
 
@@ -237,12 +237,16 @@
                     <input type="date" id="syncStartDate" value="2026-01-01" onchange="updateSyncDaysLabel()">
                 </div>
                 <p id="syncDaysLabel" style="font-size:11px; color:var(--text-secondary); margin-bottom:15px;"></p>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; padding:0 5px;">
+                    <span style="font-size:9px; color:gray; text-transform:uppercase; letter-spacing:1px;">Meta</span>
+                    <span style="font-size:9px; color:gray; text-transform:uppercase; letter-spacing:1px;">Días cumplidos</span>
+                </div>
                 <div id="syncHabitsList">`;
             
             habits.forEach(h => {
                 html += `
                     <div class="sync-row">
-                        <span style="font-size:13px;">${h.icon} ${h.name}</span>
+                        <span style="font-size:13px; font-weight:700;">${h.icon} ${h.name}</span>
                         <input type="number" class="sync-input-mini" id="syncVal_${h.id}" placeholder="0" min="0">
                     </div>`;
             });
@@ -287,7 +291,6 @@
                 alert(`Error: No puedes tener más victorias (${wins}) que días totales (${totalDaysInRange}) en el hábito ${h.name}.`);
                 error = true;
             } else {
-                // Generar fechas de victorias
                 h.history = [];
                 let current = new Date(migrationStart);
                 for (let i = 0; i < wins; i++) {
@@ -309,9 +312,6 @@
         toggleSettings();
     }
 
-    // -------------------------------------------------------------------------
-    // RENDERIZADO Y UI
-    // -------------------------------------------------------------------------
     function renderColorSelector(containerId, isManager = false, habitId = null) {
         const container = document.getElementById(containerId);
         container.innerHTML = "";
@@ -408,10 +408,6 @@
         if (h) { h[field] = value; saveAll(); renderHabits(); }
     }
 
-    // -------------------------------------------------------------------------
-    // LÓGICA CORE (IA Y ESTADO)
-    // -------------------------------------------------------------------------
-
     async function fetchFromAI(prompt, key) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_PRIORITY[0]}:generateContent?key=${key}`;
         try {
@@ -500,7 +496,6 @@
         renderHabits(); 
         checkStatus(); 
 
-        // Listeners para la tecla Enter
         const hNameInput = document.getElementById('hName');
         const hIconInput = document.getElementById('hIcon');
         const reflectionArea = document.getElementById('reflectionArea');
