@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Seguimiento Pro AI - v9.6 (Migration Edition)</title>
+    <title>Seguimiento Pro AI - v9.7 (Multi-Sync Edition)</title>
     <!-- Configuración para App iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -91,9 +91,6 @@
         .input-group { margin-bottom: 20px; }
         .input-label { font-size: 10px; font-weight: 900; color: var(--text-secondary); display: block; margin-bottom: 10px; letter-spacing: 1px; text-transform: uppercase; }
         
-        .input-wrapper { position: relative; display: flex; align-items: center; }
-        .input-icon { position: absolute; right: 16px; pointer-events: none; color: var(--text-secondary); font-size: 18px; }
-
         input[type="text"], input[type="date"], input[type="number"] {
             width: 100%; padding: 16px; padding-right: 16px; border-radius: 18px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 16px; outline: none; transition: 0.2s;
         }
@@ -134,12 +131,12 @@
         
         <div class="input-group">
             <label class="input-label">Nombre de la meta</label>
-            <input type="text" id="hName" placeholder="Ej: Ejercicio Diario">
+            <input type="text" id="hName" placeholder="Ej: No fumar">
         </div>
 
         <div class="input-group">
             <label class="input-label">Emoji / Icono</label>
-            <input type="text" id="hIcon" placeholder="🔥">
+            <input type="text" id="hIcon" placeholder="🚭">
         </div>
 
         <div class="input-group">
@@ -173,7 +170,6 @@
     </section>
 </div>
 
-<!-- CONTAINER APP -->
 <div class="app-container">
     <header>
         <div><h1>Seguimiento</h1><p id="statusText">Consistencia Activa</p></div>
@@ -196,16 +192,16 @@
     </div>
 
     <main id="habitsContainer"></main>
-    <footer>v9.6 • Premium Migration Edition</footer>
+    <footer>v9.7 • Premium Migration Edition</footer>
 </div>
 
 <script>
     const API_KEY_INTERNA = "AIzaSyBcEYRrKA_dIp7iTMiztuAnqujvqa6-9EI"; 
-    const APP_VER = "9.6";
-    const KEY_H = 'res_v96_habits';
-    const KEY_S = 'res_v96_start';
-    const KEY_M = 'res_v96_mock';
-    const KEY_SYNCED = 'res_v96_is_synced';
+    const APP_VER = "9.7";
+    const KEY_H = 'res_v97_habits';
+    const KEY_S = 'res_v97_start';
+    const KEY_M = 'res_v97_mock';
+    const KEY_SYNCED = 'res_v97_is_synced';
 
     const PRESET_COLORS = ["#007aff", "#34c759", "#ff3b30", "#ff9500", "#af52de", "#ff2d55"];
     let selectedAddColor = PRESET_COLORS[0];
@@ -228,18 +224,19 @@
             container.innerHTML = `<div class="btn-sync-locked">Traslado Finalizado ✅</div>
                                    <p style="font-size:11px; color:var(--accent-blue); margin-top:8px; text-align:center;">Tus datos históricos están sellados.</p>`;
         } else if (habits.length === 0) {
-            container.innerHTML = `<p style="font-size:12px; color:gray; text-align:center;">Crea tus metas primero para poder sincronizarlas.</p>`;
+            container.innerHTML = `<p style="font-size:12px; color:gray; text-align:center;">Primero crea tus metas (No fumar, Ejercicio, etc.) para poder migrarlas.</p>`;
         } else {
             let html = `
                 <label class="input-label">Traslado de Historial</label>
+                <p style="font-size:11px; color:gray; margin-bottom:15px;">Migra todas tus metas del Excel de un solo golpe aquí.</p>
                 <div class="input-group">
-                    <label style="font-size:9px; color:gray; display:block; margin-bottom:5px;">FECHA DE INICIO DE MIGRACIÓN</label>
+                    <label style="font-size:9px; color:gray; display:block; margin-bottom:5px;">FECHA DE INICIO EN EL EXCEL</label>
                     <input type="date" id="syncStartDate" value="2026-01-01" onchange="updateSyncDaysLabel()">
                 </div>
                 <p id="syncDaysLabel" style="font-size:11px; color:var(--text-secondary); margin-bottom:15px;"></p>
                 <div style="display:flex; justify-content:space-between; margin-bottom:10px; padding:0 5px;">
                     <span style="font-size:9px; color:gray; text-transform:uppercase; letter-spacing:1px;">Meta</span>
-                    <span style="font-size:9px; color:gray; text-transform:uppercase; letter-spacing:1px;">Días cumplidos</span>
+                    <span style="font-size:9px; color:gray; text-transform:uppercase; letter-spacing:1px;">Victorias (checks)</span>
                 </div>
                 <div id="syncHabitsList">`;
             
@@ -252,8 +249,8 @@
             });
 
             html += `</div>
-                <button onclick="ejecutarSincronizacion()" class="btn-main-action" style="background:var(--accent-blue); color:white; margin:15px 0 0 0">CONFIRMAR TRASLADO</button>
-                <p style="font-size:10px; color:var(--warning-orange); margin-top:10px; text-align:center;">Esta acción es única y solo puede hacerse una vez.</p>`;
+                <button onclick="ejecutarSincronizacion()" class="btn-main-action" style="background:var(--accent-blue); color:white; margin:15px 0 0 0">CONFIRMAR TODO</button>
+                <p style="font-size:10px; color:var(--warning-orange); margin-top:10px; text-align:center;">Asegúrate de haber añadido todas tus metas antes de confirmar.</p>`;
             
             container.innerHTML = html;
             updateSyncDaysLabel();
@@ -266,7 +263,7 @@
         const start = new Date(dateInput.value);
         const today = new Date();
         const diff = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
-        document.getElementById('syncDaysLabel').innerText = `Rango detectado: ${diff} días totales.`;
+        document.getElementById('syncDaysLabel').innerText = `Rango detectado: ${diff} días totales en el historial.`;
     }
 
     function ejecutarSincronizacion() {
@@ -276,11 +273,11 @@
         const totalDaysInRange = Math.floor((today - migrationStart) / (1000 * 60 * 60 * 24)) + 1;
 
         if (totalDaysInRange < 1) {
-            alert("La fecha de inicio debe ser anterior a hoy.");
+            alert("La fecha debe ser anterior a hoy.");
             return;
         }
 
-        if (!confirm(`¿Confirmas el traslado desde el ${dateInput.value}? Esta opción desaparecerá al terminar.`)) return;
+        if (!confirm(`¿Confirmas el traslado de todas estas metas? Esta opción se bloqueará para siempre.`)) return;
 
         let error = false;
         habits.forEach(h => {
@@ -288,7 +285,7 @@
             const wins = parseInt(valInput.value) || 0;
 
             if (wins > totalDaysInRange) {
-                alert(`Error: No puedes tener más victorias (${wins}) que días totales (${totalDaysInRange}) en el hábito ${h.name}.`);
+                alert(`Error: ${h.name} no puede tener más victorias (${wins}) que días totales (${totalDaysInRange}).`);
                 error = true;
             } else {
                 h.history = [];
@@ -308,10 +305,13 @@
         saveAll();
         renderHabits();
         renderSyncMenu();
-        alert("Traslado exitoso. El sistema ha registrado tus victorias y fallos históricos.");
+        alert("Traslado exitoso. El sistema ha sellado tu historial global.");
         toggleSettings();
     }
 
+    // -------------------------------------------------------------------------
+    // RENDERIZADO Y UI
+    // -------------------------------------------------------------------------
     function renderColorSelector(containerId, isManager = false, habitId = null) {
         const container = document.getElementById(containerId);
         container.innerHTML = "";
@@ -377,7 +377,7 @@
             const porc = calcularPorc(h);
             card.innerHTML = `<h3>${h.icon} ${h.name}</h3><div class="btn-undo" onclick="deshacer('${h.id}', event)">✕</div>
                 <div style="background:var(--bg-color); height:12px; border-radius:12px; margin-top:15px; overflow:hidden"><div style="background:${h.color}; width:${porc}%; height:100%; transition:1.4s cubic-bezier(0.1, 0.5, 0.1, 1)"></div></div>
-                <div class="card-meta"><span>Días: ${h.history.length}</span><span>${porc}% Éxito</span></div>`;
+                <div class="card-meta"><span>Victorias: ${h.history.length}</span><span>${porc}% Éxito</span></div>`;
             cont.appendChild(card);
         });
         actualizarGlobal();
