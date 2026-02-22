@@ -8,7 +8,425 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://img.icons8.com/color/96/cannabis.png">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Seguimiento Pro AI - v10.0 (Drag & Drop)</title>
+    <!-- Configuración para App iPhone -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/color/96/cannabis.png">
+    
+    <!-- Librería para Arrastrar y Soltar (Liviana y compatible con Touch) -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
+    <style>
+        :root {
+            --bg-color: #000000;
+            --card-bg: #1c1c1e;
+            --text-main: #ffffff;
+            --text-secondary: #8e8e93;
+            --border-color: #2c2c2e;
+            --success-green: #34c759;
+            --danger-red: #ff3b30;
+            --accent-blue: #007aff;
+            --warning-orange: #ff9500;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        /* SCROLLBAR INTEGRADO */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #38383a; border-radius: 10px; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; display: flex; justify-content: center; overflow-x: hidden; }
+        .app-container { width: 100%; max-width: 430px; min-height: 100vh; animation: fadeIn 0.6s ease-out; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; }
+        h1 { font-size: 34px; font-weight: 800; letter-spacing: -1.5px; background: linear-gradient(135deg, var(--text-main) 0%, var(--text-secondary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        #statusText { font-size: 13px; color: var(--text-secondary); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+        .btn-circle { background: var(--card-bg); border: none; width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); font-size: 22px; cursor: pointer; transition: all 0.2s; color: var(--text-main); border: 1px solid var(--border-color); }
+
+        /* ZONA DE AGREGAR METAS */
+        .add-meta-trigger {
+            background: rgba(255, 255, 255, 0.02);
+            border: 2px dashed var(--border-color);
+            border-radius: 35px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .add-meta-trigger:active { transform: scale(0.97); }
+        .add-meta-trigger .plus-icon { font-size: 32px; font-weight: 200; color: var(--text-secondary); }
+        .add-meta-trigger span { font-size: 14px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1.5px; }
+
+        /* PANEL GLOBAL */
+        .global-card { background: var(--card-bg); padding: 30px; border-radius: 35px; box-shadow: var(--shadow); margin-bottom: 25px; border: 1px solid var(--border-color); }
+        .global-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 15px; }
+        .global-perc { font-size: 56px; font-weight: 900; letter-spacing: -3px; color: var(--text-main); }
+        .bar-bg { background: var(--bg-color); height: 16px; border-radius: 12px; overflow: hidden; margin-bottom: 15px; }
+        .bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent-blue), var(--success-green)); transition: width 1.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        /* CARDS */
+        .card { background: var(--card-bg); border-radius: 30px; padding: 25px; position: relative; margin-bottom: 18px; box-shadow: var(--shadow); border: 1px solid var(--border-color); transition: all 0.3s; cursor: pointer; overflow: hidden; }
+        .card h3 { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 700; color: var(--text-main); }
+        .card-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px; }
+        
+        .btn-undo { position: absolute; top: 22px; right: 22px; width: 36px; height: 36px; background: var(--bg-color); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text-secondary); transition: 0.2s; border: 1px solid var(--border-color); z-index: 10; }
+
+        /* MODALES */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .modal-panel { background: var(--card-bg); padding: 35px; border-radius: 40px; width: 100%; max-width: 410px; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: var(--text-main); }
+        
+        .modal-title { font-size: 26px; margin-bottom: 25px; letter-spacing: -1.2px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
+        
+        .btn-main-action { background: var(--text-main); color: var(--card-bg); border: none; padding: 18px; border-radius: 20px; width: 100%; font-weight: 800; margin-top: 15px; cursor: pointer; font-size: 16px; transition: 0.2s; }
+
+        /* INPUTS */
+        .input-group { margin-bottom: 20px; }
+        .input-label { font-size: 10px; font-weight: 900; color: var(--text-secondary); display: block; margin-bottom: 10px; letter-spacing: 1px; text-transform: uppercase; }
+        
+        input[type="text"], input[type="date"], input[type="number"] {
+            width: 100%; padding: 16px; border-radius: 18px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 16px; outline: none;
+        }
+
+        /* COLOR SELECTOR */
+        .color-selector { display: flex; justify-content: center; padding: 10px 0; gap: 12px; flex-wrap: wrap; }
+        .color-swatch { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; display: flex; align-items: center; justify-content: center; position: relative; }
+        .color-swatch.active { border-color: white; transform: scale(1.1); }
+        .color-swatch.plus-trigger { background: #2c2c2e; border: 1px dashed var(--text-secondary); color: var(--text-secondary); font-weight: bold; }
+        .hidden-color-input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; top: 0; left: 0; }
+
+        /* GESTOR DE RANKING (DRAG & DROP) */
+        .manager-item { 
+            background: var(--bg-color); 
+            padding: 20px; 
+            border-radius: 24px; 
+            margin-bottom: 12px; 
+            border: 1px solid var(--border-color); 
+            cursor: grab;
+            transition: transform 0.2s;
+        }
+        .manager-item:active { cursor: grabbing; transform: scale(1.02); background: #2c2c2e; }
+        .sortable-ghost { opacity: 0.3; background: var(--accent-blue) !important; }
+        
+        .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .drag-handle { color: var(--text-secondary); font-size: 20px; margin-right: 10px; }
+
+        .sync-box { background: rgba(0, 122, 255, 0.05); padding: 25px; border-radius: 28px; margin-bottom: 25px; border: 1px solid rgba(0, 122, 255, 0.2); }
+        .sync-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .sync-input-mini { width: 80px !important; padding: 10px !important; text-align: center; }
+
+        footer { text-align: center; font-size: 11px; color: var(--text-secondary); margin-top: 50px; opacity: 0.5; font-weight: 700; padding-bottom: 50px; }
+    </style>
+</head>
+<body>
+
+<!-- MODAL JUEZ -->
+<div id="hardcoreModal" class="modal-overlay" style="display: none;">
+    <div class="modal-panel" style="text-align: center;">
+        <h2 style="font-size: 11px; color: var(--danger-red); letter-spacing: 5px; margin-bottom: 10px;">JURISPRUDENCIA</h2>
+        <h1 style="margin-bottom: 15px;">Acceso Suspendido</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 25px;">Inactividad crítica detectada. El tribunal exige tu declaración.</p>
+        <textarea id="reflectionArea" placeholder="Presenta tu defensa..." style="width: 100%; background: #2c2c2e; border: 1px solid #3a3a3c; border-radius: 20px; padding: 20px; color: white; margin-bottom: 20px; outline: none;" rows="4"></textarea>
+        <div id="aiFeedback" style="display: none; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 15px; color: #a2a2a7; font-size: 14px; margin-bottom: 20px; font-style: italic;"></div>
+        <button class="btn-main-action" id="btnUnlock" onclick="consultarAlJuez()">PRESENTAR AUDIENCIA</button>
+    </div>
+</div>
+
+<!-- MODAL NUEVA META -->
+<div id="addHabitModal" class="modal-overlay" onclick="toggleAddModal()">
+    <section class="modal-panel" onclick="event.stopPropagation()">
+        <div class="modal-title">Nueva Meta <span style="font-size: 14px; color: var(--text-secondary); cursor: pointer;" onclick="toggleAddModal()">Cerrar</span></div>
+        <div class="input-group">
+            <label class="input-label">Nombre</label>
+            <input type="text" id="hName" placeholder="Ej: No fumar" enterkeyhint="next">
+        </div>
+        <div class="input-group">
+            <label class="input-label">Icono</label>
+            <input type="text" id="hIcon" placeholder="🚭" enterkeyhint="done">
+        </div>
+        <div class="input-group">
+            <label class="input-label">Color</label>
+            <div class="color-selector" id="mainColorSelector"></div>
+        </div>
+        <button class="btn-main-action" onclick="addHabit()">AÑADIR AHORA</button>
+    </section>
+</div>
+
+<!-- MODAL AJUSTES -->
+<div id="settingsModal" class="modal-overlay" onclick="toggleSettings()">
+    <section class="modal-panel" onclick="event.stopPropagation()">
+        <div class="modal-title">Gestionar <span style="font-size: 14px; color: var(--text-secondary); cursor: pointer;" onclick="toggleSettings()">Cerrar</span></div>
+        <div id="syncSection" class="sync-box"></div>
+        
+        <p style="font-size: 10px; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Mantén presionado para reordenar:</p>
+        <div id="managerList"></div>
+
+        <div style="background: rgba(255, 59, 48, 0.05); padding: 25px; border-radius: 28px; margin-top: 30px; border: 1px solid rgba(255,59,48,0.2); text-align: center;">
+            <button onclick="borrarTodo()" style="background:none; color:var(--danger-red); border:1px solid var(--danger-red); padding:14px; border-radius:16px; font-weight:800; width:100%; font-size:11px; cursor:pointer;">BORRAR TODO</button>
+        </div>
+        <button class="btn-main-action" onclick="toggleSettings()">LISTO</button>
+    </section>
+</div>
+
+<div class="app-container">
+    <header>
+        <div><h1>Seguimiento</h1><p id="statusText">Consistencia Activa</p></div>
+        <button class="btn-circle" onclick="toggleSettings()">⚙️</button>
+    </header>
+
+    <div class="global-card">
+        <div class="global-header">
+            <span style="font-size: 11px; font-weight: 800; color: var(--text-secondary)">LOGRO GLOBAL</span>
+            <span id="globalPerc" class="global-perc">0%</span>
+        </div>
+        <div class="bar-bg"><div id="globalBar" class="bar-fill"></div></div>
+    </div>
+
+    <div class="add-meta-trigger" onclick="toggleAddModal()">
+        <div class="plus-icon">+</div>
+        <span>Nueva Meta</span>
+    </div>
+
+    <main id="habitsContainer"></main>
+    <footer>v10.0 • Drag & Drop Edition</footer>
+</div>
+
+<script>
+    const API_KEY_INTERNA = ""; 
+    const APP_VER = "10.0";
+    const KEY_H = 'res_v10_habits';
+    const KEY_S = 'res_v10_start';
+    const KEY_M = 'res_v10_mock';
+    const KEY_SYNCED = 'res_v10_is_synced';
+
+    const PRESET_COLORS = ["#007aff", "#34c759", "#ff3b30", "#ff9500", "#af52de", "#ff2d55"];
+    let selectedAddColor = PRESET_COLORS[0];
+    let customColorPicked = null;
+
+    let habits = JSON.parse(localStorage.getItem(KEY_H)) || [];
+    let startDate = localStorage.getItem(KEY_S) || new Date().toISOString().split('T')[0];
+    let geminiKey = API_KEY_INTERNA.trim();
+
+    // -------------------------------------------------------------------------
+    // RENDERIZADO Y UI
+    // -------------------------------------------------------------------------
+    function renderColorSelector(containerId, isManager = false, habitId = null) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = "";
+        
+        let colorsToShow = [...PRESET_COLORS];
+        if (customColorPicked && !colorsToShow.includes(customColorPicked)) colorsToShow.push(customColorPicked);
+
+        colorsToShow.forEach(color => {
+            const swatch = document.createElement("div");
+            swatch.className = "color-swatch";
+            swatch.style.backgroundColor = color;
+            let isActive = (isManager && habits.find(x => x.id === habitId)?.color === color) || (!isManager && selectedAddColor === color);
+            if (isActive) swatch.classList.add("active");
+            swatch.onclick = (e) => {
+                e.stopPropagation();
+                if (isManager) { updateHabitDetail(habitId, 'color', color); renderManager(); }
+                else { selectedAddColor = color; renderColorSelector(containerId); }
+            };
+            container.appendChild(swatch);
+        });
+
+        const plusTrigger = document.createElement("div");
+        plusTrigger.className = "color-swatch plus-trigger";
+        plusTrigger.innerHTML = `+<input type="color" class="hidden-color-input" onchange="handleCustomColorSelection(this.value, ${isManager}, '${habitId || ''}', '${containerId}')">`;
+        container.appendChild(plusTrigger);
+    }
+
+    function handleCustomColorSelection(val, isManager, habitId, containerId) {
+        customColorPicked = val;
+        if (isManager && habitId) { updateHabitDetail(habitId, 'color', val); renderManager(); }
+        else { selectedAddColor = val; renderColorSelector(containerId); }
+    }
+
+    function renderManager() {
+        const m = document.getElementById('managerList'); 
+        m.innerHTML = '';
+        habits.forEach((h) => { 
+            const div = document.createElement('div');
+            div.className = 'manager-item';
+            div.setAttribute('data-id', h.id);
+            div.innerHTML = `
+                <div class="item-header">
+                    <div style="display:flex; align-items:center;">
+                        <span class="drag-handle">≡</span>
+                        <span style="font-weight:700">${h.icon} ${h.name}</span>
+                    </div>
+                    <button onclick="removeHabit('${h.id}')" style="border:none; color:var(--danger-red); background:none; font-weight:800; font-size:10px;">BORRAR</button>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:10px;" onclick="event.stopPropagation()">
+                    <input type="text" style="padding:12px; font-size:14px; border-radius:14px;" value="${h.icon}" onchange="updateHabitDetail('${h.id}', 'icon', this.value)" placeholder="Icono">
+                    <div class="color-selector" id="color-sel-${h.id}"></div>
+                </div>`;
+            m.appendChild(div);
+            renderColorSelector(`color-sel-${h.id}`, true, h.id);
+        });
+
+        // INICIALIZAR DRAG & DROP
+        new Sortable(m, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            handle: '.manager-item', // Se puede arrastrar desde cualquier parte del item
+            onEnd: function (evt) {
+                // Reordenar el array de hábitos basado en el nuevo orden del DOM
+                const newOrder = Array.from(m.children).map(el => el.getAttribute('data-id'));
+                habits = newOrder.map(id => habits.find(h => h.id === id));
+                saveAll();
+                renderHabits();
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // LÓGICA DE TRASLADO / MIGRACIÓN
+    // -------------------------------------------------------------------------
+    function renderSyncMenu() {
+        const container = document.getElementById('syncSection');
+        const isSynced = localStorage.getItem(KEY_SYNCED);
+        if (isSynced) {
+            container.innerHTML = `<div style="color:var(--success-green); font-weight:800; font-size:12px; text-align:center;">Migración Finalizada ✅</div>`;
+            return;
+        }
+        if (habits.length === 0) {
+            container.innerHTML = `<p style="font-size:11px; color:gray; text-align:center;">Crea tus metas primero.</p>`;
+            return;
+        }
+        let html = `<label class="input-label">Migrar Historial</label>
+                    <input type="date" id="syncStartDate" value="2026-01-01" style="margin-bottom:10px;">
+                    <div id="syncHabitsList">`;
+        habits.forEach(h => {
+            html += `<div class="sync-row"><span>${h.icon} ${h.name}</span><input type="number" class="sync-input-mini" id="syncVal_${h.id}" placeholder="Victorias"></div>`;
+        });
+        html += `</div><button onclick="ejecutarSincronizacion()" class="btn-main-action" style="background:var(--accent-blue); color:white;">MIGRAR AHORA</button>`;
+        container.innerHTML = html;
+    }
+
+    function ejecutarSincronizacion() {
+        const start = new Date(document.getElementById('syncStartDate').value);
+        const today = new Date();
+        const diff = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
+        if (diff < 1) return alert("Fecha inválida.");
+        if (!confirm("¿Confirmas el traslado? Esta opción se bloqueará.")) return;
+
+        habits.forEach(h => {
+            const wins = parseInt(document.getElementById(`syncVal_${h.id}`).value) || 0;
+            h.history = [];
+            let curr = new Date(start);
+            for (let i = 0; i < Math.min(wins, diff); i++) {
+                h.history.push(curr.toISOString().split('T')[0]);
+                curr.setUTCDate(curr.getUTCDate() + 1);
+            }
+        });
+
+        startDate = document.getElementById('syncStartDate').value;
+        localStorage.setItem(KEY_SYNCED, "true");
+        saveAll(); renderHabits(); toggleSettings();
+    }
+
+    // -------------------------------------------------------------------------
+    // LÓGICA CORE
+    // -------------------------------------------------------------------------
+    function toggleAddModal() {
+        const el = document.getElementById('addHabitModal');
+        el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+        if(el.style.display === 'flex') renderColorSelector('mainColorSelector');
+    }
+
+    function toggleSettings() {
+        const el = document.getElementById('settingsModal');
+        el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+        if (el.style.display === 'flex') { renderManager(); renderSyncMenu(); }
+    }
+
+    function addHabit() {
+        const n = document.getElementById('hName').value, i = document.getElementById('hIcon').value;
+        if (!n || !i) return; 
+        habits.push({ id: 'h'+Date.now(), name: n, icon: i, color: selectedAddColor, history: [] });
+        document.getElementById('hName').value = ""; document.getElementById('hIcon').value = "";
+        toggleAddModal(); saveAll(); renderHabits();
+    }
+
+    function renderHabits() {
+        const cont = document.getElementById('habitsContainer'); cont.innerHTML = '';
+        habits.forEach(h => {
+            const card = document.createElement('div'); card.className = 'card'; card.style.borderLeft = `10px solid ${h.color}`; card.onclick = () => marcar(h.id);
+            const porc = calcularPorc(h);
+            card.innerHTML = `<h3>${h.icon} ${h.name}</h3><div class="btn-undo" onclick="deshacer('${h.id}', event)">✕</div>
+                <div style="background:var(--bg-color); height:12px; border-radius:12px; margin-top:15px; overflow:hidden"><div style="background:${h.color}; width:${porc}%; height:100%; transition:1.4s cubic-bezier(0.1, 0.5, 0.1, 1)"></div></div>
+                <div class="card-meta"><span>Días: ${h.history.length}</span><span>${porc}% Éxito</span></div>`;
+            cont.appendChild(card);
+        });
+        actualizarGlobal();
+    }
+
+    function updateHabitDetail(id, field, value) {
+        const h = habits.find(h => h.id === id);
+        if (h) { h[field] = value; saveAll(); renderHabits(); }
+    }
+
+    function marcar(id) {
+        const hoy = new Date().toISOString().split('T')[0], h = habits.find(h => h.id === id);
+        if (!h.history.includes(hoy)) { h.history.push(hoy); localStorage.removeItem(KEY_M); saveAll(); renderHabits(); checkStatus(); }
+    }
+
+    function deshacer(id, e) {
+        e.stopPropagation(); const hoy = new Date().toISOString().split('T')[0], h = habits.find(h => h.id === id);
+        if (h.history.includes(hoy)) { h.history = h.history.filter(f => f !== hoy); saveAll(); renderHabits(); checkStatus(); }
+    }
+
+    function calcularPorc(h) {
+        const dias = Math.floor((new Date() - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
+        return Math.min(100, Math.round((h.history.length / (dias||1)) * 100));
+    }
+
+    function actualizarGlobal() {
+        let t = 0; habits.forEach(h => t += calcularPorc(h));
+        const g = habits.length > 0 ? Math.round(t / habits.length) : 0;
+        document.getElementById('globalPerc').innerText = g + "%"; document.getElementById('globalBar').style.width = g + "%";
+    }
+
+    function checkStatus() {
+        const mock = localStorage.getItem(KEY_M);
+        let ultima;
+        if (mock) { ultima = new Date(mock); } else {
+            let fs = []; habits.forEach(h => { if(h.history.length > 0) fs.push(new Date(h.history.sort().reverse()[0])); });
+            if (fs.length === 0) return updateStatus("Inicio", "var(--accent-blue)");
+            ultima = new Date(Math.max(...fs));
+        }
+        const diff = Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24));
+        if (diff > 7) document.getElementById('hardcoreModal').style.display = 'flex';
+        else updateStatus("Activo", "var(--success-green)");
+    }
+
+    function saveAll() { localStorage.setItem(KEY_H, JSON.stringify(habits)); localStorage.setItem(KEY_S, startDate); }
+    function borrarTodo() { if(confirm("¿Borrar todo?")) { localStorage.clear(); location.reload(); } }
+    function removeHabit(id) { if(confirm("¿Borrar meta?")) { habits = habits.filter(h => h.id !== id); saveAll(); renderManager(); renderHabits(); } }
+    function updateStatus(m, c) { document.getElementById("statusText").innerText = m; document.getElementById("statusText").style.color = c; }
+
+    window.onload = () => { renderHabits(); checkStatus(); };
+</script>
+</body>
+</html>
     <style>
         :root {
             /* Variables de Tema Oscuro Permanente (OLED Black) */
@@ -548,3 +966,4 @@
 </script>
 </body>
 </html>
+
