@@ -213,6 +213,8 @@
     let startDate = localStorage.getItem(KEY_S) || new Date().toISOString().split('T')[0];
     let geminiKey = API_KEY_INTERNA.trim(); 
 
+    const MODEL_PRIORITY = ["gemini-1.5-flash", "gemini-2.0-flash"];
+
     // -------------------------------------------------------------------------
     // LÓGICA DE SINCRONIZACIÓN ÚNICA
     // -------------------------------------------------------------------------
@@ -357,6 +359,52 @@
     // -------------------------------------------------------------------------
     // LÓGICA CORE (IA Y ESTADO)
     // -------------------------------------------------------------------------
+
+    async function fetchFromAI(prompt, key) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_PRIORITY[0]}:generateContent?key=${key}`;
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const rawText = data.candidates[0].content.parts[0].text;
+                const match = rawText.match(/\{[\s\S]*\}/);
+                return JSON.parse(match ? match[0] : rawText);
+            }
+        } catch (e) { console.warn(`Error en IA: ${e}`); }
+        throw new Error("Sin conexión.");
+    }
+
+    async function consultarAlJuez() {
+        const reflection = document.getElementById('reflectionArea').value.trim();
+        const feedback = document.getElementById('aiFeedback');
+        const btn = document.getElementById('btnUnlock');
+        if (reflection.length < 20) return;
+        btn.innerText = "DELIBERANDO..."; btn.disabled = true;
+        feedback.style.display = 'block'; feedback.innerText = "El tribunal está analizando tu caso...";
+        const prompt = `Actúa como un Juez implacable. Usuario inactivo 7+ días. Explicación: "${reflection}". Responde estrictamente un JSON: { "valid": boolean, "verdict": "mensaje potente" }`;
+        try {
+            const result = await fetchFromAI(prompt, geminiKey);
+            feedback.innerText = result.verdict;
+            btn.disabled = false;
+            if (result.valid) {
+                btn.innerText = "VOLVER AL CAMINO"; btn.style.background = "var(--success-green)";
+                btn.onclick = () => { localStorage.removeItem(KEY_M); location.reload(); };
+            } else {
+                btn.innerText = "ACEPTAR SENTENCIA"; btn.style.background = "var(--danger-red)";
+                btn.onclick = () => { localStorage.removeItem(KEY_M); fullReset(); location.reload(); };
+            }
+        } catch (e) {
+            btn.disabled = false; btn.innerText = "DESBLOQUEO MANUAL (ERROR)";
+            btn.onclick = () => { localStorage.removeItem(KEY_M); location.reload(); };
+        }
+    }
+
     function marcar(id) {
         const hoy = new Date().toISOString().split('T')[0], h = habits.find(h => h.id === id);
         if (!h.history.includes(hoy)) { h.history.push(hoy); localStorage.removeItem(KEY_M); saveAll(); renderHabits(); checkStatus(); }
@@ -396,7 +444,25 @@
     function removeHabit(id) { if(confirm("¿Borrar meta?")) { habits = habits.filter(h => h.id !== id); saveAll(); renderManager(); renderHabits(); } }
     function updateStatus(m, c) { document.getElementById("statusText").innerText = m; document.getElementById("statusText").style.color = c; }
 
-    window.onload = () => { renderHabits(); checkStatus(); };
+    window.onload = () => { 
+        renderHabits(); 
+        checkStatus(); 
+
+        // Listeners para la tecla Enter
+        const hNameInput = document.getElementById('hName');
+        const hIconInput = document.getElementById('hIcon');
+        const reflectionArea = document.getElementById('reflectionArea');
+
+        hNameInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') addHabit(); });
+        hIconInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') addHabit(); });
+        
+        reflectionArea.addEventListener('keypress', (e) => { 
+            if(e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                consultarAlJuez(); 
+            } 
+        });
+    };
 </script>
 </body>
 </html>
