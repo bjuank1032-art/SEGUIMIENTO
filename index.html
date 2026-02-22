@@ -102,14 +102,33 @@
         }
         input:focus { border-color: var(--accent-blue); }
 
+        /* SELECTOR DE COLOR CUSTOM */
+        .color-selector {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            gap: 8px;
+        }
+        .color-swatch {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+            flex-shrink: 0;
+        }
+        .color-swatch:active { transform: scale(0.85); }
+        .color-swatch.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+
         /* MANAGER ITEM */
         .manager-item {
             background: var(--bg-color); padding: 20px; border-radius: 24px; margin-bottom: 12px; border: 1px solid var(--border-color);
         }
         .manager-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .manager-edit-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+        .manager-edit-grid { display: flex; flex-direction: column; gap: 15px; }
         
-        .mini-input { padding: 10px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 13px; width: 100%; }
+        .mini-input { padding: 12px; border-radius: 14px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 14px; width: 100%; }
 
         /* MODAL DEL JUEZ */
         #hardcoreModal {
@@ -150,14 +169,15 @@
             <input type="text" id="hName" placeholder="Ej: Lectura Profunda">
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-            <div class="input-group" style="margin-bottom: 0;">
-                <label class="input-label">Emoji / Icono</label>
-                <input type="text" id="hIcon" placeholder="📚">
-            </div>
-            <div class="input-group" style="margin-bottom: 0;">
-                <label class="input-label">Color Visual</label>
-                <input type="color" id="hColor" value="#007aff" style="height: 54px; padding: 5px; background: none; cursor: pointer; border-radius: 18px; border: 1px solid var(--border-color); width: 100%;">
+        <div class="input-group">
+            <label class="input-label">Emoji / Icono</label>
+            <input type="text" id="hIcon" placeholder="📚">
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">Color de Enfoque</label>
+            <div class="color-selector" id="mainColorSelector">
+                <!-- Se generan via JS -->
             </div>
         </div>
 
@@ -227,10 +247,14 @@
     const KEY_M = 'res_v92_mock';
     const KEY_T = 'res_v92_theme';
 
+    // Paleta de colores Premium (Apple Style)
+    const PRESET_COLORS = ["#007aff", "#34c759", "#ff3b30", "#ff9500", "#af52de", "#ff2d55", "#5856d6"];
+    let selectedAddColor = PRESET_COLORS[0];
+
     let habits = JSON.parse(localStorage.getItem(KEY_H)) || [];
     let startDate = localStorage.getItem(KEY_S) || new Date().toISOString().split('T')[0];
     let pastExcuses = JSON.parse(localStorage.getItem(KEY_E)) || [];
-    let geminiKey = API_KEY_INTERNA.trim(); // IA siempre activa en segundo plano
+    let geminiKey = API_KEY_INTERNA.trim(); 
 
     const MODEL_PRIORITY = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.0-flash"];
 
@@ -295,10 +319,42 @@
     // 3. FUNCIONES DE SISTEMA
     // =========================================================================
 
+    function renderColorSelector(containerId, isManager = false, habitId = null) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = "";
+        PRESET_COLORS.forEach(color => {
+            const swatch = document.createElement("div");
+            swatch.className = "color-swatch";
+            swatch.style.backgroundColor = color;
+            
+            // Si es manager, marcar el color actual del habito
+            if (isManager && habitId) {
+                const h = habits.find(x => x.id === habitId);
+                if (h && h.color === color) swatch.classList.add("active");
+            } else if (!isManager && selectedAddColor === color) {
+                swatch.classList.add("active");
+            }
+
+            swatch.onclick = () => {
+                if (isManager) {
+                    updateHabitDetail(habitId, 'color', color);
+                    renderManager(); // Refrescar para ver el check
+                } else {
+                    selectedAddColor = color;
+                    renderColorSelector(containerId);
+                }
+            };
+            container.appendChild(swatch);
+        });
+    }
+
     function toggleAddModal() {
         const el = document.getElementById('addHabitModal');
         el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
-        if(el.style.display === 'flex') document.getElementById('startDateInput').value = startDate;
+        if(el.style.display === 'flex') {
+            document.getElementById('startDateInput').value = startDate;
+            renderColorSelector('mainColorSelector');
+        }
     }
 
     function toggleSettings() {
@@ -308,15 +364,14 @@
     }
 
     function addHabit() {
-        const n = document.getElementById('hName').value, i = document.getElementById('hIcon').value, c = document.getElementById('hColor').value;
+        const n = document.getElementById('hName').value, i = document.getElementById('hIcon').value;
         const d = document.getElementById('startDateInput').value;
         
         if (!n || !i) return; 
         
-        habits.push({ id: 'h'+Date.now(), name: n, icon: i, color: c, history: [] });
-        startDate = d; // Actualizar fecha si se cambió en este menú
+        habits.push({ id: 'h'+Date.now(), name: n, icon: i, color: selectedAddColor, history: [] });
+        startDate = d; 
         
-        // Limpiar y cerrar
         document.getElementById('hName').value = ""; document.getElementById('hIcon').value = "";
         toggleAddModal();
         saveAll(); 
@@ -338,8 +393,9 @@
 
     function renderManager() {
         const m = document.getElementById('managerList'); 
-        m.innerHTML = '<h3 style="font-size:12px; margin-bottom:15px; color:gray; font-weight:800; text-transform:uppercase; letter-spacing:1px;">Gestionar Estética:</h3>';
+        m.innerHTML = '<h3 style="font-size:12px; margin-bottom:15px; color:gray; font-weight:800; text-transform:uppercase; letter-spacing:1px;">Gestionar Metas:</h3>';
         habits.forEach((h) => { 
+            const habitSelectorId = `color-sel-${h.id}`;
             m.innerHTML += `
                 <div class="manager-item">
                     <div class="manager-row">
@@ -348,9 +404,11 @@
                     </div>
                     <div class="manager-edit-grid">
                         <input type="text" class="mini-input" value="${h.icon}" onchange="updateHabitDetail('${h.id}', 'icon', this.value)" placeholder="Icono">
-                        <input type="color" class="mini-input" value="${h.color}" onchange="updateHabitDetail('${h.id}', 'color', this.value)" style="height:38px; padding:2px;">
+                        <div class="color-selector" id="${habitSelectorId}"></div>
                     </div>
                 </div>`; 
+            // Esperar a que el HTML se inserte para renderizar sus colores
+            setTimeout(() => renderColorSelector(habitSelectorId, true, h.id), 0);
         });
     }
 
