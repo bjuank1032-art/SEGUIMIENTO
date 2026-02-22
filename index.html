@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Seguimiento Pro AI - v9.5 (Hardcore Edition)</title>
+    <title>Seguimiento Pro AI - v9.6 (Migration Edition)</title>
     <!-- Configuración para App iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -94,8 +94,8 @@
         .input-wrapper { position: relative; display: flex; align-items: center; }
         .input-icon { position: absolute; right: 16px; pointer-events: none; color: var(--text-secondary); font-size: 18px; }
 
-        input[type="text"], input[type="date"] {
-            width: 100%; padding: 16px; padding-right: 45px; border-radius: 18px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 16px; outline: none; transition: 0.2s;
+        input[type="text"], input[type="date"], input[type="number"] {
+            width: 100%; padding: 16px; padding-right: 16px; border-radius: 18px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 16px; outline: none; transition: 0.2s;
         }
 
         /* SELECTOR DE COLOR */
@@ -104,9 +104,11 @@
         .color-swatch.active { border-color: white; transform: scale(1.1); }
         .color-swatch.plus-trigger { background: #2c2c2e; border: 1px dashed var(--text-secondary); color: var(--text-secondary); font-size: 18px; font-weight: bold; }
 
-        /* SYNC SECTION */
-        .sync-box { background: rgba(52, 199, 89, 0.05); padding: 25px; border-radius: 28px; margin-bottom: 25px; border: 1px solid rgba(52,199,89,0.2); text-align: center; }
-        .btn-sync-locked { color: var(--success-green); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        /* SYNC SECTION (Migration Wizard) */
+        .sync-box { background: rgba(0, 122, 255, 0.05); padding: 25px; border-radius: 28px; margin-bottom: 25px; border: 1px solid rgba(0, 122, 255, 0.2); }
+        .sync-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .sync-input-mini { width: 80px !important; padding: 10px !important; text-align: center; }
+        .btn-sync-locked { color: var(--success-green); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; text-align: center; width: 100%; }
 
         footer { text-align: center; font-size: 11px; color: var(--text-secondary); margin-top: 50px; opacity: 0.5; font-weight: 700; padding-bottom: 50px; }
     </style>
@@ -155,9 +157,9 @@
     <section class="modal-panel" onclick="event.stopPropagation()">
         <div class="modal-title">Ajustes <span style="font-size: 14px; color: var(--text-secondary); cursor: pointer;" onclick="toggleSettings()">Cerrar</span></div>
         
-        <!-- SECCIÓN DE SINCRONIZACIÓN ÚNICA -->
+        <!-- SECCIÓN DE TRASLADO / SINCRONIZACIÓN -->
         <div id="syncSection" class="sync-box">
-            <!-- Contenido dinámico via JS -->
+            <!-- Dinámico -->
         </div>
 
         <div id="managerList"></div>
@@ -194,16 +196,16 @@
     </div>
 
     <main id="habitsContainer"></main>
-    <footer>v9.5 • Premium Black Edition</footer>
+    <footer>v9.6 • Premium Migration Edition</footer>
 </div>
 
 <script>
     const API_KEY_INTERNA = "AIzaSyBcEYRrKA_dIp7iTMiztuAnqujvqa6-9EI"; 
-    const APP_VER = "9.5";
-    const KEY_H = 'res_v95_habits';
-    const KEY_S = 'res_v95_start';
-    const KEY_M = 'res_v95_mock';
-    const KEY_SYNCED = 'res_v95_is_synced';
+    const APP_VER = "9.6";
+    const KEY_H = 'res_v96_habits';
+    const KEY_S = 'res_v96_start';
+    const KEY_M = 'res_v96_mock';
+    const KEY_SYNCED = 'res_v96_is_synced';
 
     const PRESET_COLORS = ["#007aff", "#34c759", "#ff3b30", "#ff9500", "#af52de", "#ff2d55"];
     let selectedAddColor = PRESET_COLORS[0];
@@ -216,45 +218,95 @@
     const MODEL_PRIORITY = ["gemini-1.5-flash", "gemini-2.0-flash"];
 
     // -------------------------------------------------------------------------
-    // LÓGICA DE SINCRONIZACIÓN ÚNICA
+    // LÓGICA DE TRASLADO (Sincronización Inteligente)
     // -------------------------------------------------------------------------
     function renderSyncMenu() {
         const container = document.getElementById('syncSection');
         const isSynced = localStorage.getItem(KEY_SYNCED);
 
         if (isSynced) {
-            container.innerHTML = `<div class="btn-sync-locked">Sincronización Finalizada ✅</div>
-                                   <p style="font-size:11px; color:gray; margin-top:8px;">Historial bloqueado para garantizar transparencia.</p>`;
+            container.innerHTML = `<div class="btn-sync-locked">Traslado Finalizado ✅</div>
+                                   <p style="font-size:11px; color:var(--accent-blue); margin-top:8px; text-align:center;">Tus datos históricos están sellados.</p>`;
+        } else if (habits.length === 0) {
+            container.innerHTML = `<p style="font-size:12px; color:gray; text-align:center;">Crea tus metas primero para poder sincronizarlas.</p>`;
         } else {
-            container.innerHTML = `<label class="input-label">Sincronización de Inicio</label>
-                                   <p style="font-size:12px; color:var(--text-secondary); margin-bottom:15px;">Esto marcará todas tus metas como cumplidas desde el 1 de Enero hasta hoy.</p>
-                                   <button onclick="ejecutarSincronizacion()" class="btn-main-action" style="background:var(--success-green); color:white; margin:0">SINCRONIZAR AHORA</button>
-                                   <p style="font-size:10px; color:var(--danger-red); margin-top:10px; font-weight:800;">ESTA ACCIÓN ES ÚNICA E IRREVERSIBLE.</p>`;
+            let html = `
+                <label class="input-label">Traslado de Historial</label>
+                <div class="input-group">
+                    <label style="font-size:9px; color:gray; display:block; margin-bottom:5px;">FECHA DE INICIO DE MIGRACIÓN</label>
+                    <input type="date" id="syncStartDate" value="2026-01-01" onchange="updateSyncDaysLabel()">
+                </div>
+                <p id="syncDaysLabel" style="font-size:11px; color:var(--text-secondary); margin-bottom:15px;"></p>
+                <div id="syncHabitsList">`;
+            
+            habits.forEach(h => {
+                html += `
+                    <div class="sync-row">
+                        <span style="font-size:13px;">${h.icon} ${h.name}</span>
+                        <input type="number" class="sync-input-mini" id="syncVal_${h.id}" placeholder="0" min="0">
+                    </div>`;
+            });
+
+            html += `</div>
+                <button onclick="ejecutarSincronizacion()" class="btn-main-action" style="background:var(--accent-blue); color:white; margin:15px 0 0 0">CONFIRMAR TRASLADO</button>
+                <p style="font-size:10px; color:var(--warning-orange); margin-top:10px; text-align:center;">Esta acción es única y solo puede hacerse una vez.</p>`;
+            
+            container.innerHTML = html;
+            updateSyncDaysLabel();
         }
     }
 
-    function ejecutarSincronizacion() {
-        if (!confirm("¿Confirmas que has cumplido tus metas desde el 1 de Enero? Esta opción desaparecerá después.")) return;
-
-        const start = new Date("2026-01-01T12:00:00Z");
+    function updateSyncDaysLabel() {
+        const dateInput = document.getElementById('syncStartDate');
+        if (!dateInput) return;
+        const start = new Date(dateInput.value);
         const today = new Date();
-        today.setHours(12, 0, 0, 0);
+        const diff = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
+        document.getElementById('syncDaysLabel').innerText = `Rango detectado: ${diff} días totales.`;
+    }
 
+    function ejecutarSincronizacion() {
+        const dateInput = document.getElementById('syncStartDate');
+        const migrationStart = new Date(dateInput.value);
+        const today = new Date();
+        const totalDaysInRange = Math.floor((today - migrationStart) / (1000 * 60 * 60 * 24)) + 1;
+
+        if (totalDaysInRange < 1) {
+            alert("La fecha de inicio debe ser anterior a hoy.");
+            return;
+        }
+
+        if (!confirm(`¿Confirmas el traslado desde el ${dateInput.value}? Esta opción desaparecerá al terminar.`)) return;
+
+        let error = false;
         habits.forEach(h => {
-            let current = new Date(start);
-            while (current <= today) {
-                const dateStr = current.toISOString().split('T')[0];
-                if (!h.history.includes(dateStr)) h.history.push(dateStr);
-                current.setUTCDate(current.getUTCDate() + 1);
+            const valInput = document.getElementById(`syncVal_${h.id}`);
+            const wins = parseInt(valInput.value) || 0;
+
+            if (wins > totalDaysInRange) {
+                alert(`Error: No puedes tener más victorias (${wins}) que días totales (${totalDaysInRange}) en el hábito ${h.name}.`);
+                error = true;
+            } else {
+                // Generar fechas de victorias
+                h.history = [];
+                let current = new Date(migrationStart);
+                for (let i = 0; i < wins; i++) {
+                    const dateStr = current.toISOString().split('T')[0];
+                    h.history.push(dateStr);
+                    current.setUTCDate(current.getUTCDate() + 1);
+                }
             }
         });
 
-        startDate = "2026-01-01";
+        if (error) return;
+
+        startDate = dateInput.value;
         localStorage.setItem(KEY_SYNCED, "true");
         saveAll();
         renderHabits();
         renderSyncMenu();
-        alert("Sincronización completada. El historial ha sido sellado.");
+        alert("Traslado exitoso. El sistema ha registrado tus victorias y fallos históricos.");
+        toggleSettings();
     }
 
     // -------------------------------------------------------------------------
@@ -325,7 +377,7 @@
             const porc = calcularPorc(h);
             card.innerHTML = `<h3>${h.icon} ${h.name}</h3><div class="btn-undo" onclick="deshacer('${h.id}', event)">✕</div>
                 <div style="background:var(--bg-color); height:12px; border-radius:12px; margin-top:15px; overflow:hidden"><div style="background:${h.color}; width:${porc}%; height:100%; transition:1.4s cubic-bezier(0.1, 0.5, 0.1, 1)"></div></div>
-                <div class="card-meta"><span>Victorias: ${h.history.length}</span><span>${porc}% Éxito</span></div>`;
+                <div class="card-meta"><span>Días: ${h.history.length}</span><span>${porc}% Éxito</span></div>`;
             cont.appendChild(card);
         });
         actualizarGlobal();
