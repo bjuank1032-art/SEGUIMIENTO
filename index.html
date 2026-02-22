@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Seguimiento Pro AI - v9.3 (Final Edition)</title>
+    <title>Seguimiento Pro AI - v9.5 (Hardcore Edition)</title>
     <!-- Configuración para App iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -11,12 +11,12 @@
 
     <style>
         :root {
-            /* Variables de Tema Oscuro Permanente */
+            /* Variables de Tema Oscuro Permanente (OLED Black) */
             --bg-color: #000000;
             --card-bg: #1c1c1e;
             --text-main: #ffffff;
             --text-secondary: #8e8e93;
-            --border-color: #38383a;
+            --border-color: #2c2c2e;
             --success-green: #34c759;
             --danger-red: #ff3b30;
             --accent-blue: #007aff;
@@ -25,11 +25,10 @@
             --juez-accent: #ff3b30;
         }
 
-        /* INTEGRACIÓN DE SCROLLBAR */
-        ::-webkit-scrollbar { width: 6px; }
+        /* SCROLLBAR INTEGRADO */
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #38383a; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #48484a; }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         
@@ -47,7 +46,7 @@
 
         /* ZONA DE AGREGAR METAS (Botonera Central) */
         .add-meta-trigger {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.02);
             border: 2px dashed var(--border-color);
             border-radius: 35px;
             padding: 30px;
@@ -60,8 +59,8 @@
             align-items: center;
             gap: 12px;
         }
-        .add-meta-trigger:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.06); border-color: var(--text-secondary); }
-        .add-meta-trigger .plus-icon { font-size: 32px; font-weight: 300; color: var(--text-secondary); }
+        .add-meta-trigger:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.05); }
+        .add-meta-trigger .plus-icon { font-size: 32px; font-weight: 200; color: var(--text-secondary); }
         .add-meta-trigger span { font-size: 14px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1.5px; }
 
         /* PANEL GLOBAL */
@@ -80,15 +79,15 @@
         .btn-undo { position: absolute; top: 22px; right: 22px; width: 36px; height: 36px; background: var(--bg-color); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text-secondary); transition: 0.2s; border: 1px solid var(--border-color); }
 
         /* MODALES */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
         .modal-panel { background: var(--card-bg); padding: 35px; border-radius: 40px; width: 100%; max-width: 410px; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: var(--text-main); }
         
         .modal-title { font-size: 26px; margin-bottom: 25px; letter-spacing: -1.2px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
         
         .btn-main-action { background: var(--text-main); color: var(--card-bg); border: none; padding: 18px; border-radius: 20px; width: 100%; font-weight: 800; margin-top: 15px; cursor: pointer; font-size: 16px; transition: 0.2s; }
-        .btn-main-action:active { transform: scale(0.98); opacity: 0.9; }
+        .btn-main-action:active { transform: scale(0.98); }
 
-        /* INPUTS & WRAPPERS */
+        /* INPUTS */
         .input-group { margin-bottom: 20px; }
         .input-label { font-size: 10px; font-weight: 900; color: var(--text-secondary); display: block; margin-bottom: 10px; letter-spacing: 1px; text-transform: uppercase; }
         
@@ -98,31 +97,16 @@
         input[type="text"], input[type="date"] {
             width: 100%; padding: 16px; padding-right: 45px; border-radius: 18px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 16px; outline: none; transition: 0.2s;
         }
-        input:focus { border-color: var(--accent-blue); }
 
-        /* SELECTOR DE COLOR CUSTOM - CENTRADO */
-        .color-selector { 
-            display: flex; 
-            justify-content: center; 
-            padding: 10px 0; 
-            gap: 12px; 
-            flex-wrap: wrap; 
-        }
-        .color-swatch {
-            width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold;
-        }
+        /* SELECTOR DE COLOR */
+        .color-selector { display: flex; justify-content: center; padding: 10px 0; gap: 12px; flex-wrap: wrap; }
+        .color-swatch { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
         .color-swatch.active { border-color: white; transform: scale(1.1); }
-        .color-swatch.plus-trigger { background: #2c2c2e; border: 1px dashed var(--text-secondary); color: var(--text-secondary); }
+        .color-swatch.plus-trigger { background: #2c2c2e; border: 1px dashed var(--text-secondary); color: var(--text-secondary); font-size: 18px; font-weight: bold; }
 
-        /* MANAGER ITEM */
-        .manager-item { background: var(--bg-color); padding: 20px; border-radius: 24px; margin-bottom: 12px; border: 1px solid var(--border-color); }
-        .manager-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        
-        .mini-input { padding: 12px; border-radius: 14px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 14px; width: 100%; }
-
-        .lab-box { background: rgba(255, 59, 48, 0.05); padding: 25px; border-radius: 28px; margin-top: 30px; border: 1px solid rgba(255,59,48,0.2); }
-        .btn-danger { background: none; color: var(--danger-red); border: 1px solid var(--danger-red); padding: 14px; border-radius: 16px; font-weight: 800; width: 100%; margin-top: 10px; font-size: 11px; text-transform: uppercase; cursor: pointer; }
+        /* SYNC SECTION */
+        .sync-box { background: rgba(52, 199, 89, 0.05); padding: 25px; border-radius: 28px; margin-bottom: 25px; border: 1px solid rgba(52,199,89,0.2); text-align: center; }
+        .btn-sync-locked { color: var(--success-green); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
 
         footer { text-align: center; font-size: 11px; color: var(--text-secondary); margin-top: 50px; opacity: 0.5; font-weight: 700; padding-bottom: 50px; }
     </style>
@@ -130,11 +114,11 @@
 <body>
 
 <!-- MODAL JUEZ -->
-<div id="hardcoreModal" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.9);">
+<div id="hardcoreModal" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.95);">
     <div class="modal-panel" style="background: #1c1c1e; border-color: rgba(255,255,255,0.1); text-align: center;">
         <h2 style="font-size: 11px; color: var(--danger-red); letter-spacing: 5px; margin-bottom: 10px;">JURISPRUDENCIA</h2>
         <h1 style="color: white; margin-bottom: 15px;">Acceso Suspendido</h1>
-        <p style="color: #8e8e93; margin-bottom: 25px;">Has fallado al compromiso de 7 días. El tribunal exige una declaración de honestidad.</p>
+        <p style="color: #8e8e93; margin-bottom: 25px;">Inactividad crítica (+7 días). El tribunal exige una declaración de honestidad.</p>
         <textarea id="reflectionArea" placeholder="Presenta tu defensa..." style="width: 100%; background: #2c2c2e; border: 1px solid #3a3a3c; border-radius: 20px; padding: 20px; color: white; margin-bottom: 20px; outline: none;" rows="4"></textarea>
         <div id="aiFeedback" style="display: none; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 15px; color: #a2a2a7; font-size: 14px; margin-bottom: 20px; font-style: italic;"></div>
         <button class="btn-main-action" style="background: white; color: black;" id="btnUnlock" onclick="consultarAlJuez()">PRESENTAR AUDIENCIA</button>
@@ -148,27 +132,18 @@
         
         <div class="input-group">
             <label class="input-label">Nombre de la meta</label>
-            <input type="text" id="hName" placeholder="Ej: Lectura Profunda">
+            <input type="text" id="hName" placeholder="Ej: Ejercicio Diario">
         </div>
 
         <div class="input-group">
             <label class="input-label">Emoji / Icono</label>
-            <input type="text" id="hIcon" placeholder="📚">
+            <input type="text" id="hIcon" placeholder="🔥">
         </div>
 
         <div class="input-group">
             <label class="input-label">Color de Enfoque</label>
             <div class="color-selector" id="mainColorSelector"></div>
-            <!-- Hidden real input for the custom color -->
             <input type="color" id="customColorInput" style="display: none;" onchange="handleCustomColorSelection(this.value)">
-        </div>
-
-        <div class="input-group">
-            <label class="input-label">Fecha de Inicio del Reto</label>
-            <div class="input-wrapper">
-                <input type="date" id="startDateInput">
-                <span class="input-icon">📅</span>
-            </div>
         </div>
 
         <button class="btn-main-action" onclick="addHabit()">AÑADIR AHORA</button>
@@ -178,22 +153,28 @@
 <!-- MODAL AJUSTES -->
 <div id="settingsModal" class="modal-overlay" onclick="toggleSettings()">
     <section class="modal-panel" onclick="event.stopPropagation()">
-        <div class="modal-title">Gestionar Metas <span style="font-size: 14px; color: var(--text-secondary); cursor: pointer;" onclick="toggleSettings()">Cerrar</span></div>
+        <div class="modal-title">Ajustes <span style="font-size: 14px; color: var(--text-secondary); cursor: pointer;" onclick="toggleSettings()">Cerrar</span></div>
         
-        <div id="managerList"></div>
-
-        <div class="lab-box">
-            <strong style="color: var(--danger-red); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;">Zona Crítica</strong>
-            <button class="btn-danger" onclick="borrarTodo()">Resetear Memoria Completa</button>
+        <!-- SECCIÓN DE SINCRONIZACIÓN ÚNICA -->
+        <div id="syncSection" class="sync-box">
+            <!-- Contenido dinámico via JS -->
         </div>
 
-        <button class="btn-main-action" onclick="saveSettings()">GUARDAR CAMBIOS</button>
+        <div id="managerList"></div>
+
+        <div style="background: rgba(255, 59, 48, 0.05); padding: 25px; border-radius: 28px; margin-top: 30px; border: 1px solid rgba(255,59,48,0.2); text-align: center;">
+            <strong style="color: var(--danger-red); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;">Zona de Peligro</strong>
+            <button onclick="borrarTodo()" style="background:none; color:var(--danger-red); border:1px solid var(--danger-red); padding:14px; border-radius:16px; font-weight:800; width:100%; margin-top:10px; font-size:11px; cursor:pointer;">Reiniciar Memoria</button>
+        </div>
+
+        <button class="btn-main-action" onclick="toggleSettings()">CERRAR PANEL</button>
     </section>
 </div>
 
+<!-- CONTAINER APP -->
 <div class="app-container">
     <header>
-        <div><h1>Seguimiento</h1><p id="statusText">Día 1: Empieza hoy.</p></div>
+        <div><h1>Seguimiento</h1><p id="statusText">Consistencia Activa</p></div>
         <div class="header-btns">
             <button class="btn-circle" onclick="toggleSettings()">⚙️</button>
         </div>
@@ -213,18 +194,17 @@
     </div>
 
     <main id="habitsContainer"></main>
-    <footer>v9.3 • Premium Black Edition</footer>
+    <footer>v9.5 • Premium Black Edition</footer>
 </div>
 
 <script>
-    const API_KEY_INTERNA = ""; // Clave gestionada por el entorno
-    const APP_VER = "9.3";
-    const KEY_H = 'res_v93_habits';
-    const KEY_S = 'res_v93_start';
-    const KEY_E = 'res_v93_excuses';
-    const KEY_M = 'res_v93_mock';
+    const API_KEY_INTERNA = "AIzaSyBcEYRrKA_dIp7iTMiztuAnqujvqa6-9EI"; 
+    const APP_VER = "9.5";
+    const KEY_H = 'res_v95_habits';
+    const KEY_S = 'res_v95_start';
+    const KEY_M = 'res_v95_mock';
+    const KEY_SYNCED = 'res_v95_is_synced';
 
-    // Paleta de colores Premium
     const PRESET_COLORS = ["#007aff", "#34c759", "#ff3b30", "#ff9500", "#af52de", "#ff2d55"];
     let selectedAddColor = PRESET_COLORS[0];
     let isCustomMode = false;
@@ -233,142 +213,103 @@
     let startDate = localStorage.getItem(KEY_S) || new Date().toISOString().split('T')[0];
     let geminiKey = API_KEY_INTERNA.trim(); 
 
-    const MODEL_PRIORITY = ["gemini-1.5-flash", "gemini-2.0-flash"];
+    // -------------------------------------------------------------------------
+    // LÓGICA DE SINCRONIZACIÓN ÚNICA
+    // -------------------------------------------------------------------------
+    function renderSyncMenu() {
+        const container = document.getElementById('syncSection');
+        const isSynced = localStorage.getItem(KEY_SYNCED);
+
+        if (isSynced) {
+            container.innerHTML = `<div class="btn-sync-locked">Sincronización Finalizada ✅</div>
+                                   <p style="font-size:11px; color:gray; margin-top:8px;">Historial bloqueado para garantizar transparencia.</p>`;
+        } else {
+            container.innerHTML = `<label class="input-label">Sincronización de Inicio</label>
+                                   <p style="font-size:12px; color:var(--text-secondary); margin-bottom:15px;">Esto marcará todas tus metas como cumplidas desde el 1 de Enero hasta hoy.</p>
+                                   <button onclick="ejecutarSincronizacion()" class="btn-main-action" style="background:var(--success-green); color:white; margin:0">SINCRONIZAR AHORA</button>
+                                   <p style="font-size:10px; color:var(--danger-red); margin-top:10px; font-weight:800;">ESTA ACCIÓN ES ÚNICA E IRREVERSIBLE.</p>`;
+        }
+    }
+
+    function ejecutarSincronizacion() {
+        if (!confirm("¿Confirmas que has cumplido tus metas desde el 1 de Enero? Esta opción desaparecerá después.")) return;
+
+        const start = new Date("2026-01-01T12:00:00Z");
+        const today = new Date();
+        today.setHours(12, 0, 0, 0);
+
+        habits.forEach(h => {
+            let current = new Date(start);
+            while (current <= today) {
+                const dateStr = current.toISOString().split('T')[0];
+                if (!h.history.includes(dateStr)) h.history.push(dateStr);
+                current.setUTCDate(current.getUTCDate() + 1);
+            }
+        });
+
+        startDate = "2026-01-01";
+        localStorage.setItem(KEY_SYNCED, "true");
+        saveAll();
+        renderHabits();
+        renderSyncMenu();
+        alert("Sincronización completada. El historial ha sido sellado.");
+    }
 
     // -------------------------------------------------------------------------
-    // RENDER COLOR SELECTOR
+    // RENDERIZADO Y UI
     // -------------------------------------------------------------------------
     function renderColorSelector(containerId, isManager = false, habitId = null) {
         const container = document.getElementById(containerId);
         container.innerHTML = "";
-        
         PRESET_COLORS.forEach(color => {
             const swatch = document.createElement("div");
             swatch.className = "color-swatch";
             swatch.style.backgroundColor = color;
-            
             if (isManager && habitId) {
                 const h = habits.find(x => x.id === habitId);
                 if (h && h.color === color) swatch.classList.add("active");
             } else if (!isManager && !isCustomMode && selectedAddColor === color) {
                 swatch.classList.add("active");
             }
-
             swatch.onclick = () => {
-                isCustomMode = false;
-                if (isManager) {
-                    updateHabitDetail(habitId, 'color', color);
-                    renderManager();
-                } else {
-                    selectedAddColor = color;
-                    renderColorSelector(containerId);
-                }
+                if (isManager) { updateHabitDetail(habitId, 'color', color); renderManager(); }
+                else { selectedAddColor = color; isCustomMode = false; renderColorSelector(containerId); }
             };
             container.appendChild(swatch);
         });
-
-        // Icono de + para abrir paleta completa
-        const plusTrigger = document.createElement("div");
-        plusTrigger.className = "color-swatch plus-trigger";
-        if (isCustomMode && !isManager) plusTrigger.classList.add("active");
-        plusTrigger.innerHTML = "+";
-        plusTrigger.onclick = () => {
+        const plus = document.createElement("div");
+        plus.className = "color-swatch plus-trigger";
+        plus.innerHTML = "+";
+        plus.onclick = () => {
             const input = document.getElementById('customColorInput');
-            // Si es manager, guardamos el id temporalmente para el cambio
-            if(isManager) input.dataset.targetHabit = habitId;
-            else input.dataset.targetHabit = "";
+            input.dataset.targetHabit = isManager ? habitId : "";
             input.click();
         };
-        container.appendChild(plusTrigger);
+        container.appendChild(plus);
     }
 
     function handleCustomColorSelection(val) {
         const targetId = document.getElementById('customColorInput').dataset.targetHabit;
-        if (targetId) {
-            updateHabitDetail(targetId, 'color', val);
-            renderManager();
-        } else {
-            selectedAddColor = val;
-            isCustomMode = true;
-            renderColorSelector('mainColorSelector');
-        }
+        if (targetId) { updateHabitDetail(targetId, 'color', val); renderManager(); }
+        else { selectedAddColor = val; isCustomMode = true; renderColorSelector('mainColorSelector'); }
     }
 
-    // -------------------------------------------------------------------------
-    // MOTOR IA
-    // -------------------------------------------------------------------------
-    async function fetchFromAI(prompt, key) {
-        for (const modelName of MODEL_PRIORITY) {
-            try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { temperature: 0.15, response_mime_type: "application/json" }
-                    })
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    const rawText = data.candidates[0].content.parts[0].text;
-                    const match = rawText.match(/\{[\s\S]*\}/);
-                    return JSON.parse(match ? match[0] : rawText);
-                }
-            } catch (e) { console.warn(`Model retry...`); }
-        }
-        throw new Error("Sin conexión.");
-    }
-
-    async function consultarAlJuez() {
-        const reflection = document.getElementById('reflectionArea').value.trim();
-        const feedback = document.getElementById('aiFeedback');
-        const btn = document.getElementById('btnUnlock');
-        if (reflection.length < 20) return;
-        btn.innerText = "DELIBERANDO..."; btn.disabled = true;
-        feedback.style.display = 'block'; feedback.innerText = "El tribunal está analizando tu caso...";
-        const prompt = `Actúa como un Juez implacable. Usuario inactivo 7+ días. Explicación: "${reflection}". Responde estrictamente un JSON: { "valid": boolean, "verdict": "mensaje potente" }`;
-        try {
-            const result = await fetchFromAI(prompt, geminiKey);
-            feedback.innerText = result.verdict;
-            btn.disabled = false;
-            if (result.valid) {
-                btn.innerText = "VOLVER AL CAMINO"; btn.style.background = "var(--success-green)";
-                btn.onclick = () => { localStorage.removeItem(KEY_M); location.reload(); };
-            } else {
-                btn.innerText = "ACEPTAR SENTENCIA"; btn.style.background = "var(--danger-red)";
-                btn.onclick = () => { localStorage.removeItem(KEY_M); fullReset(); location.reload(); };
-            }
-        } catch (e) {
-            btn.disabled = false; btn.innerText = "DESBLOQUEO MANUAL (ERROR)";
-            btn.onclick = () => { localStorage.removeItem(KEY_M); location.reload(); };
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // LÓGICA DE SISTEMA
-    // -------------------------------------------------------------------------
     function toggleAddModal() {
         const el = document.getElementById('addHabitModal');
         el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
-        if(el.style.display === 'flex') {
-            document.getElementById('startDateInput').value = startDate;
-            renderColorSelector('mainColorSelector');
-        }
+        if(el.style.display === 'flex') renderColorSelector('mainColorSelector');
     }
 
     function toggleSettings() {
         const el = document.getElementById('settingsModal');
         el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
-        if (el.style.display === 'flex') renderManager();
+        if (el.style.display === 'flex') { renderManager(); renderSyncMenu(); }
     }
 
     function addHabit() {
         const n = document.getElementById('hName').value, i = document.getElementById('hIcon').value;
-        const d = document.getElementById('startDateInput').value;
         if (!n || !i) return; 
         habits.push({ id: 'h'+Date.now(), name: n, icon: i, color: selectedAddColor, history: [] });
-        startDate = d; 
         document.getElementById('hName').value = ""; document.getElementById('hIcon').value = "";
         toggleAddModal();
         saveAll(); 
@@ -390,16 +331,16 @@
 
     function renderManager() {
         const m = document.getElementById('managerList'); 
-        m.innerHTML = '<h3 style="font-size:12px; margin-bottom:15px; color:gray; font-weight:800; text-transform:uppercase; letter-spacing:1px;">Gestionar Metas:</h3>';
+        m.innerHTML = '<h3 style="font-size:12px; margin-bottom:15px; color:gray; font-weight:800; text-transform:uppercase; letter-spacing:1px;">Editar Metas:</h3>';
         habits.forEach((h) => { 
             const habitSelectorId = `color-sel-${h.id}`;
             m.innerHTML += `
-                <div class="manager-item">
-                    <div class="manager-row">
+                <div style="background:var(--bg-color); padding:20px; border-radius:24px; margin-bottom:12px; border:1px solid var(--border-color);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                         <span style="font-weight:700">${h.icon} ${h.name}</span>
                         <button onclick="removeHabit('${h.id}')" style="border:none; color:var(--danger-red); background:none; cursor:pointer; font-weight:800; font-size:10px;">ELIMINAR</button>
                     </div>
-                    <div class="manager-edit-grid">
+                    <div style="display:flex; flex-direction:column; gap:10px;">
                         <input type="text" class="mini-input" value="${h.icon}" onchange="updateHabitDetail('${h.id}', 'icon', this.value)" placeholder="Icono">
                         <div class="color-selector" id="${habitSelectorId}"></div>
                     </div>
@@ -413,6 +354,9 @@
         if (h) { h[field] = value; saveAll(); renderHabits(); }
     }
 
+    // -------------------------------------------------------------------------
+    // LÓGICA CORE (IA Y ESTADO)
+    // -------------------------------------------------------------------------
     function marcar(id) {
         const hoy = new Date().toISOString().split('T')[0], h = habits.find(h => h.id === id);
         if (!h.history.includes(hoy)) { h.history.push(hoy); localStorage.removeItem(KEY_M); saveAll(); renderHabits(); checkStatus(); }
@@ -444,22 +388,15 @@
         }
         const diff = Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24));
         if (diff > 7) document.getElementById('hardcoreModal').style.display = 'flex';
-        else if (diff >= 3) updateStatus(`${diff} días ausente`, "var(--warning-orange)");
         else updateStatus("Enfoque activo", "var(--success-green)");
     }
 
-    function saveSettings() { saveAll(); toggleSettings(); }
     function saveAll() { localStorage.setItem(KEY_H, JSON.stringify(habits)); localStorage.setItem(KEY_S, startDate); }
-    function fullReset() { habits.forEach(h => h.history = []); saveAll(); }
-    function borrarTodo() { if(confirm("¿Eliminar absolutamente todo?")) { localStorage.clear(); location.reload(); } }
+    function borrarTodo() { if(confirm("¿Eliminar todo?")) { localStorage.clear(); location.reload(); } }
     function removeHabit(id) { if(confirm("¿Borrar meta?")) { habits = habits.filter(h => h.id !== id); saveAll(); renderManager(); renderHabits(); } }
     function updateStatus(m, c) { document.getElementById("statusText").innerText = m; document.getElementById("statusText").style.color = c; }
-    
-    window.onload = () => { 
-        renderHabits(); checkStatus(); 
-        const ft = document.querySelector('footer');
-        ft.innerText = `v${APP_VER} • Tribunal AI Activo`;
-    };
+
+    window.onload = () => { renderHabits(); checkStatus(); };
 </script>
 </body>
 </html>
