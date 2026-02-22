@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Resiliencia Pro AI - v9.0 (Final Edition)</title>
+    <title>Seguimiento Pro AI - v9.1 (Final Edition)</title>
     <!-- Configuración para App iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -11,28 +11,28 @@
 
     <style>
         :root {
-            /* Light Theme Variables */
-            --bg-color: #f2f2f7;
-            --card-bg: #ffffff;
-            --text-main: #1c1c1e;
-            --text-secondary: #636366;
-            --border-color: #e5e5ea;
-            --success-green: #34c759;
-            --danger-red: #ff3b30;
-            --accent-blue: #007aff;
-            --warning-orange: #ff9500;
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-            --juez-accent: #ff3b30;
-        }
-
-        [data-theme='dark'] {
-            /* Dark Theme Variables */
+            /* Variables de Tema Oscuro (Predeterminado) */
             --bg-color: #000000;
             --card-bg: #1c1c1e;
             --text-main: #ffffff;
             --text-secondary: #8e8e93;
             --border-color: #38383a;
+            --success-green: #34c759;
+            --danger-red: #ff3b30;
+            --accent-blue: #007aff;
+            --warning-orange: #ff9500;
             --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --juez-accent: #ff3b30;
+        }
+
+        [data-theme='light'] {
+            /* Variables de Tema Claro */
+            --bg-color: #f2f2f7;
+            --card-bg: #ffffff;
+            --text-main: #1c1c1e;
+            --text-secondary: #636366;
+            --border-color: #e5e5ea;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -47,10 +47,43 @@
         #statusText { font-size: 13px; color: var(--text-secondary); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 
         .header-btns { display: flex; gap: 10px; }
-        .btn-circle { background: var(--card-bg); border: none; width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); font-size: 22px; cursor: pointer; transition: all 0.2s; color: var(--text-main); }
+        .btn-circle { background: var(--card-bg); border: none; width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); font-size: 22px; cursor: pointer; transition: all 0.2s; color: var(--text-main); border: 1px solid var(--border-color); }
         .btn-circle:active { transform: scale(0.9); opacity: 0.8; }
 
-        /* MODAL DEL JUEZ (REDISEÑO INMERSIVO v9.0) */
+        /* ZONA CENTRAL DE AGREGAR METAS (Estilo Caja Opaca) */
+        .add-meta-zone {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px dashed var(--border-color);
+            border-radius: 35px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .add-meta-zone h3 { font-size: 14px; color: var(--text-secondary); margin-bottom: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .add-meta-inputs { display: flex; flex-direction: column; gap: 10px; }
+        
+        .btn-add-main { 
+            background: var(--text-main); 
+            color: var(--card-bg); 
+            border: none; 
+            padding: 18px; 
+            border-radius: 20px; 
+            width: 100%; 
+            font-weight: 800; 
+            margin-top: 10px; 
+            cursor: pointer; 
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-add-main:active { transform: scale(0.98); }
+
+        /* MODAL DEL JUEZ */
         #hardcoreModal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.8); z-index: 5000; display: none;
@@ -62,23 +95,7 @@
         .juez-box {
             background: #1c1c1e; padding: 45px 25px; border-radius: 45px; width: 100%; max-width: 380px;
             box-shadow: 0 40px 80px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
-            animation: modalPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        
-        @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        #hardcoreModal h2 { font-size: 11px; color: var(--juez-accent); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 5px; font-weight: 900; }
-        #hardcoreModal h1 { font-size: 28px; color: white; margin-bottom: 20px; letter-spacing: -1.2px; font-weight: 800; line-height: 1.1; }
-        #juezDesc { font-size: 15px; color: #8e8e93; line-height: 1.6; margin-bottom: 30px; }
-        
-        #reflectionArea { 
-            width: 100%; background: #2c2c2e; border: 1px solid #3a3a3c; border-radius: 24px; 
-            padding: 22px; color: white; font-size: 16px; margin-bottom: 25px; outline: none; resize: none;
-        }
-
-        #aiFeedback { font-size: 14px; color: #a2a2a7; margin-bottom: 25px; font-style: italic; line-height: 1.6; padding: 22px; background: rgba(255,255,255,0.05); border-radius: 25px; display: none; white-space: pre-wrap; border: 1px solid rgba(255,255,255,0.05); }
-        
-        .btn-action-ai { background: white; color: black; padding: 22px; border-radius: 22px; font-weight: 800; border: none; width: 100%; font-size: 17px; cursor: pointer; transition: 0.3s; }
 
         /* PANEL GLOBAL */
         .global-card { background: var(--card-bg); padding: 30px; border-radius: 35px; box-shadow: var(--shadow); margin-bottom: 30px; border: 1px solid var(--border-color); }
@@ -93,15 +110,15 @@
         .card h3 { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 700; color: var(--text-main); }
         .card-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px; }
         
-        .btn-undo { position: absolute; top: 22px; right: 22px; width: 36px; height: 36px; background: var(--bg-color); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text-secondary); transition: 0.2s; }
+        .btn-undo { position: absolute; top: 22px; right: 22px; width: 36px; height: 36px; background: var(--bg-color); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text-secondary); transition: 0.2s; border: 1px solid var(--border-color); }
 
         /* AJUSTES */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
         .settings-panel { background: var(--card-bg); padding: 35px; border-radius: 40px; width: 100%; max-width: 410px; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.1); border: 1px solid var(--border-color); color: var(--text-main); }
-        .btn-save-all { background: var(--text-main); color: var(--card-bg); border: none; padding: 18px; border-radius: 20px; width: 100%; font-weight: 700; margin-top: 25px; cursor: pointer; font-size: 16px; }
+        .btn-save-all { background: var(--text-main); color: var(--card-bg); border: none; padding: 18px; border-radius: 20px; width: 100%; font-weight: 800; margin-top: 25px; cursor: pointer; font-size: 16px; }
 
-        /* LABORATORIO (REFORMADO) */
-        .lab-box { background: #1c1c1e; padding: 28px; border-radius: 32px; margin-top: 25px; border: 1px solid rgba(255,255,255,0.05); }
+        /* LABORATORIO */
+        .lab-box { background: rgba(255, 59, 48, 0.05); padding: 28px; border-radius: 32px; margin-top: 25px; border: 1px solid rgba(255,59,48,0.2); }
         .lab-btn { background: rgba(255, 59, 48, 0.15); color: var(--danger-red); border: 1px solid rgba(255,59,48,0.4); padding: 16px; border-radius: 18px; font-weight: 800; width: 100%; margin-top: 12px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; }
 
         .loading-spinner { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid white; border-radius: 50%; width: 30px; height: 30px; animation: spin 0.8s linear infinite; display: none; margin: 0 auto 20px; }
@@ -112,9 +129,20 @@
         input[type="text"], input[type="password"], input[type="date"] {
             width: 100%; padding: 16px; border-radius: 18px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 16px; outline: none; transition: 0.2s;
         }
+        input:focus { border-color: var(--accent-blue); }
+
+        /* Estilos para el Manager de Metas */
+        .manager-item {
+            display: flex; flex-direction: column; gap: 8px; padding: 20px;
+            background: var(--bg-color); border-radius: 20px; margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+        }
+        .manager-row { display: flex; justify-content: space-between; align-items: center; }
+        .manager-edit-group { display: flex; gap: 8px; margin-top: 5px; }
+        .manager-input-mini { padding: 8px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 12px; width: 100%; }
     </style>
 </head>
-<body data-theme="light">
+<body data-theme="dark">
 
 <div id="hardcoreModal">
     <div class="juez-box">
@@ -130,31 +158,23 @@
 
 <div id="modalOverlay" class="modal-overlay" onclick="toggleSettings()">
     <section class="settings-panel" onclick="event.stopPropagation()">
-        <h2 style="font-size: 28px; margin-bottom: 25px; letter-spacing: -1.2px; font-weight: 800;">Panel de Control</h2>
+        <h2 style="font-size: 26px; margin-bottom: 25px; letter-spacing: -1.2px; font-weight: 800;">Ajustes</h2>
         
-        <div style="background: var(--bg-color); padding: 25px; border-radius: 30px; margin-bottom: 25px; border: 1px solid var(--border-color);">
-            <label style="color: var(--text-secondary); font-size: 10px; font-weight: 900; display: block; margin-bottom: 12px; letter-spacing: 1.2px;">MOTOR DE INTELIGENCIA (GEMINI)</label>
-            <input type="password" id="apiKeyInput" placeholder="Pega tu llave de AI Studio aquí...">
+        <div style="background: var(--bg-color); padding: 25px; border-radius: 25px; margin-bottom: 25px; border: 1px solid var(--border-color);">
+            <label style="color: var(--text-secondary); font-size: 10px; font-weight: 900; display: block; margin-bottom: 12px; letter-spacing: 1.2px;">LLAVE DE IA (GEMINI)</label>
+            <input type="password" id="apiKeyInput" placeholder="Pega tu llave aquí...">
         </div>
 
         <div style="margin-bottom:25px">
             <label style="font-size: 11px; font-weight: 800; color: var(--text-secondary); display: block; margin-bottom: 10px;">FECHA DE INICIO DEL RETO</label>
             <input type="date" id="startDateInput">
         </div>
-        
-        <div style="background: var(--card-bg); padding: 25px; border-radius: 32px; border: 1px solid var(--border-color); box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
-            <h3 style="font-size: 17px; margin-bottom: 18px; font-weight: 800; letter-spacing: -0.6px;">+ NUEVA META</h3>
-            <input type="text" id="hName" placeholder="Nombre" style="margin-bottom:12px">
-            <input type="text" id="hIcon" placeholder="Emoji" style="margin-bottom:12px">
-            <input type="color" id="hColor" value="#007aff" style="width:100%; height:45px; border:none; margin-bottom:12px; border-radius: 18px; cursor: pointer; background:none;">
-            <button class="btn-save-all" style="background:var(--accent-blue); color:white; margin:0" onclick="addHabit()">AÑADIR AHORA</button>
-        </div>
 
-        <div id="managerList" style="margin-top:28px;"></div>
+        <div id="managerList" style="margin-top:20px;"></div>
 
         <div class="lab-box">
-            <strong style="color: var(--success-green); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-weight: 900;">Memoria de Sistema</strong>
-            <button class="lab-btn" onclick="borrarTodo()">Resetear Todo el Progreso</button>
+            <strong style="color: var(--danger-red); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-weight: 900;">Zona de Peligro</strong>
+            <button class="lab-btn" onclick="borrarTodo()">Reiniciar Todo</button>
         </div>
 
         <button class="btn-save-all" onclick="saveSettings()">GUARDAR Y APLICAR</button>
@@ -163,9 +183,9 @@
 
 <div class="app-container">
     <header>
-        <div><h1>Resiliencia</h1><p id="statusText">Horizon Stable</p></div>
+        <div><h1>Seguimiento</h1><p id="statusText">Día 1: Empieza hoy.</p></div>
         <div class="header-btns">
-            <button class="btn-circle" id="themeBtn" onclick="toggleTheme()">🌙</button>
+            <button class="btn-circle" id="themeBtn" onclick="toggleTheme()">☀️</button>
             <button class="btn-circle" onclick="toggleSettings()">⚙️</button>
         </div>
     </header>
@@ -178,8 +198,21 @@
         <div class="bar-bg"><div id="globalBar" class="bar-fill"></div></div>
     </div>
 
+    <!-- ZONA CENTRAL DE AGREGAR METAS -->
+    <div class="add-meta-zone">
+        <h3>+ Agregar Metas</h3>
+        <div class="add-meta-inputs">
+            <input type="text" id="hName" placeholder="Nombre de la meta">
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="hIcon" placeholder="Emoji (ej: 🔥)" style="flex: 2;">
+                <input type="color" id="hColor" value="#007aff" style="flex: 1; height: 50px; cursor: pointer; background: none; border-radius: 18px; border: 1px solid var(--border-color); padding: 5px;">
+            </div>
+            <button class="btn-add-main" onclick="addHabit()">AÑADIR AHORA</button>
+        </div>
+    </div>
+
     <main id="habitsContainer"></main>
-    <footer>v9.0 • Premium Edition</footer>
+    <footer>v9.1 • Final Edition</footer>
 </div>
 
 <script>
@@ -188,13 +221,13 @@
     // =========================================================================
     const API_KEY_INTERNA = "AIzaSyBcEYRrKA_dIp7iTMiztuAnqujvqa6-9EI"; 
 
-    const APP_VER = "9.0";
-    const KEY_H = 'res_v90_habits';
-    const KEY_S = 'res_v90_start';
-    const KEY_A = 'res_v90_apikey';
-    const KEY_E = 'res_v90_excuses';
-    const KEY_M = 'res_v90_mock';
-    const KEY_T = 'res_v90_theme';
+    const APP_VER = "9.1";
+    const KEY_H = 'res_v91_habits';
+    const KEY_S = 'res_v91_start';
+    const KEY_A = 'res_v91_apikey';
+    const KEY_E = 'res_v91_excuses';
+    const KEY_M = 'res_v91_mock';
+    const KEY_T = 'res_v91_theme';
 
     let habits = JSON.parse(localStorage.getItem(KEY_H)) || [];
     let startDate = localStorage.getItem(KEY_S) || new Date().toISOString().split('T')[0];
@@ -204,7 +237,7 @@
     const MODEL_PRIORITY = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.0-flash"];
 
     // =========================================================================
-    // 2. MOTOR DE IA (EDICIÓN FINAL)
+    // 2. MOTOR DE IA
     // =========================================================================
 
     async function fetchFromAI(prompt, key) {
@@ -263,9 +296,9 @@
                 };
             }
         } catch (e) {
-            feedback.innerText = "ERROR TÉCNICO: El Juez no puede escucharte ahora.";
+            feedback.innerText = "ERROR TÉCNICO: Fallo en la IA.";
             loader.style.display = 'none'; btn.style.display = 'block';
-            btn.innerText = "DESBLOQUEO MANUAL (FALLO IA)";
+            btn.innerText = "DESBLOQUEO MANUAL";
             btn.onclick = () => { localStorage.removeItem(KEY_M); document.getElementById('hardcoreModal').style.display = 'none'; resetAudit(); };
         }
     }
@@ -276,7 +309,7 @@
 
     function resetAudit() { const h = new Date().toISOString().split('T')[0]; habits.forEach(x => { if(x.history.length > 0) x.lastA = h; }); saveAll(); }
     function fullReset() { habits.forEach(h => h.history = []); startDate = new Date().toISOString().split('T')[0]; saveAll(); renderHabits(); }
-    function borrarTodo() { if(confirm("¿Estás seguro de borrar toda tu memoria?")) { localStorage.clear(); location.reload(); } }
+    function borrarTodo() { if(confirm("¿Borrar todo el progreso y metas?")) { localStorage.clear(); location.reload(); } }
 
     function checkStatus() {
         if (habits.length === 0) return updateStatus("Configura tus metas ⚙️", "gray");
@@ -284,19 +317,28 @@
         let ultima;
         if (mock) { ultima = new Date(mock); } else {
             let fs = []; habits.forEach(h => { if(h.history.length > 0) fs.push(new Date(h.history.sort().reverse()[0])); });
-            if (fs.length === 0) return updateStatus("Día 1: Inicia hoy.", "var(--accent-blue)");
+            if (fs.length === 0) return updateStatus("Seguimiento activo", "var(--accent-blue)");
             ultima = new Date(Math.max(...fs));
         }
         const diff = Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24));
         if (diff > 7) document.getElementById('hardcoreModal').style.display = 'flex';
-        else if (diff >= 3) updateStatus(`${diff} días de silencio`, "var(--warning-orange)");
-        else updateStatus("Consistencia activa", "var(--success-green)");
+        else if (diff >= 3) updateStatus(`${diff} días ausente`, "var(--warning-orange)");
+        else updateStatus("Enfoque activo", "var(--success-green)");
     }
 
     function addHabit() {
         const n = document.getElementById('hName').value, i = document.getElementById('hIcon').value, c = document.getElementById('hColor').value;
-        if (!n || !i) return; habits.push({ id: 'h'+Date.now(), name: n, icon: i, color: c, history: [] });
-        document.getElementById('hName').value = ""; document.getElementById('hIcon').value = ""; saveAll(); renderHabits();
+        if (!n || !i) return; 
+        
+        habits.push({ id: 'h'+Date.now(), name: n, icon: i, color: c, history: [] });
+        
+        // Limpiar campos y dar feedback
+        document.getElementById('hName').value = ""; 
+        document.getElementById('hIcon').value = "";
+        
+        saveAll(); 
+        renderHabits();
+        checkStatus();
     }
 
     function renderHabits() {
@@ -306,7 +348,7 @@
             const porc = calcularPorc(h);
             card.innerHTML = `<h3>${h.icon} ${h.name}</h3><div class="btn-undo" onclick="deshacer('${h.id}', event)">✕</div>
                 <div style="background:var(--bg-color); height:12px; border-radius:12px; margin-top:15px; overflow:hidden"><div style="background:${h.color}; width:${porc}%; height:100%; transition:1.4s cubic-bezier(0.1, 0.5, 0.1, 1)"></div></div>
-                <div class="card-meta"><span>Días: ${h.history.length}</span><span>${porc}% Éxito</span></div>`;
+                <div class="card-meta"><span>Días: ${h.history.length}</span><span>${porc}% Logrado</span></div>`;
             cont.appendChild(card);
         });
         actualizarGlobal();
@@ -345,13 +387,32 @@
 
     function renderManager() {
         const m = document.getElementById('managerList'); 
-        m.innerHTML = '<h3 style="font-size:12px; margin:15px 0 10px; color:gray; font-weight:800; text-transform:uppercase; letter-spacing:1px;">Mis Metas:</h3>';
-        habits.forEach(h => { 
-            m.innerHTML += `<div style="display:flex; justify-content:space-between; padding:15px; background:var(--bg-color); border-radius:18px; margin-bottom:10px; border: 1px solid var(--border-color);"><span>${h.icon} ${h.name}</span><button onclick="removeHabit('${h.id}')" style="border:none; color:var(--danger-red); background:none; cursor:pointer; font-weight:800; font-size:11px;">BORRAR</button></div>`; 
+        m.innerHTML = '<h3 style="font-size:12px; margin:15px 0 10px; color:gray; font-weight:800; text-transform:uppercase; letter-spacing:1px;">Gestionar Estética:</h3>';
+        habits.forEach((h, idx) => { 
+            m.innerHTML += `
+                <div class="manager-item">
+                    <div class="manager-row">
+                        <span style="font-weight:700">${h.icon} ${h.name}</span>
+                        <button onclick="removeHabit('${h.id}')" style="border:none; color:var(--danger-red); background:none; cursor:pointer; font-weight:800; font-size:11px;">BORRAR</button>
+                    </div>
+                    <div class="manager-edit-group">
+                        <input type="text" class="manager-input-mini" value="${h.icon}" onchange="updateHabitDetail('${h.id}', 'icon', this.value)" placeholder="Emoji">
+                        <input type="color" class="manager-input-mini" value="${h.color}" onchange="updateHabitDetail('${h.id}', 'color', this.value)" style="padding:2px; height:30px;">
+                    </div>
+                </div>`; 
         });
     }
 
-    function removeHabit(id) { if (confirm("¿Eliminar meta?")) { habits = habits.filter(h => h.id !== id); saveAll(); renderManager(); renderHabits(); } }
+    function updateHabitDetail(id, field, value) {
+        const h = habits.find(h => h.id === id);
+        if (h) {
+            h[field] = value;
+            saveAll();
+            renderHabits();
+        }
+    }
+
+    function removeHabit(id) { if (confirm("¿Eliminar esta meta?")) { habits = habits.filter(h => h.id !== id); saveAll(); renderManager(); renderHabits(); } }
     
     function saveSettings() { 
         startDate = document.getElementById('startDateInput').value; 
@@ -369,7 +430,7 @@
     }
 
     function loadTheme() {
-        const saved = localStorage.getItem(KEY_T) || 'light';
+        const saved = localStorage.getItem(KEY_T) || 'dark'; // Dark por defecto
         document.body.setAttribute('data-theme', saved);
         document.getElementById('themeBtn').innerText = saved === 'dark' ? '☀️' : '🌙';
     }
