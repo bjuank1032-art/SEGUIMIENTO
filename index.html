@@ -3,30 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Splendor Mentor - Gemini 3.1</title>
+    <title>Splendor Mentor - Final</title>
     <style>
-        :root { --primary: #00ff88; --bg: #121212; --card: #1e1e1e; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .msg { max-width: 80%; padding: 12px 16px; border-radius: 15px; line-height: 1.4; font-size: 0.95rem; }
-        .bot { background: #2a2a2a; color: var(--primary); align-self: flex-start; border-bottom-left-radius: 2px; border-left: 3px solid var(--primary); font-style: italic; }
-        .user { background: var(--primary); color: black; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: 500; }
-        .input-area { background: #1e1e1e; padding: 20px; display: flex; gap: 10px; border-top: 1px solid #333; }
-        input { flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; outline: none; }
-        button { background: var(--primary); color: black; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .header { padding: 15px; text-align: center; border-bottom: 1px solid #333; background: #1a1a1a; }
-        .header h1 { font-size: 1.2rem; margin: 0; color: var(--primary); }
+        :root { --primary: #00ff88; --bg: #121212; }
+        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        #chat { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 80%; padding: 12px; border-radius: 15px; font-size: 0.95rem; }
+        .bot { background: #2a2a2a; color: var(--primary); align-self: flex-start; border-left: 3px solid var(--primary); }
+        .user { background: var(--primary); color: black; align-self: flex-end; font-weight: bold; }
+        .input-area { background: #1e1e1e; padding: 15px; display: flex; gap: 10px; }
+        input { flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; }
+        button { background: var(--primary); border: none; padding: 12px; border-radius: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
-
-    <div class="header">
-        <h1>Splendor Mentor 💀</h1>
-        <small style="color: #666;">Meta: UdeA | Marca: Splendor</small>
+    <div style="padding:15px; text-align:center; border-bottom:1px solid #333;">
+        <h1 style="font-size:1.2rem; color:var(--primary); margin:0;">Splendor Mentor 💀</h1>
     </div>
-
-    <div id="chat-container"></div>
-
+    <div id="chat"></div>
     <div class="input-area">
         <input type="text" id="userInput" placeholder="Escribe tu excusa aquí...">
         <button onclick="enviarMensaje()">Enviar</button>
@@ -35,37 +29,23 @@
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-        // LÓGICA DE SEGURIDAD: Pide la llave si no existe en el teléfono
+        // SEGURIDAD: La llave nunca se sube a GitHub
         let API_KEY = localStorage.getItem('mi_llave_secreta');
-
         if (!API_KEY || API_KEY === "null") {
             API_KEY = prompt("Pega aquí tu NUEVA API Key (la que empieza por AIza...):");
-            if (API_KEY) {
-                localStorage.setItem('mi_llave_secreta', API_KEY);
-            }
+            if (API_KEY) localStorage.setItem('mi_llave_secreta', API_KEY);
         }
 
         const genAI = new GoogleGenerativeAI(API_KEY);
-        
-        // Usamos el modelo más potente que vimos en tus capturas
         const model = genAI.getGenerativeModel({ 
             model: "gemini-3.1-pro-preview", 
-            systemInstruction: `Eres un mentor sarcástico y ácido. 
-            DATOS DEL USUARIO:
-            - Peso: 57 kg (Quiere ganar masa muscular).
-            - Altura: 1.77 m.
-            - Trabajo: Empleado en un café de un mall.
-            - Meta Académica: Estudiar en la Universidad de Antioquia (UdeA).
-            - Proyecto: Marca de ropa 'Splendor'.
-            - Hábito a dejar: Marihuana (evaluación mensual).
-            
-            Tu misión es ser pesado. Si el usuario pone excusas de cansancio por el trabajo en el café, búrlate. Dile que si no estudia y no entrena, seguirá sirviendo lattes con 57kg de peso para siempre. Splendor no se hará sola.`
+            systemInstruction: "Eres un mentor sarcástico. Usuario: 1.77m, 57kg. Meta: UdeA. Proyecto: Splendor. Trabajo: Café Mall. Si pone excusas por el cansancio del café, búrlate. Sé breve y ácido."
         });
 
         const chat = model.startChat({ history: [] });
-        const container = document.getElementById('chat-container');
+        const container = document.getElementById('chat');
 
-        function appendMessage(role, text) {
+        function append(role, text) {
             const div = document.createElement('div');
             div.className = `msg ${role}`;
             div.innerText = text;
@@ -73,34 +53,25 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // Saludo inicial
-        appendMessage('bot', "Vaya, regresaste. ¿Vienes a contarme cómo el café te quitó las energías para estudiar para la UdeA o vas a hacer algo por Splendor hoy?");
+        append('bot', "¿Vas a estudiar para la UdeA o vas a seguir perdiendo el tiempo?");
 
         window.enviarMensaje = async () => {
             const input = document.getElementById('userInput');
             const mensaje = input.value.trim();
             if (!mensaje) return;
-
-            appendMessage('user', mensaje);
+            append('user', mensaje);
             input.value = '';
-
             try {
                 const result = await chat.sendMessage(mensaje);
-                const respuesta = result.response.text();
-                appendMessage('bot', respuesta);
-            } catch (error) {
-                console.error(error);
-                appendMessage('bot', "Error: Puede que tu llave sea inválida o Google la bloqueó de nuevo. ¿Quieres intentar borrarla para poner una nueva?");
-                if(confirm("¿Hubo un error, quieres borrar la API Key guardada para intentar con otra?")) {
+                append('bot', result.response.text());
+            } catch (e) {
+                append('bot', "Error. ¿Llave bloqueada? Dale a Aceptar para borrarla y poner una nueva.");
+                if(confirm("¿Quieres borrar la llave guardada e intentar con otra?")) {
                     localStorage.removeItem('mi_llave_secreta');
                     location.reload();
                 }
             }
         };
-
-        document.getElementById('userInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') enviarMensaje();
-        });
     </script>
 </body>
 </html>
