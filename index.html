@@ -1,672 +1,525 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  CheckCircle2, Flame, Brain, Moon, Sun, Dumbbell, Target, 
-  Briefcase, Palette, Wallet, BookOpen, Clock,
-  ChevronRight, Sparkles, Info, ShieldAlert, Zap, ListChecks,
-  Settings, Undo2, X, Plus, BarChart3, Map, Trash2
-} from 'lucide-react';
-import Sortable from 'sortablejs';
-
-// --- CONFIGURACIÓN Y CONSTANTES ---
-// PEGA TU LLAVE ENTRE LAS COMILLAS PARA ACTIVAR LA IA EN TU IPHONE:
-const API_KEY = "AIzaSyBcEYRrKA_dIp7iTMiztuAnqujvqa6-9EI"; 
-
-const KEY_H = 'res_v11_habits';
-const KEY_S = 'res_v11_start';
-const KEY_M = 'res_v11_mock';
-const KEY_SYNCED = 'res_v11_is_synced';
-const PRESET_COLORS = ["#007aff", "#34c759", "#ff3b30", "#ff9500", "#af52de", "#ff2d55"];
-
-// Función para obtener fecha local YYYY-MM-DD sin desfase UTC (Colombia)
-const getLocalISODate = () => {
-  const hoy = new Date();
-  const offset = hoy.getTimezoneOffset() * 60000;
-  return (new Date(hoy - offset)).toISOString().split('T')[0];
-};
-
-const App = () => {
-  // --- ESTADO GLOBAL ---
-  const [activeTab, setActiveTab] = useState('seguimiento'); 
-  const [habits, setHabits] = useState([]);
-  const [startDate, setStartDate] = useState(getLocalISODate());
-  const [isSynced, setIsSynced] = useState(false);
-  
-  // Modales
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showJuez, setShowJuez] = useState(false);
-  
-  // IA y Juez
-  const [reflection, setReflection] = useState("");
-  const [aiFeedback, setAiFeedback] = useState("");
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [verdictValid, setVerdictValid] = useState(null);
-
-  // Formulario nueva meta
-  const [newName, setNewName] = useState("");
-  const [newIcon, setNewIcon] = useState("🔥");
-  const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
-
-  const managerListRef = useRef(null);
-
-  // --- CARGA INICIAL ---
-  useEffect(() => {
-    const savedHabits = JSON.parse(localStorage.getItem(KEY_H)) || [];
-    const savedStart = localStorage.getItem(KEY_S) || getLocalISODate();
-    const savedSynced = localStorage.getItem(KEY_SYNCED) === 'true';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistema 3 de Junio Pro v11.3</title>
     
-    setHabits(savedHabits);
-    setStartDate(savedStart);
-    setIsSynced(savedSynced);
+    <!-- Configuración para App iPhone -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/color/96/cannabis.png">
     
-    checkJuezStatus(savedHabits);
-  }, []);
-
-  // --- PERSISTENCIA ---
-  useEffect(() => {
-    localStorage.setItem(KEY_H, JSON.stringify(habits));
-    localStorage.setItem(KEY_S, startDate);
-    localStorage.setItem(KEY_SYNCED, isSynced.toString());
-  }, [habits, startDate, isSynced]);
-
-  // --- LÓGICA DEL JUEZ ---
-  const checkJuezStatus = (currentHabits) => {
-    const mock = localStorage.getItem(KEY_M);
-    let ultima;
-
-    if (mock) {
-      ultima = new Date(mock + "T12:00:00");
-    } else {
-      let fechasValidas = [];
-      currentHabits.forEach(h => {
-        if (h.history.length > 0) {
-          const sorted = [...h.history].sort().reverse();
-          fechasValidas.push(new Date(sorted[0] + "T12:00:00"));
-        }
-      });
-      if (fechasValidas.length === 0) return;
-      ultima = new Date(Math.max(...fechasValidas));
-    }
-
-    const hoy = new Date();
-    hoy.setHours(12, 0, 0, 0);
-    ultima.setHours(12, 0, 0, 0);
-
-    const diff = Math.floor((hoy - ultima) / (1000 * 60 * 60 * 24));
-    if (diff > 7) setShowJuez(true);
-  };
-
-  const consultarAlJuez = async () => {
-    if (reflection.trim().length < 20) return;
-    setIsAiLoading(true);
+    <!-- Scripts de Dependencias -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     
-    // Si la llave está vacía, activa el protocolo de rescate manual
-    if (!API_KEY) {
-      setTimeout(() => {
-        setAiFeedback("PROTOCOLO DE RESCATE: IA no detectada en este servidor. Se registra tu reflexión. No vuelvas a fallar.");
-        setVerdictValid(true);
-        setIsAiLoading(false);
-      }, 1500);
-      return;
-    }
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 
-    try {
-      const prompt = `Actúa como un Juez implacable. Usuario inactivo 7+ días. Reflexión: "${reflection}". Responde estrictamente un JSON: { "valid": boolean, "verdict": "mensaje potente" }`;
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
-      
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
-      });
-      
-      const data = await res.json();
-      let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      text = text.replace(/```json|```/gi, "").trim(); 
-      const result = JSON.parse(text);
-      
-      setAiFeedback(result.verdict);
-      setVerdictValid(result.valid);
-    } catch (e) {
-      setAiFeedback("Error de conexión. Desbloqueo manual habilitado por emergencia.");
-      setVerdictValid(true);
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
-
-  // --- LÓGICA DE HÁBITOS ---
-  const handleMark = (id) => {
-    const hoy = getLocalISODate();
-    setHabits(prev => prev.map(h => {
-      if (h.id === id && !h.history.includes(hoy)) {
-        return { ...h, history: [...h.history, hoy] };
-      }
-      return h;
-    }));
-    localStorage.removeItem(KEY_M);
-  };
-
-  const handleUndo = (id, e) => {
-    e.stopPropagation();
-    const hoy = getLocalISODate();
-    setHabits(prev => prev.map(h => {
-      if (h.id === id) {
-        return { ...h, history: h.history.filter(d => d !== hoy) };
-      }
-      return h;
-    }));
-  };
-
-  const calculatePorc = (h) => {
-    const start = new Date(startDate + "T12:00:00");
-    const hoy = new Date();
-    const diff = Math.floor((hoy - start) / (1000 * 60 * 60 * 24)) + 1;
-    return Math.min(100, Math.round((h.history.length / (diff || 1)) * 100));
-  };
-
-  const getGlobalStats = () => {
-    if (habits.length === 0) return 0;
-    let total = 0;
-    habits.forEach(h => total += calculatePorc(h));
-    return Math.round(total / habits.length);
-  };
-
-  const addHabit = () => {
-    if (!newName || !newIcon) return;
-    const newHabit = {
-      id: 'h' + Date.now(),
-      name: newName,
-      icon: newIcon,
-      color: selectedColor,
-      history: []
-    };
-    setHabits([...habits, newHabit]);
-    setNewName("");
-    setShowAddModal(false);
-  };
-
-  // --- ROADMAP DATA (SISTEMA 3 DE JUNIO) ---
-  const [expandedStep, setExpandedStep] = useState(1);
-  const allObjectives = [
-    { id: "1", text: "Dejar de fumar marihuana" },
-    { id: "2", text: "Aclarar mi futuro (Académico)" },
-    { id: "3", text: "Ejercicio (Cuerpo y mente)" },
-    { id: "4", text: "Meditar (Gym cerebral)" },
-    { id: "5", text: "Controlar mi mente (Enfoque)" },
-    { id: "6", text: "Despertarse temprano (6:30 AM)" },
-    { id: "7", text: "Dormirse temprano (10:30 PM)" },
-    { id: "8", text: "Aprender (Inglés y Excel)" },
-    { id: "9", text: "Tener un trabajo" },
-    { id: "10", text: "SPLENDOR (Marca de Ropa)" },
-    { id: "11", text: "Tener Dinero" },
-    { id: "12", text: "Recuperar mi cabello (Tratamiento)" }
-  ];
-
-  const steps = [
-    {
-      id: 1,
-      title: "Nivel 1: El Reset Bioquímico",
-      icon: <Flame className="w-5 h-5 text-red-400" />,
-      tag: "24 Feb - 24 Mar",
-      objectives: ["1", "6", "7"],
-      tasks: [
-        "Purga de parafernalia estricta",
-        "Cero contacto con círculos de consumo",
-        "Dormir 10:30 PM / Despertar 6:30 AM",
-        "Uso obligatorio del Seguimiento Pro"
-      ],
-      impact: "Limpiar el cerebro es el paso único para recuperar la voluntad.",
-      color: "border-red-500/50"
-    },
-    {
-      id: 2,
-      title: "Nivel 2: Mente y Estabilidad",
-      icon: <Brain className="w-5 h-5 text-orange-400" />,
-      tag: "24 Feb - 24 Mar",
-      objectives: ["2", "3", "4", "5", "9"],
-      tasks: [
-        "Meditación AM/PM (10 min)",
-        "Rutina de ejercicio diaria",
-        "Búsqueda activa de empleo",
-        "Definición académica final"
-      ],
-      impact: "Eliminas la incertidumbre y aseguras sustento.",
-      color: "border-orange-500/50"
-    },
-    {
-      id: 3,
-      title: "Nivel 3: Deep Work",
-      icon: <BookOpen className="w-5 h-5 text-blue-400" />,
-      tag: "Marzo - Abril",
-      objectives: ["8"],
-      tasks: [
-        "Inscripción Inglés",
-        "Lectura 15 páginas diarias",
-        "Dedicación total a Excel",
-        "Estudio profundo sin celular"
-      ],
-      impact: "Pasas de la intención a la competencia técnica.",
-      color: "border-blue-500/50"
-    },
-    {
-      id: 4,
-      title: "Nivel 4: Consolidación",
-      icon: <Wallet className="w-5 h-5 text-emerald-400" />,
-      tag: "Abril - Mayo",
-      objectives: ["11", "12"],
-      tasks: [
-        "Gestión de primeros ingresos",
-        "Inicio Tratamiento Capilar",
-        "Inversión en alimentación/gym",
-        "Ahorro específico movilidad"
-      ],
-      impact: "El dinero pasa a ser herramienta de inversión.",
-      color: "border-emerald-500/50"
-    },
-    {
-      id: 5,
-      title: "Nivel 5: Cúspide Splendor",
-      icon: <Palette className="w-5 h-5 text-purple-400" />,
-      tag: "3 de Junio",
-      objectives: ["10", "11"],
-      tasks: [
-        "Lanzamiento Marca SPLENDOR",
-        "Trámite Licencia / Ahorro Moto",
-        "Renovación de imagen personal",
-        "Nueva identidad libre de humo"
-      ],
-      impact: "Manifestación final del proceso al 3 de Junio.",
-      color: "border-purple-500/50"
-    }
-  ];
-
-  // --- COMPONENTES DE VISTA ---
-  const renderSeguimiento = () => (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
-      <header className="mb-8">
-        <h1 className="text-3xl font-black italic tracking-tighter text-white uppercase">Seguimiento</h1>
-        <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest mt-1">
-          Consistencia Activa • {habits.length} Metas
-        </p>
-      </header>
-
-      <div className="bg-neutral-900/60 border border-neutral-800 p-8 rounded-[2.5rem] mb-8 shadow-2xl">
-        <div className="flex justify-between items-baseline mb-4">
-          <span className="text-[11px] font-black text-neutral-500 tracking-[0.2em] uppercase">Progreso Global</span>
-          <span className="text-5xl font-black text-white italic tracking-tighter">{getGlobalStats()}%</span>
-        </div>
-        <div className="h-4 bg-black rounded-full overflow-hidden border border-neutral-800">
-          <div 
-            className="h-full bg-gradient-to-r from-blue-600 to-emerald-500 transition-all duration-1000 ease-out" 
-            style={{ width: `${getGlobalStats()}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="grid gap-4">
-        {habits.map(h => {
-          const porc = calculatePorc(h);
-          return (
-            <div 
-              key={h.id} 
-              onClick={() => handleMark(h.id)}
-              className="bg-neutral-900/40 border border-neutral-800 rounded-[2rem] p-6 relative group cursor-pointer active:scale-95 transition-all overflow-hidden"
-              style={{ borderLeft: `8px solid ${h.color}` }}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-white flex items-center gap-3 italic">
-                  <span className="text-2xl not-italic">{h.icon}</span> {h.name}
-                </h3>
-                <button 
-                  onClick={(e) => handleUndo(h.id, e)}
-                  className="w-10 h-10 bg-black rounded-xl border border-neutral-800 flex items-center justify-center text-neutral-500 hover:text-red-500 transition-colors"
-                >
-                  <Undo2 className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <div className="h-3 bg-black rounded-full overflow-hidden mb-3 border border-neutral-800">
-                <div 
-                  className="h-full transition-all duration-1000" 
-                  style={{ width: `${porc}%`, backgroundColor: h.color }}
-                />
-              </div>
-              
-              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-neutral-500">
-                <span>Victorias: {h.history.length}</span>
-                <span style={{ color: h.color }}>{porc}% Éxito</span>
-              </div>
-            </div>
-          );
-        })}
-
-        <div 
-          onClick={() => setShowAddModal(true)}
-          className="border-2 border-dashed border-neutral-800 rounded-[2rem] p-8 flex flex-col items-center justify-center gap-3 text-neutral-600 hover:border-neutral-500 hover:text-neutral-400 transition-all cursor-pointer bg-neutral-900/10"
-        >
-          <Plus className="w-8 h-8" />
-          <span className="text-xs font-black uppercase tracking-widest">Añadir Meta</span>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderRoadmap = () => (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
-      <header className="mb-8 border-b border-neutral-800 pb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Zap className="text-yellow-400 w-6 h-6 fill-yellow-400" />
-          <h1 className="text-2xl md:text-3xl font-black tracking-tighter text-white uppercase italic">Sistema 3 de Junio</h1>
-        </div>
-        <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">
-          Reingeniería Personal • Inicio: 24 de Febrero
-        </p>
-      </header>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Objetivos Globales */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="bg-neutral-900/40 border border-neutral-800/60 p-6 rounded-[2.5rem] sticky top-8 backdrop-blur-md">
-            <h2 className="text-xs font-black uppercase tracking-widest text-neutral-400 mb-6 flex items-center gap-2">
-              <ListChecks className="w-4 h-4 text-purple-400" /> Los 12 Objetivos
-            </h2>
-            <div className="space-y-2">
-              {allObjectives.map((obj) => (
-                <div key={obj.id} className="flex items-center gap-3 p-2 rounded-xl border border-transparent hover:bg-white/5 transition-all group">
-                  <div className="w-6 h-6 rounded-lg bg-neutral-800 group-hover:bg-neutral-700 flex items-center justify-center text-[10px] font-bold text-neutral-400 italic">
-                    {obj.id}
-                  </div>
-                  <span className="text-[11px] font-bold text-neutral-300 group-hover:text-white">{obj.text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Pasos Cronológicos */}
-        <div className="lg:col-span-8 relative">
-          <div className="absolute left-6 top-0 bottom-0 w-px bg-neutral-800/50"></div>
-          <div className="space-y-6">
-            {steps.map((step) => (
-              <div 
-                key={step.id}
-                onClick={() => setExpandedStep(step.id)}
-                className="relative pl-16 group cursor-pointer"
-              >
-                <div className={`absolute left-0 top-0 w-12 h-12 rounded-2xl flex items-center justify-center z-10 border transition-all duration-300 ${
-                  expandedStep === step.id ? 'bg-white text-black border-white shadow-xl' : 'bg-black text-neutral-600 border-neutral-800'
-                }`}>
-                  <span className="font-black italic text-base">{step.id}</span>
-                </div>
-
-                <div className={`p-6 md:p-8 rounded-[2.5rem] border-2 transition-all duration-500 ${
-                  expandedStep === step.id 
-                  ? `${step.color} bg-neutral-900/60 shadow-2xl backdrop-blur-md` 
-                  : 'border-transparent bg-neutral-900/10 opacity-30 group-hover:opacity-50'
-                }`}>
-                  <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
-                    <div className="flex items-center gap-4">
-                      <div className="p-2.5 bg-neutral-800 rounded-xl">{step.icon}</div>
-                      <h3 className="text-xl md:text-2xl font-black text-white italic uppercase tracking-tighter leading-tight">{step.title}</h3>
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest bg-white text-black px-4 py-1.5 rounded-full whitespace-nowrap">
-                      {step.tag}
-                    </span>
-                  </div>
-
-                  {expandedStep === step.id && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-4">
-                      <div className="space-y-4">
-                        <h4 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest flex items-center gap-2 border-b border-neutral-800 pb-2">
-                          <Zap className="w-3 h-3 text-yellow-500" /> Acciones
-                        </h4>
-                        <ul className="space-y-3">
-                          {step.tasks.map((task, i) => (
-                            <li key={i} className="flex items-start gap-3 group/task">
-                              <div className="mt-2 w-1.5 h-1.5 rounded-full bg-neutral-700 group-hover/task:bg-white shrink-0"></div>
-                              <span className="text-xs font-semibold text-neutral-300 leading-tight group-hover/task:text-white">{task}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="space-y-4">
-                        <div className="p-5 bg-black/50 rounded-[2rem] border border-neutral-800">
-                          <h4 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3">Impacto Final</h4>
-                          <p className="text-[11px] text-neutral-400 leading-relaxed italic font-medium">{step.impact}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-black text-neutral-200 font-sans p-4 md:p-8 selection:bg-white selection:text-black">
-      <div className="max-w-4xl mx-auto">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         
-        {/* NAVEGACIÓN DE PESTAÑAS */}
-        {activeTab === 'seguimiento' ? renderSeguimiento() : renderRoadmap()}
+        body {
+            background-color: black;
+            color: #e5e5e5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain;
+        }
 
-        {/* BARRA INFERIOR (iPhone Floating Nav) */}
-        <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-neutral-900/80 backdrop-blur-xl border border-neutral-800 rounded-[2.5rem] p-2 flex gap-2 shadow-2xl z-[100] w-[92%] max-w-sm">
-          <button 
-            onClick={() => setActiveTab('seguimiento')}
-            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-[2rem] transition-all duration-300 font-black uppercase text-[10px] tracking-widest ${
-              activeTab === 'seguimiento' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'
-            }`}
-          >
-            <BarChart3 className="w-4 h-4" /> <span>Metas</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('roadmap')}
-            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-[2rem] transition-all duration-300 font-black uppercase text-[10px] tracking-widest ${
-              activeTab === 'roadmap' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'
-            }`}
-          >
-            <Map className="w-4 h-4" /> <span>Ruta</span>
-          </button>
-          <button 
-            onClick={() => setShowSettings(true)}
-            className="w-14 h-14 flex items-center justify-center rounded-full bg-neutral-800 text-neutral-400 hover:text-white transition-all"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-        </nav>
+        .animate-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
 
-        {/* MODAL NUEVA META */}
-        {showAddModal && (
-          <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[2000] flex items-center justify-center p-6 animate-in fade-in duration-300">
-            <div className="bg-neutral-900 border border-neutral-800 w-full max-w-md rounded-[3rem] p-10 relative">
-              <button onClick={() => setShowAddModal(false)} className="absolute top-8 right-8 text-neutral-500 hover:text-white"><X /></button>
-              <h2 className="text-2xl font-black italic tracking-tighter text-white mb-8 uppercase">Añadir Meta</h2>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Nombre</label>
-                  <input 
-                    type="text" value={newName} onChange={e => setNewName(e.target.value)}
-                    className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none focus:border-white transition-all"
-                    placeholder="Ej: Meditación profunda"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Emoji</label>
-                  <input 
-                    type="text" value={newIcon} onChange={e => setNewIcon(e.target.value)}
-                    className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none"
-                    placeholder="🔥"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Color de Enfoque</label>
-                  <div className="flex gap-3 flex-wrap">
-                    {PRESET_COLORS.map(c => (
-                      <div 
-                        key={c} onClick={() => setSelectedColor(c)}
-                        className={`w-10 h-10 rounded-full cursor-pointer transition-all border-4 ${selectedColor === c ? 'border-white scale-110' : 'border-transparent'}`}
-                        style={{ backgroundColor: c }}
-                      />
-                    ))}
-                    <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-500 relative overflow-hidden">
-                      <Plus className="w-5 h-5" />
-                      <input type="color" className="absolute opacity-0 inset-0 cursor-pointer" onChange={e => setSelectedColor(e.target.value)} />
-                    </div>
-                  </div>
-                </div>
-                <button onClick={addHabit} className="w-full bg-white text-black font-black py-5 rounded-2xl mt-4 uppercase text-xs tracking-widest hover:scale-[1.02] active:scale-95 transition-all">Crear Meta</button>
-              </div>
-            </div>
-          </div>
-        )}
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-        {/* MODAL AJUSTES */}
-        {showSettings && (
-          <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-[2000] flex items-center justify-center p-6 animate-in fade-in duration-300">
-            <div className="bg-neutral-900 border border-neutral-800 w-full max-w-md max-h-[85vh] overflow-y-auto rounded-[3rem] p-10 relative custom-scrollbar">
-              <button onClick={() => setShowSettings(false)} className="absolute top-8 right-8 text-neutral-500 hover:text-white"><X /></button>
-              <h2 className="text-2xl font-black italic tracking-tighter text-white mb-8 uppercase tracking-tight">Preferencias</h2>
-              
-              <div className="space-y-8">
-                <div className="text-center">
-                  <span className={`text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest ${API_KEY ? 'bg-green-500/10 text-green-500' : 'bg-orange-500/10 text-orange-500'}`}>
-                    {API_KEY ? 'IA Gemini Activa ✅' : 'Modo Rescate (Sin IA) ⚠️'}
-                  </span>
-                </div>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2c2c2e;
+            border-radius: 10px;
+        }
 
-                {!isSynced && (
-                  <div className="bg-blue-500/5 border border-blue-500/20 p-6 rounded-3xl">
-                    <h3 className="text-xs font-black uppercase text-blue-400 mb-4 tracking-widest">Traspaso Histórico</h3>
-                    <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full bg-black border border-neutral-800 p-4 rounded-xl text-white mb-4" />
-                    <div className="space-y-3">
-                      {habits.map(h => (
-                        <div key={h.id} className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-neutral-800">
-                          <span className="text-xs font-bold text-neutral-300">{h.icon} {h.name}</span>
-                          <input 
-                            type="number" placeholder="Wins" 
-                            className="bg-neutral-800 text-white w-16 p-2 rounded-lg text-center text-xs outline-none focus:border-blue-500" 
-                            onBlur={(e) => {
-                              const val = parseInt(e.target.value) || 0;
-                              setHabits(prev => prev.map(hab => {
-                                if (hab.id === h.id) {
-                                  let newHist = [];
-                                  let curr = new Date(startDate + "T12:00:00");
-                                  for (let i = 0; i < val; i++) {
-                                    newHist.push(curr.toISOString().split('T')[0]);
-                                    curr.setUTCDate(curr.getUTCDate() + 1);
-                                  }
-                                  return { ...hab, history: newHist };
-                                }
-                                return hab;
-                              }));
-                            }}
-                          />
+        /* Bloqueo de zoom en iOS */
+        input, textarea {
+            font-size: 16px !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- ICON HELPER COMPONENT (REFORZADO) ---
+        const Icon = ({ name, className = "w-5 h-5", color = "currentColor", fill = "none" }) => {
+            const iconRef = useRef(null);
+
+            useEffect(() => {
+                if (iconRef.current) {
+                    iconRef.current.innerHTML = '';
+                    try {
+                        // Validación y Fallback para evitar errores tipográficos
+                        const lucideName = name.charAt(0).toUpperCase() + name.slice(1);
+                        const iconData = lucide[name] || lucide[lucideName] || lucide['Zap'];
+                        
+                        lucide.createIcons({
+                            icons: { [name]: iconData },
+                            attrs: { 
+                                class: className,
+                                stroke: color,
+                                fill: fill
+                            }
+                        });
+                    } catch (e) {
+                        console.error("Error cargando icono:", name);
+                    }
+                }
+            }, [name, className, color, fill]);
+
+            return <span ref={iconRef} className="inline-flex items-center justify-center"></span>;
+        };
+
+        // --- CONFIGURACIÓN Y CONSTANTES ---
+        const API_KEY = "AIzaSyBcEYRrKA_dIp7iTMiztuAnqujvqa6-9EI"; 
+        const KEY_H = 'res_v11_habits';
+        const KEY_S = 'res_v11_start';
+        const KEY_M = 'res_v11_mock';
+        const KEY_SYNCED = 'res_v11_is_synced';
+        const PRESET_COLORS = ["#007aff", "#34c759", "#ff3b30", "#ff9500", "#af52de", "#ff2d55"];
+
+        const getLocalISODate = () => {
+            const hoy = new Date();
+            const offset = hoy.getTimezoneOffset() * 60000;
+            return (new Date(hoy - offset)).toISOString().split('T')[0];
+        };
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('seguimiento'); 
+            const [habits, setHabits] = useState([]);
+            const [startDate, setStartDate] = useState(getLocalISODate());
+            const [isSynced, setIsSynced] = useState(false);
+            
+            const [showAddModal, setShowAddModal] = useState(false);
+            const [showSettings, setShowSettings] = useState(false);
+            const [showJuez, setShowJuez] = useState(false);
+            
+            const [reflection, setReflection] = useState("");
+            const [aiFeedback, setAiFeedback] = useState("");
+            const [isAiLoading, setIsAiLoading] = useState(false);
+            const [verdictValid, setVerdictValid] = useState(null);
+
+            const [newName, setNewName] = useState("");
+            const [newIcon, setNewIcon] = useState("Flame");
+            const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
+
+            const managerListRef = useRef(null);
+
+            useEffect(() => {
+                const savedHabits = JSON.parse(localStorage.getItem(KEY_H)) || [];
+                const savedStart = localStorage.getItem(KEY_S) || getLocalISODate();
+                const savedSynced = localStorage.getItem(KEY_SYNCED) === 'true';
+                
+                setHabits(savedHabits);
+                setStartDate(savedStart);
+                setIsSynced(savedSynced);
+                
+                checkJuezStatus(savedHabits);
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem(KEY_H, JSON.stringify(habits));
+                localStorage.setItem(KEY_S, startDate);
+                localStorage.setItem(KEY_SYNCED, isSynced.toString());
+            }, [habits, startDate, isSynced]);
+
+            const checkJuezStatus = (currentHabits) => {
+                const mock = localStorage.getItem(KEY_M);
+                let ultima;
+
+                if (mock) {
+                    ultima = new Date(mock + "T12:00:00");
+                } else {
+                    let fechasValidas = [];
+                    currentHabits.forEach(h => {
+                        if (h.history.length > 0) {
+                            const sorted = [...h.history].sort().reverse();
+                            fechasValidas.push(new Date(sorted[0] + "T12:00:00"));
+                        }
+                    });
+                    if (fechasValidas.length === 0) return;
+                    ultima = new Date(Math.max(...fechasValidas));
+                }
+
+                const hoy = new Date();
+                hoy.setHours(12, 0, 0, 0);
+                ultima.setHours(12, 0, 0, 0);
+
+                const diff = Math.floor((hoy - ultima) / (1000 * 60 * 60 * 24));
+                if (diff > 7) setShowJuez(true);
+            };
+
+            const consultarAlJuez = async () => {
+                if (reflection.trim().length < 20) return;
+                setIsAiLoading(true);
+                
+                if (!API_KEY) {
+                    setTimeout(() => {
+                        setAiFeedback("PROTOCOLO DE RESCATE: IA no detectada. Se registra tu reflexión. No vuelvas a fallar.");
+                        setVerdictValid(true);
+                        setIsAiLoading(false);
+                    }, 1500);
+                    return;
+                }
+
+                try {
+                    // PROMPT REFORZADO PARA EL SISTEMA 3 DE JUNIO Y SPLENDOR
+                    const prompt = `Actúa como un Juez implacable del "Sistema 3 de Junio".
+                    Contexto del Usuario: Está en un proceso de reingeniería personal profunda. Sus metas incluyen el lanzamiento de su marca de ropa SPLENDOR, el detox total de marihuana y el éxito académico.
+                    Situación: Ha estado inactivo más de 7 días.
+                    Reflexión del usuario: "${reflection}".
+                    Tarea: Evalúa si su excusa es válida para alguien que aspira a la grandeza con SPLENDOR o si es simple mediocridad.
+                    Responde estrictamente un JSON limpio: { "valid": boolean, "verdict": "string (un mensaje corto, potente y desafiante)" }`;
+                    
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+                    
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
+                    });
+                    
+                    const data = await res.json();
+                    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                    text = text.replace(/```json|```/gi, "").trim(); 
+                    const result = JSON.parse(text);
+                    
+                    setAiFeedback(result.verdict);
+                    setVerdictValid(result.valid);
+                } catch (e) {
+                    setAiFeedback("Error de conexión con el tribunal. Desbloqueo manual de emergencia habilitado.");
+                    setVerdictValid(true);
+                } finally {
+                    setIsAiLoading(false);
+                }
+            };
+
+            const handleMark = (id) => {
+                const hoy = getLocalISODate();
+                setHabits(prev => prev.map(h => {
+                    if (h.id === id && !h.history.includes(hoy)) {
+                        return { ...h, history: [...h.history, hoy] };
+                    }
+                    return h;
+                }));
+                localStorage.removeItem(KEY_M);
+            };
+
+            const handleUndo = (id, e) => {
+                e.stopPropagation();
+                const hoy = getLocalISODate();
+                setHabits(prev => prev.map(h => {
+                    if (h.id === id) {
+                        return { ...h, history: h.history.filter(d => d !== hoy) };
+                    }
+                    return h;
+                }));
+            };
+
+            const calculatePorc = (h) => {
+                const start = new Date(startDate + "T12:00:00");
+                const hoy = new Date();
+                const diff = Math.floor((hoy - start) / (1000 * 60 * 60 * 24)) + 1;
+                return Math.min(100, Math.round((h.history.length / (diff || 1)) * 100));
+            };
+
+            const getGlobalStats = () => {
+                if (habits.length === 0) return 0;
+                let total = 0;
+                habits.forEach(h => total += calculatePorc(h));
+                return Math.round(total / habits.length);
+            };
+
+            const addHabit = () => {
+                if (!newName) return;
+                const newHabit = {
+                    id: 'h' + Date.now(),
+                    name: newName,
+                    icon: newIcon,
+                    color: selectedColor,
+                    history: []
+                };
+                setHabits([...habits, newHabit]);
+                setNewName("");
+                setShowAddModal(false);
+            };
+
+            // --- ROADMAP DATA ---
+            const [expandedStep, setExpandedStep] = useState(1);
+            const allObjectives = [
+                { id: "1", text: "Dejar de fumar marihuana" },
+                { id: "2", text: "Aclarar mi futuro (Académico)" },
+                { id: "3", text: "Ejercicio (Cuerpo y mente)" },
+                { id: "4", text: "Meditar (Gym cerebral)" },
+                { id: "5", text: "Controlar mi mente (Enfoque)" },
+                { id: "6", text: "Despertarse temprano (6:30 AM)" },
+                { id: "7", text: "Dormirse temprano (10:30 PM)" },
+                { id: "8", text: "Aprender (Inglés y Excel)" },
+                { id: "9", text: "Tener un trabajo" },
+                { id: "10", text: "SPLENDOR (Marca de Ropa)" },
+                { id: "11", text: "Tener Dinero" },
+                { id: "12", text: "Recuperar mi cabello (Tratamiento)" }
+            ];
+
+            const steps = [
+                { id: 1, title: "Nivel 1: El Reset Bioquímico", icon: 'Flame', tag: "24 Feb - 24 Mar", objectives: ["1", "6", "7"], tasks: ["Purga de parafernalia estricta", "Cero contacto con círculos de consumo", "Dormir 10:30 PM / Despertar 6:30 AM", "Uso obligatorio del Seguimiento Pro"], impact: "Limpiar el cerebro es el paso único para recuperar la voluntad.", color: "border-red-500/50", iconColor: "text-red-400" },
+                { id: 2, title: "Nivel 2: Mente y Estabilidad", icon: 'Brain', tag: "24 Feb - 24 Mar", objectives: ["2", "3", "4", "5", "9"], tasks: ["Meditación AM/PM (10 min)", "Rutina de ejercicio diaria", "Búsqueda activa de empleo", "Definición académica final"], impact: "Eliminas la incertidumbre y aseguras sustento.", color: "border-orange-500/50", iconColor: "text-orange-400" },
+                { id: 3, title: "Nivel 3: Deep Work", icon: 'BookOpen', tag: "Marzo - Abril", objectives: ["8"], tasks: ["Inscripción Inglés", "Lectura 15 páginas diarias", "Dedicación total a Excel", "Estudio profundo sin celular"], impact: "Pasas de la intención a la competencia técnica.", color: "border-blue-500/50", iconColor: "text-blue-400" },
+                { id: 4, title: "Nivel 4: Consolidación", icon: 'Wallet', tag: "Abril - Mayo", objectives: ["11", "12"], tasks: ["Gestión de primeros ingresos", "Inicio Tratamiento Capilar", "Inversión en alimentación/gym", "Ahorro específico movilidad"], impact: "El dinero pasa a ser herramienta de inversión.", color: "border-emerald-500/50", iconColor: "text-emerald-400" },
+                { id: 5, title: "Nivel 5: Cúspide Splendor", icon: 'Palette', tag: "3 de Junio", objectives: ["10", "11"], tasks: ["Lanzamiento Marca SPLENDOR", "Trámite Licencia / Ahorro Moto", "Renovación de imagen personal", "Nueva identidad libre de humo"], impact: "Manifestación final del proceso al 3 de Junio.", color: "border-purple-500/50", iconColor: "text-purple-400" }
+            ];
+
+            const renderSeguimiento = () => (
+                <div className="animate-in pb-32">
+                    <header className="mb-8 px-2">
+                        <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase leading-none">Seguimiento</h1>
+                        <p className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mt-2">Consistencia Activa • {habits.length} Metas</p>
+                    </header>
+
+                    <div className="bg-neutral-900/60 border border-neutral-800 p-8 rounded-[2.5rem] mb-8 shadow-2xl backdrop-blur-md">
+                        <div className="flex justify-between items-baseline mb-4">
+                            <span className="text-[11px] font-black text-neutral-500 tracking-[0.2em] uppercase">Progreso Global</span>
+                            <span className="text-5xl font-black text-white italic tracking-tighter">{getGlobalStats()}%</span>
                         </div>
-                      ))}
+                        <div className="h-4 bg-black rounded-full overflow-hidden border border-neutral-800 p-[2px]">
+                            <div className="h-full bg-gradient-to-r from-blue-600 to-emerald-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${getGlobalStats()}%` }} />
+                        </div>
                     </div>
-                    <button onClick={() => setIsSynced(true)} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl mt-6 uppercase text-[10px] tracking-widest">Confirmar Migración</button>
-                  </div>
-                )}
 
-                <div>
-                  <h3 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-4">Reordenar Metas</h3>
-                  <div className="space-y-3" ref={managerListRef}>
-                    {habits.map((h) => (
-                      <div key={h.id} data-id={h.id} className="flex justify-between items-center bg-black border border-neutral-800 p-4 rounded-2xl group cursor-grab active:cursor-grabbing">
-                        <span className="text-sm font-bold text-neutral-300">≡ {h.icon} {h.name}</span>
-                        <button 
-                          onClick={() => setHabits(habits.filter(hab => hab.id !== h.id))}
-                          className="text-red-500 p-2 hover:bg-red-500/10 rounded-lg transition-all"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                    <div className="grid gap-4">
+                        {habits.map(h => {
+                            const porc = calculatePorc(h);
+                            return (
+                                <div key={h.id} onClick={() => handleMark(h.id)} className="bg-neutral-900/40 border border-neutral-800 rounded-[2.2rem] p-6 relative group cursor-pointer active:scale-95 transition-all overflow-hidden" style={{ borderLeft: `10px solid ${h.color}` }}>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-xl font-bold text-white flex items-center gap-3 italic">
+                                            <Icon name={h.icon} className="w-6 h-6" /> {h.name}
+                                        </h3>
+                                        <button onClick={(e) => handleUndo(h.id, e)} className="w-10 h-10 bg-black rounded-xl border border-neutral-800 flex items-center justify-center text-neutral-500 hover:text-red-500 active:bg-red-500/10 transition-colors">
+                                            <Icon name="Undo2" className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                    <div className="h-3 bg-black rounded-full overflow-hidden mb-3 border border-neutral-800">
+                                        <div className="h-full transition-all duration-1000 rounded-full" style={{ width: `${porc}%`, backgroundColor: h.color }} />
+                                    </div>
+                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-neutral-500">
+                                        <span>Victorias: {h.history.length}</span>
+                                        <span style={{ color: h.color }}>{porc}% Éxito</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        <div onClick={() => setShowAddModal(true)} className="border-2 border-dashed border-neutral-800 rounded-[2.2rem] p-10 flex flex-col items-center justify-center gap-3 text-neutral-600 hover:border-neutral-500 hover:text-neutral-400 transition-all cursor-pointer bg-neutral-900/10">
+                            <Icon name="Plus" className="w-8 h-8" />
+                            <span className="text-xs font-black uppercase tracking-widest">Añadir Nueva Meta</span>
+                        </div>
+                    </div>
                 </div>
+            );
 
-                <div className="pt-4 border-t border-neutral-800">
-                  <button 
-                    onClick={() => { if(confirm("¿Eliminar todos los datos?")) { localStorage.clear(); location.reload(); } }}
-                    className="w-full border border-red-500/50 text-red-500 font-black py-4 rounded-2xl uppercase text-[10px] tracking-widest"
-                  >
-                    Purgar Memoria del Sistema
-                  </button>
+            const renderRoadmap = () => (
+                <div className="animate-in pb-32">
+                    <header className="mb-8 px-2 border-b border-neutral-800 pb-8">
+                        <div className="flex items-center gap-3 mb-2">
+                            <Icon name="Zap" className="text-yellow-400 w-6 h-6" fill="yellow" />
+                            <h1 className="text-3xl font-black tracking-tighter text-white uppercase italic">Plan Maestro</h1>
+                        </div>
+                        <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Reingeniería Personal • Inicio: 24 de Febrero</p>
+                    </header>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        <div className="lg:col-span-4 space-y-6">
+                            <div className="bg-neutral-900/40 border border-neutral-800/60 p-6 rounded-[2.5rem] sticky top-8 backdrop-blur-md">
+                                <h2 className="text-xs font-black uppercase tracking-widest text-neutral-400 mb-6 flex items-center gap-2">
+                                    <Icon name="ListChecks" className="w-4 h-4 text-purple-400" /> Los 12 Objetivos
+                                </h2>
+                                <div className="space-y-1">
+                                    {allObjectives.map((obj) => (
+                                        <div key={obj.id} className="flex items-center gap-3 p-2 rounded-xl border border-transparent hover:bg-white/5 transition-all group">
+                                            <div className="w-6 h-6 rounded-lg bg-neutral-800 group-hover:bg-neutral-700 flex items-center justify-center text-[10px] font-bold text-neutral-400 italic shrink-0">
+                                                {obj.id}
+                                            </div>
+                                            <span className="text-[11px] font-bold text-neutral-300 group-hover:text-white truncate">{obj.text}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="lg:col-span-8 relative">
+                            <div className="absolute left-6 top-0 bottom-0 w-px bg-neutral-800/30"></div>
+                            <div className="space-y-6">
+                                {steps.map((step) => (
+                                    <div key={step.id} onClick={() => setExpandedStep(step.id)} className="relative pl-16 group cursor-pointer">
+                                        <div className={`absolute left-0 top-0 w-12 h-12 rounded-2xl flex items-center justify-center z-10 border transition-all duration-300 ${expandedStep === step.id ? 'bg-white text-black border-white shadow-xl scale-110' : 'bg-black text-neutral-600 border-neutral-800'}`}>
+                                            <span className="font-black italic text-base">{step.id}</span>
+                                        </div>
+                                        <div className={`p-6 md:p-8 rounded-[2.5rem] border-2 transition-all duration-500 ${expandedStep === step.id ? `${step.color} bg-neutral-900/60 shadow-2xl backdrop-blur-md` : 'border-transparent bg-neutral-900/10 opacity-30 group-hover:opacity-50'}`}>
+                                            <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-2.5 bg-neutral-800 rounded-xl">
+                                                        <Icon name={step.icon} className={`w-5 h-5 ${step.iconColor}`} />
+                                                    </div>
+                                                    <h3 className="text-xl md:text-2xl font-black text-white italic uppercase tracking-tighter leading-tight">{step.title}</h3>
+                                                </div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest bg-white text-black px-4 py-1.5 rounded-full whitespace-nowrap">
+                                                    {step.tag}
+                                                </span>
+                                            </div>
+                                            {expandedStep === step.id && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in">
+                                                    <div className="space-y-4">
+                                                        <h4 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest flex items-center gap-2 border-b border-neutral-800 pb-2">
+                                                            <Icon name="Zap" className="w-3 h-3 text-yellow-500" fill="yellow" /> Acciones
+                                                        </h4>
+                                                        <ul className="space-y-3">
+                                                            {step.tasks.map((task, i) => (
+                                                                <li key={i} className="flex items-start gap-3 group/task">
+                                                                    <div className="mt-2 w-1.5 h-1.5 rounded-full bg-neutral-700 group-hover/task:bg-white shrink-0"></div>
+                                                                    <span className="text-xs font-semibold text-neutral-300 leading-tight group-hover/task:text-white">{task}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                    <div className="space-y-4">
+                                                        <div className="p-5 bg-black/50 rounded-[2rem] border border-neutral-800">
+                                                            <h4 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3">Impacto Final</h4>
+                                                            <p className="text-[11px] text-neutral-400 leading-relaxed italic font-medium">{step.impact}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
+            );
 
-        {/* MODAL JUEZ (ESTRICTO) */}
-        {showJuez && (
-          <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl z-[3000] flex items-center justify-center p-6 animate-in zoom-in duration-500">
-            <div className="bg-neutral-900 border-2 border-red-500/30 w-full max-w-lg rounded-[3.5rem] p-10 text-center shadow-[0_0_100px_rgba(255,59,48,0.2)]">
-              <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-6" />
-              <h2 className="text-[10px] font-black text-red-500 uppercase tracking-[0.5em] mb-3">Audiencia de Resiliencia</h2>
-              <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase mb-6 leading-none">Consistencia Perdida</h1>
-              <p className="text-neutral-400 text-sm mb-8 px-4 font-medium leading-relaxed">
-                Inactividad mayor a 7 días detectada. El tribunal exige tu defensa para decidir si preservas tu progreso o ejecutas el reinicio.
-              </p>
-              
-              <textarea 
-                value={reflection} onChange={e => setReflection(e.target.value)}
-                placeholder="Explica tu abandono honestamente..."
-                className="w-full bg-black border border-neutral-800 rounded-3xl p-6 text-white text-sm outline-none focus:border-red-500 transition-all mb-6 min-h-[140px]"
-              />
+            return (
+                <div className="min-h-screen bg-black text-neutral-200 font-sans p-4 md:p-8 selection:bg-white selection:text-black">
+                    <div className="max-w-4xl mx-auto relative">
+                        
+                        {activeTab === 'seguimiento' ? renderSeguimiento() : renderRoadmap()}
 
-              {aiFeedback && (
-                <div className="bg-white/5 border border-white/10 p-5 rounded-2xl text-neutral-300 text-xs italic mb-6 animate-in slide-in-from-bottom-2">
-                  {aiFeedback}
+                        {/* NAVBAR INFERIOR ESTILO IPHONE */}
+                        <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-neutral-900/90 backdrop-blur-2xl border border-neutral-800 rounded-[2.8rem] p-2 flex gap-2 shadow-2xl z-[100] w-[92%] max-w-sm">
+                            <button onClick={() => setActiveTab('seguimiento')} className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-[2.2rem] transition-all duration-300 font-black uppercase text-[10px] tracking-widest ${activeTab === 'seguimiento' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'}`}>
+                                <Icon name="BarChart3" className="w-4 h-4" /> <span>Metas</span>
+                            </button>
+                            <button onClick={() => setActiveTab('roadmap')} className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-[2.2rem] transition-all duration-300 font-black uppercase text-[10px] tracking-widest ${activeTab === 'roadmap' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'}`}>
+                                <Icon name="Map" className="w-4 h-4" /> <span>Ruta</span>
+                            </button>
+                            <button onClick={() => setShowSettings(true)} className="w-14 h-14 flex items-center justify-center rounded-full bg-neutral-800 text-neutral-400 hover:text-white active:scale-90 transition-all">
+                                <Icon name="Settings" className="w-5 h-5" />
+                            </button>
+                        </nav>
+
+                        {/* MODALES */}
+                        {showAddModal && (
+                            <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[2000] flex items-center justify-center p-6 animate-in">
+                                <div className="bg-neutral-900 border border-neutral-800 w-full max-w-md rounded-[3rem] p-10 relative">
+                                    <button onClick={() => setShowAddModal(false)} className="absolute top-8 right-8 text-neutral-500 hover:text-white"><Icon name="X" /></button>
+                                    <h2 className="text-2xl font-black italic tracking-tighter text-white mb-8 uppercase">Nueva Meta</h2>
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Nombre</label>
+                                            <input type="text" value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none focus:border-white transition-all" placeholder="Ej: No fumar" />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Icono (Lucide name)</label>
+                                            <input type="text" value={newIcon} onChange={e => setNewIcon(e.target.value)} className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none" placeholder="Flame, Brain, Wallet..." />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Color</label>
+                                            <div className="flex gap-3 flex-wrap">
+                                                {PRESET_COLORS.map(c => (<div key={c} onClick={() => setSelectedColor(c)} className={`w-10 h-10 rounded-full cursor-pointer transition-all border-4 ${selectedColor === c ? 'border-white scale-110' : 'border-transparent'}`} style={{ backgroundColor: c }} />))}
+                                            </div>
+                                        </div>
+                                        <button onClick={addHabit} className="w-full bg-white text-black font-black py-5 rounded-2xl mt-4 uppercase text-xs tracking-widest hover:scale-[1.02] active:scale-95 transition-all">Crear Meta</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {showSettings && (
+                            <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-[2000] flex items-center justify-center p-6 animate-in">
+                                <div className="bg-neutral-900 border border-neutral-800 w-full max-w-md max-h-[85vh] overflow-y-auto rounded-[3rem] p-10 relative custom-scrollbar">
+                                    <button onClick={() => setShowSettings(false)} className="absolute top-8 right-8 text-neutral-500 hover:text-white"><Icon name="X" /></button>
+                                    <h2 className="text-2xl font-black italic tracking-tighter text-white mb-8 uppercase">Ajustes</h2>
+                                    <div className="space-y-8">
+                                        <div className="text-center">
+                                            <span className={`text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest ${API_KEY ? 'bg-green-500/10 text-green-500' : 'bg-orange-500/10 text-orange-500'}`}>
+                                                {API_KEY ? 'IA Gemini Activa ✅' : 'Modo Rescate ⚠️'}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-4">Metas Actuales</h3>
+                                            <div className="space-y-3">
+                                                {habits.map((h) => (
+                                                    <div key={h.id} className="flex justify-between items-center bg-black border border-neutral-800 p-4 rounded-2xl">
+                                                        <span className="text-sm font-bold text-neutral-300">≡ {h.name}</span>
+                                                        <button onClick={() => setHabits(habits.filter(hab => hab.id !== h.id))} className="text-red-500 p-2"><Icon name="Trash2" className="w-4 h-4" /></button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="pt-4 border-t border-neutral-800">
+                                            <button onClick={() => { if(confirm("¿Purgar todos los datos?")) { localStorage.clear(); location.reload(); } }} className="w-full border border-red-500/50 text-red-500 font-black py-4 rounded-2xl uppercase text-[10px] tracking-widest">Purgar Memoria del Sistema</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {showJuez && (
+                            <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl z-[3000] flex items-center justify-center p-6 animate-in">
+                                <div className="bg-neutral-900 border-2 border-red-500/30 w-full max-w-lg rounded-[3.5rem] p-10 text-center shadow-[0_0_100px_rgba(255,59,48,0.2)]">
+                                    <Icon name="ShieldAlert" className="w-16 h-16 text-red-500 mx-auto mb-6" />
+                                    <h2 className="text-[10px] font-black text-red-500 uppercase tracking-[0.5em] mb-3">Audiencia de Resiliencia</h2>
+                                    <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase mb-6 leading-none">Consistencia Perdida</h1>
+                                    <p className="text-neutral-400 text-sm mb-8 px-4 font-medium leading-relaxed">Inactividad mayor a 7 días detectada en el Sistema 3 de Junio. El tribunal de SPLENDOR exige tu defensa.</p>
+                                    <textarea value={reflection} onChange={e => setReflection(e.target.value)} placeholder="¿Por qué abandonaste tu disciplina?..." className="w-full bg-black border border-neutral-800 rounded-3xl p-6 text-white text-sm outline-none focus:border-red-500 transition-all mb-6 min-h-[140px]" />
+                                    {aiFeedback && <div className="bg-white/5 border border-white/10 p-5 rounded-2xl text-neutral-300 text-xs italic mb-6">{aiFeedback}</div>}
+                                    <button onClick={consultarAlJuez} disabled={isAiLoading || verdictValid !== null} className={`w-full font-black py-6 rounded-2xl uppercase text-xs tracking-[0.2em] transition-all shadow-xl ${verdictValid === true ? 'bg-green-500 text-white' : verdictValid === false ? 'bg-red-600 text-white' : 'bg-white text-black'}`}>
+                                        {isAiLoading ? 'DELIBERANDO...' : verdictValid === true ? 'VERDICTO: VOLVER' : verdictValid === false ? 'SENTENCIA: REINICIO' : 'PRESENTAR AUDIENCIA'}
+                                    </button>
+                                    {verdictValid === true && <button onClick={() => { localStorage.setItem(KEY_M, getLocalISODate()); setShowJuez(false); }} className="mt-4 text-xs font-black text-neutral-500 uppercase tracking-widest underline underline-offset-8">Confirmar Entrada al Sistema</button>}
+                                </div>
+                            </div>
+                        )}
+                        <footer className="mt-20 text-center pb-32">
+                            <p className="text-[9px] font-black text-neutral-800 uppercase tracking-[0.6em]">SPLENDOR • SISTEMA 3 DE JUNIO • v11.3</p>
+                        </footer>
+                    </div>
                 </div>
-              )}
+            );
+        };
 
-              <button 
-                onClick={consultarAlJuez} 
-                disabled={isAiLoading || verdictValid !== null}
-                className={`w-full font-black py-6 rounded-2xl uppercase text-xs tracking-[0.2em] transition-all shadow-xl ${
-                  verdictValid === true ? 'bg-green-500 text-white' : 
-                  verdictValid === false ? 'bg-red-600 text-white' : 
-                  'bg-white text-black hover:scale-[1.02]'
-                }`}
-              >
-                {isAiLoading ? 'DELIBERANDO...' : verdictValid === true ? 'VERDICTO: VOLVER AL CAMINO' : verdictValid === false ? 'SENTENCIA: REINICIO TOTAL' : 'PRESENTAR AUDIENCIA'}
-              </button>
-              
-              {verdictValid === true && (
-                <button 
-                  onClick={() => { localStorage.setItem(KEY_M, getLocalISODate()); setShowJuez(false); }}
-                  className="mt-4 text-xs font-black text-neutral-500 uppercase tracking-widest hover:text-white transition-all underline underline-offset-8"
-                >
-                  Confirmar Entrada al Sistema
-                </button>
-              )}
-              {verdictValid === false && (
-                <button 
-                  onClick={() => { localStorage.clear(); location.reload(); }}
-                  className="mt-4 text-xs font-black text-red-500 uppercase tracking-widest hover:text-white transition-all"
-                >
-                  Ejecutar Purgado de Datos
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        <footer className="mt-20 text-center pb-32">
-          <p className="text-[9px] font-black text-neutral-800 uppercase tracking-[0.6em]">
-            SPLENDOR • SISTEMA 3 DE JUNIO • v11.1
-          </p>
-        </footer>
-      </div>
-    </div>
-  );
-};
-
-export default App;
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
