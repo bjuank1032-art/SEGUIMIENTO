@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sistema 3 de Junio Pro v12.9</title>
+    <title>Sistema 3 de Junio Pro v13.0</title>
     
     <!-- Configuración para App iPhone -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -67,6 +67,7 @@
             line-height: 1;
         }
 
+        /* Optimización Safari iPhone */
         .glass-modal {
             background: rgba(23, 23, 23, 0.8) !important;
             backdrop-filter: blur(25px) !important;
@@ -92,14 +93,12 @@
 
         const apiKey = ""; // Inyectada o manual
 
-        // COMPONENTE ICON ACTUALIZADO: Detección de Emoji vs Lucide
         const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
             const iconRef = useRef(null);
             
             useEffect(() => {
                 if (!iconRef.current) return;
                 
-                // Regex para detectar si el string contiene emojis
                 const isEmoji = /\p{Emoji}/u.test(name) && !/^[a-zA-Z0-9-]+$/.test(name);
                 
                 if (isEmoji) {
@@ -205,26 +204,30 @@
                 if (diff > 7) setShowJuez(true);
             };
 
+            // --- FUNCIÓN callGemini ROBUSTA (v13.0) ---
             const callGemini = async (prompt) => {
                 const currentKey = userKey || apiKey;
                 if (!currentKey) throw new Error("LLAVE_FALTANTE");
 
-                // MIGRACIÓN A ENDPOINT V1 ESTABLE
                 const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${currentKey}`;
                 
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }]
+                        contents: [{ 
+                            role: "user",
+                            parts: [{ text: prompt }] 
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 800
+                        }
                     })
                 });
 
                 const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error?.message || "Fallo en la conexión");
-                }
+                if (!response.ok) throw new Error(data.error?.message || "Fallo en la conexión");
 
                 return data.candidates?.[0]?.content?.parts?.[0]?.text;
             };
@@ -248,8 +251,37 @@
                 }
             };
 
+            // --- VALIDACIÓN DE DEFENSA CON IA (v13.0) ---
+            const validarDefensa = async () => {
+                if (reflection.length < 10) return;
+                setIsAiLoading(true);
+                try {
+                    const veredicto = await callGemini(`Actúa como el Juez del Sistema 3 de Junio. Analiza si esta reflexión del usuario es honesta y merece perdón para retomar el reto. Si es aceptable, termina tu mensaje con la palabra "DESBLOQUEO_APROBADO". Reflexión: "${reflection}"`);
+                    
+                    // Mostramos el veredicto en el chat para que el usuario lo lea al volver
+                    setChatMessages(prev => [...prev, { role: 'ai', text: veredicto }]);
+                    
+                    if (veredicto.includes("DESBLOQUEO_APROBADO")) {
+                        localStorage.setItem(KEY_M, getLocalISODate());
+                        setShowJuez(false);
+                        setReflection("");
+                    } else {
+                        // Si no lo aprueba, mostramos un mensaje temporal en la audiencia
+                        setReflection(prev => prev + "\n\n[SISTEMA: Veredicto negativo. Profundiza en tu honestidad.]");
+                    }
+                } catch (e) {
+                    setChatMessages(prev => [...prev, { role: 'ai', text: "El tribunal no puede deliberar sin conexión. (Fallo de Red)" }]);
+                    // Fallback de emergencia si falla la red para no dejar al usuario bloqueado por error técnico
+                    if (confirm("Fallo de conexión con el tribunal. ¿Usar liberación de emergencia?")) {
+                        localStorage.setItem(KEY_M, getLocalISODate());
+                        setShowJuez(false);
+                    }
+                } finally {
+                    setIsAiLoading(false);
+                }
+            };
+
             const calculatePorc = (h) => {
-                // CÁLCULO DE EFICACIA DINÁMICA: Basado en createdAt o startDate
                 const baseDate = h.createdAt || startDate;
                 const start = new Date(baseDate + "T12:00:00");
                 const hoy = new Date();
@@ -275,25 +307,23 @@
                     <div className="min-h-screen bg-black flex items-center justify-center p-6 animate-in">
                         <div className="glass-modal w-full max-w-lg rounded-[4rem] p-12 text-center border-red-500/30 border">
                             <Icon name="ShieldAlert" className="w-20 h-20 text-red-500 mx-auto mb-8" />
-                            <h1 className="text-4xl font-black italic text-white uppercase mb-6 tracking-tighter">Audiencia Obligatoria</h1>
-                            <p className="text-neutral-400 text-sm mb-10 leading-relaxed italic">Has estado ausente más de 7 días. El Sistema se ha bloqueado. Presenta tu defensa.</p>
+                            <h1 className="text-4xl font-black italic text-white uppercase mb-6 tracking-tighter leading-none">Audiencia Obligatoria</h1>
+                            <p className="text-neutral-400 text-sm mb-10 leading-relaxed italic">Has estado ausente más de 7 días. El Juez IA decidirá si puedes continuar.</p>
                             
                             <textarea 
                                 value={reflection} 
                                 onChange={e => setReflection(e.target.value)} 
-                                placeholder="Escribe aquí tu reflexión o motivo de ausencia..." 
+                                placeholder="Escribe aquí tu reflexión honesta..." 
                                 className="w-full bg-black border border-neutral-800 rounded-[2.5rem] p-7 text-white text-base outline-none focus:border-red-500 transition-all mb-8 min-h-[180px] shadow-inner" 
+                                disabled={isAiLoading}
                             />
                             
                             <button 
-                                onClick={() => {
-                                    if (reflection.length < 10) return;
-                                    localStorage.setItem(KEY_M, getLocalISODate());
-                                    setShowJuez(false);
-                                }} 
-                                className="w-full bg-white text-black font-black py-7 rounded-3xl uppercase text-xs tracking-[0.3em] active:scale-95 transition-all shadow-2xl"
+                                onClick={validarDefensa} 
+                                disabled={isAiLoading || reflection.length < 10}
+                                className={`w-full font-black py-7 rounded-3xl uppercase text-xs tracking-[0.3em] active:scale-95 transition-all shadow-2xl ${isAiLoading ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' : 'bg-white text-black'}`}
                             >
-                                PRESENTAR AL JUEZ
+                                {isAiLoading ? 'EL JUEZ ESTÁ ANALIZANDO...' : 'PRESENTAR DEFENSA AL TRIBUNAL'}
                             </button>
                         </div>
                     </div>
@@ -304,21 +334,20 @@
                 <div className="min-h-screen bg-black text-neutral-200">
                     <div className="max-w-4xl mx-auto pt-6 h-screen flex flex-col">
                         
-                        {/* PESTAÑA SEGUIMIENTO */}
                         {activeTab === 'seguimiento' && (
                             <div className="animate-in pb-32">
                                 <header className="px-6 mb-8 flex justify-between items-center">
                                     <div>
                                         <h1 className="text-4xl font-black italic text-white uppercase leading-none">Metas</h1>
-                                        <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mt-2">v12.9 • Ineludible</p>
+                                        <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mt-2">v13.0 • The Purge Edition</p>
                                     </div>
                                     <button onClick={() => setShowSettings(true)} className="w-14 h-14 btn-gear-pro rounded-full flex items-center justify-center">
                                         <Icon name="Settings" className="w-6 h-6" color="white" />
                                     </button>
                                 </header>
-                                <div className="mx-4 bg-neutral-900/60 border border-neutral-800 p-8 rounded-[2.8rem] mb-10 shadow-2xl backdrop-blur-md">
+                                <div className="mx-4 glass-modal p-8 rounded-[2.8rem] mb-10 shadow-2xl">
                                     <div className="flex justify-between items-baseline mb-5">
-                                        <span className="text-[11px] font-black text-neutral-500 tracking-widest uppercase">Eficacia</span>
+                                        <span className="text-[11px] font-black text-neutral-500 tracking-widest uppercase">Eficacia Total</span>
                                         <span className="text-5xl font-black text-white italic tracking-tighter">{getGlobalStats()}%</span>
                                     </div>
                                     <div className="h-4 bg-black rounded-full overflow-hidden border border-neutral-800 p-[2px]">
@@ -349,7 +378,6 @@
                             </div>
                         )}
 
-                        {/* PESTAÑA ASISTENTE IA */}
                         {activeTab === 'asistente' && (
                             <div className="animate-in h-[85vh] flex flex-col px-6 pb-40">
                                 <header className="mb-6 border-b border-neutral-800 pb-4 pt-4">
@@ -357,7 +385,7 @@
                                         <Icon name="Zap" className="w-6 h-6 text-yellow-400" />
                                         <h2 className="text-2xl font-black italic text-white uppercase leading-none">Asistente</h2>
                                     </div>
-                                    <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-2">v1 Stable • Conexión Directa</p>
+                                    <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-2">v1 Stable • Motor Flash 1.5</p>
                                 </header>
                                 <div className="flex-1 overflow-y-auto space-y-6 custom-scrollbar mb-4 pr-2">
                                     {chatMessages.map((msg, i) => (
@@ -367,7 +395,7 @@
                                             </div>
                                         </div>
                                     ))}
-                                    {isAiLoading && <div className="text-[10px] font-black text-neutral-600 uppercase tracking-widest animate-pulse ml-2 italic">Analizando...</div>}
+                                    {isAiLoading && <div className="text-[10px] font-black text-neutral-600 uppercase tracking-widest animate-pulse ml-2 italic">Analizando veredicto...</div>}
                                     <div ref={chatEndRef} />
                                 </div>
                                 <div className="bg-neutral-900 border border-neutral-800 p-3 rounded-[2rem] flex gap-3 shadow-2xl items-center mb-10">
@@ -378,6 +406,7 @@
                                         onKeyDown={e => e.key === 'Enter' && handleSend()}
                                         placeholder="Habla con tu conciencia..." 
                                         className="flex-1 bg-transparent outline-none text-white px-4 h-12 text-sm"
+                                        disabled={isAiLoading}
                                     />
                                     <button onClick={handleSend} disabled={isAiLoading || !chatInput.trim()} className="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center active:scale-90 transition-all disabled:opacity-20 shadow-lg">
                                         <Icon name="Send" className="w-5 h-5" color="black" />
@@ -386,30 +415,27 @@
                             </div>
                         )}
 
-                        {/* PESTAÑA RUTA */}
                         {activeTab === 'roadmap' && (
                             <div className="px-6 pb-40 pt-4 animate-in">
-                                <h2 className="text-3xl font-black italic text-white uppercase mb-8">Ruta Maestro</h2>
+                                <h2 className="text-3xl font-black italic text-white uppercase mb-8 leading-none">Ruta Maestro</h2>
                                 <div className="space-y-6">
-                                    <div className="p-8 bg-neutral-900/50 border border-neutral-800 rounded-[2.5rem] flex items-center gap-6">
+                                    <div className="p-8 glass-modal rounded-[2.5rem] flex items-center gap-6 border border-blue-500/20">
                                         <Icon name="Map" className="w-8 h-8 text-blue-500" />
                                         <div>
                                             <h3 className="font-black text-white italic uppercase tracking-tighter">Fase de Resiliencia</h3>
-                                            <p className="text-xs text-neutral-500">Iniciada el 3 de Junio.</p>
+                                            <p className="text-xs text-neutral-500 mt-1">Convergencia final: 3 de Junio.</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* NAVEGACIÓN */}
                         <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-neutral-900/90 backdrop-blur-3xl border border-neutral-800 rounded-[3.5rem] p-2.5 flex gap-2 shadow-2xl z-[100] w-[90%] max-w-sm">
                             <button onClick={() => setActiveTab('seguimiento')} className={`flex-1 py-4 rounded-[3rem] font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'seguimiento' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'}`}>Metas</button>
                             <button onClick={() => setActiveTab('asistente')} className={`flex-1 py-4 rounded-[3rem] font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'asistente' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'}`}>IA</button>
                             <button onClick={() => setActiveTab('roadmap')} className={`flex-1 py-4 rounded-[3rem] font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'roadmap' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'}`}>Ruta</button>
                         </nav>
 
-                        {/* MODAL AJUSTES */}
                         {showSettings && (
                             <div className="fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-5 animate-in backdrop-blur-md">
                                 <div className="glass-modal w-full max-w-md rounded-[3.5rem] p-10 shadow-2xl">
@@ -419,7 +445,7 @@
                                     </div>
                                     <div className="space-y-8">
                                         <div>
-                                            <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Llave Gemini (API Key)</label>
+                                            <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Llave Gemini (Privada)</label>
                                             <input 
                                                 type="password" 
                                                 value={userKey} 
@@ -427,6 +453,7 @@
                                                 className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none focus:border-blue-500 text-sm shadow-inner" 
                                                 placeholder="Pega tu API Key aquí..."
                                             />
+                                            <p className="text-[9px] text-neutral-600 mt-2 italic">Solo para uso local. No queda grabada en el código.</p>
                                         </div>
                                         <div className="pt-6 border-t border-white/5">
                                             <button onClick={() => { if(confirm("¿Purgar todos los datos?")) { localStorage.clear(); location.reload(); } }} className="w-full py-4 border border-red-500/20 text-red-500 rounded-2xl text-[10px] font-black uppercase tracking-widest active:bg-red-500 active:text-white transition-all">Borrar Memoria Total</button>
