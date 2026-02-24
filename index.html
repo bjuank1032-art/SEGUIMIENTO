@@ -212,12 +212,12 @@
                 const currentKey = (userKey || apiKey).trim();
                 if (!currentKey) throw new Error("LLAVE_FALTANTE");
 
-                // Endpoint v1beta para mayor compatibilidad con modelos flash
+                // TAREA 1: Endpoint v1beta actualizado con nombre de modelo corregido
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${currentKey}`;
                 
                 const response = await fetch(url, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json' }, // TAREA 3: Cabeceras mínimas para respetar restricciones de Google Cloud
                     body: JSON.stringify({
                         contents: [{ 
                             parts: [{ text: prompt }] 
@@ -232,6 +232,10 @@
                 const data = await response.json();
                 
                 if (!response.ok) {
+                    // TAREA 2: Debug detallado si Google Cloud rechaza la conexión
+                    if (data.error) {
+                        console.error("DETALLE_GOOGLE_CLOUD:", data.error.message);
+                    }
                     throw new Error(data.error?.message || "Fallo en la conexión");
                 }
 
