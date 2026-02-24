@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sistema 3 de Junio Pro v12.2</title>
+    <title>Sistema 3 de Junio Pro v12.3</title>
     
     <!-- Configuración para App iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -35,7 +35,6 @@
             -webkit-tap-highlight-color: transparent;
             overscroll-behavior-y: contain;
             padding-top: var(--safe-top);
-            /* Padding inferior dinámico para evitar cortes con la nav bar */
             padding-bottom: calc(var(--safe-bottom) + 160px);
         }
 
@@ -46,6 +45,19 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Animación de Vibración de Peligro */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px) rotate(-1deg); }
+            75% { transform: translateX(3px) rotate(1deg); }
+        }
+
+        .btn-danger-shake:active {
+            animation: shake 0.15s ease-in-out infinite;
+            background-color: rgba(255, 59, 48, 0.2) !important;
+            border-color: #ff3b30 !important;
         }
 
         @keyframes pulse-red-soft {
@@ -69,7 +81,6 @@
             font-size: 16px !important;
         }
 
-        /* Estilo Glassmorphism para Modales */
         .glass-modal {
             background: rgba(23, 23, 23, 0.8) !important;
             backdrop-filter: blur(25px) !important;
@@ -77,7 +88,6 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* Línea de Roadmap con Degradado de Niveles */
         .roadmap-line-gradient {
             background: linear-gradient(to bottom, #ef4444, #f97316, #3b82f6, #10b981, #a855f7) !important;
         }
@@ -444,7 +454,6 @@
                                             <div className="w-7 h-7 rounded-xl bg-neutral-800 group-hover:bg-neutral-700 flex items-center justify-center text-[10px] font-bold text-neutral-400 italic shrink-0 shadow-lg">
                                                 {obj.id}
                                             </div>
-                                            {/* Jerarquía de Texto Mejorada */}
                                             <span className="text-xs font-medium text-neutral-200 group-hover:text-white truncate tracking-tight">{obj.text}</span>
                                         </div>
                                     ))}
@@ -452,7 +461,6 @@
                             </div>
                         </div>
                         <div className="lg:col-span-8 relative">
-                            {/* Línea Vertical con Degradado de Niveles */}
                             <div className="absolute left-6 top-0 bottom-0 w-1 roadmap-line-gradient rounded-full opacity-60"></div>
                             <div className="space-y-8">
                                 {steps.map((step) => (
@@ -517,7 +525,6 @@
                             </button>
                         </nav>
 
-                        {/* MODALES CON EFECTO GLASSREAL v12.2 */}
                         {showAddModal && (
                             <div className="fixed inset-0 bg-black/50 z-[2000] flex items-center justify-center p-5 animate-in">
                                 <div className="glass-modal w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[3.5rem] p-10 relative flex flex-col shadow-[0_0_60px_rgba(0,0,0,1)]">
@@ -574,12 +581,21 @@
                                                         <span className="text-sm font-bold text-neutral-300 flex items-center gap-3">
                                                             ≡ <Icon name={h.icon} className="w-4 h-4" /> {h.name}
                                                         </span>
-                                                        <div className="flex gap-2">
-                                                            <button onClick={() => openEditModal(h)} className="text-white p-3 bg-neutral-800 rounded-2xl transition-all active:scale-90">
-                                                                <Icon name="Pencil" className="w-4 h-4" />
+                                                        <div className="flex gap-3">
+                                                            {/* BOTÓN EDITAR OPTIMIZADO v12.3 */}
+                                                            <button 
+                                                                onClick={() => openEditModal(h)} 
+                                                                className="p-4 bg-neutral-800/80 hover:bg-neutral-700 rounded-2xl transition-all active:scale-90 border border-neutral-700 shadow-lg flex items-center justify-center"
+                                                            >
+                                                                <Icon name="Pencil" className="w-5 h-5" color="#ffffff" />
                                                             </button>
-                                                            <button onClick={() => { if(confirm("¿Eliminar meta?")) setHabits(habits.filter(hab => hab.id !== h.id)); }} className="text-red-500 p-3 bg-red-500/10 rounded-2xl transition-all active:scale-90">
-                                                                <Icon name="Trash2" className="w-4 h-4" />
+                                                            
+                                                            {/* BOTÓN ELIMINAR CON VIBRACIÓN v12.3 */}
+                                                            <button 
+                                                                onClick={() => { if(confirm("¿Eliminar meta?")) setHabits(habits.filter(hab => hab.id !== h.id)); }} 
+                                                                className="p-4 bg-red-500/10 hover:bg-red-500/20 rounded-2xl transition-all active:scale-90 btn-danger-shake border border-red-500/20 shadow-lg flex items-center justify-center"
+                                                            >
+                                                                <Icon name="Trash2" className="w-5 h-5" color="#ff3b30" />
                                                             </button>
                                                         </div>
                                                     </div>
@@ -596,7 +612,6 @@
                             </div>
                         )}
 
-                        {/* MODAL JUEZ CON PULSO DE VALIDACIÓN */}
                         {showJuez && (
                             <div className="fixed inset-0 bg-black/60 z-[3000] flex items-center justify-center p-5 animate-in">
                                 <div className="glass-modal w-full max-w-lg rounded-[4rem] p-12 text-center shadow-[0_0_120px_rgba(255,59,48,0.25)]">
@@ -627,7 +642,7 @@
 
                         <footer className="mt-24 text-center pb-40">
                             <p className="text-[10px] font-black text-neutral-800 uppercase tracking-[0.7em] px-6">
-                                SPLENDOR • SISTEMA 3 DE JUNIO • v12.2
+                                SPLENDOR • SISTEMA 3 DE JUNIO • v12.3
                             </p>
                         </footer>
                     </div>
