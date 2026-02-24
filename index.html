@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Splendor Mentor - Gemini 3</title>
+    <title>Splendor Mentor - Gemini 3.1</title>
     <style>
         :root { --primary: #00ff88; --bg: #121212; --card: #1e1e1e; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
@@ -21,8 +21,8 @@
 <body>
 
     <div class="header">
-        <h1>Splendor Mentor 💀 (G3)</h1>
-        <small style="color: #666;">Modo: Mentor Sarcástico</small>
+        <h1>Splendor Mentor 💀</h1>
+        <small style="color: #666;">Meta: UdeA | Marca: Splendor</small>
     </div>
 
     <div id="chat-container"></div>
@@ -35,17 +35,31 @@
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-        // TU API KEY
-        const API_KEY = "AIzaSyBcEYRrKA_dIp7iTMiztuAnqujvqa6-9EI"; 
+        // LÓGICA DE SEGURIDAD: Pide la llave si no existe en el teléfono
+        let API_KEY = localStorage.getItem('mi_llave_secreta');
+
+        if (!API_KEY || API_KEY === "null") {
+            API_KEY = prompt("Pega aquí tu NUEVA API Key (la que empieza por AIza...):");
+            if (API_KEY) {
+                localStorage.setItem('mi_llave_secreta', API_KEY);
+            }
+        }
 
         const genAI = new GoogleGenerativeAI(API_KEY);
         
-        // CONFIGURADO PARA GEMINI 3 FLASH PREVIEW
+        // Usamos el modelo más potente que vimos en tus capturas
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-3-flash-preview", 
+            model: "gemini-3.1-pro-preview", 
             systemInstruction: `Eres un mentor sarcástico y ácido. 
-            Contexto: El usuario trabaja en un café de un mall, quiere entrar a la UdeA y crear su marca 'Splendor'. 
-            Instrucción: Si el usuario pone excusas, búrlate de su falta de disciplina. Sé muy breve y directo.`
+            DATOS DEL USUARIO:
+            - Peso: 57 kg (Quiere ganar masa muscular).
+            - Altura: 1.77 m.
+            - Trabajo: Empleado en un café de un mall.
+            - Meta Académica: Estudiar en la Universidad de Antioquia (UdeA).
+            - Proyecto: Marca de ropa 'Splendor'.
+            - Hábito a dejar: Marihuana (evaluación mensual).
+            
+            Tu misión es ser pesado. Si el usuario pone excusas de cansancio por el trabajo en el café, búrlate. Dile que si no estudia y no entrena, seguirá sirviendo lattes con 57kg de peso para siempre. Splendor no se hará sola.`
         });
 
         const chat = model.startChat({ history: [] });
@@ -59,7 +73,8 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        appendMessage('bot', "Vaya, parece que lograste conectar el modelo nuevo. ¿Ahora sí vas a estudiar o vas a seguir perdiendo el tiempo?");
+        // Saludo inicial
+        appendMessage('bot', "Vaya, regresaste. ¿Vienes a contarme cómo el café te quitó las energías para estudiar para la UdeA o vas a hacer algo por Splendor hoy?");
 
         window.enviarMensaje = async () => {
             const input = document.getElementById('userInput');
@@ -70,13 +85,16 @@
             input.value = '';
 
             try {
-                // En Gemini 3, usamos el envío estándar de mensajes
                 const result = await chat.sendMessage(mensaje);
                 const respuesta = result.response.text();
                 appendMessage('bot', respuesta);
             } catch (error) {
-                console.error("Error detallado:", error);
-                appendMessage('bot', "Sigue saliendo error. Revisa si en Google AI Studio tienes activo el 'Pay-as-you-go' o si la llave tiene restricciones.");
+                console.error(error);
+                appendMessage('bot', "Error: Puede que tu llave sea inválida o Google la bloqueó de nuevo. ¿Quieres intentar borrarla para poner una nueva?");
+                if(confirm("¿Hubo un error, quieres borrar la API Key guardada para intentar con otra?")) {
+                    localStorage.removeItem('mi_llave_secreta');
+                    location.reload();
+                }
             }
         };
 
