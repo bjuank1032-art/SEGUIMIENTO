@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Splendor Mentor - Final</title>
+    <title>Splendor Mentor - V1.5</title>
     <style>
         :root { --primary: #00ff88; --bg: #121212; }
         body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         #chat { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .msg { max-width: 80%; padding: 12px; border-radius: 15px; font-size: 0.95rem; }
+        .msg { max-width: 80%; padding: 12px; border-radius: 15px; font-size: 0.95rem; line-height: 1.4; }
         .bot { background: #2a2a2a; color: var(--primary); align-self: flex-start; border-left: 3px solid var(--primary); }
         .user { background: var(--primary); color: black; align-self: flex-end; font-weight: bold; }
-        .input-area { background: #1e1e1e; padding: 15px; display: flex; gap: 10px; }
-        input { flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; }
-        button { background: var(--primary); border: none; padding: 12px; border-radius: 10px; font-weight: bold; }
+        .input-area { background: #1e1e1e; padding: 15px; display: flex; gap: 10px; border-top: 1px solid #333; }
+        input { flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; outline: none; }
+        button { background: var(--primary); border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div style="padding:15px; text-align:center; border-bottom:1px solid #333;">
+    <div style="padding:15px; text-align:center; background:#1a1a1a; border-bottom:1px solid #333;">
         <h1 style="font-size:1.2rem; color:var(--primary); margin:0;">Splendor Mentor 💀</h1>
+        <small style="color:#666;">Modelo: 1.5 Flash (Rápido)</small>
     </div>
     <div id="chat"></div>
     <div class="input-area">
@@ -29,17 +30,17 @@
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-        // SEGURIDAD: La llave nunca se sube a GitHub
         let API_KEY = localStorage.getItem('mi_llave_secreta');
         if (!API_KEY || API_KEY === "null") {
-            API_KEY = prompt("Pega aquí tu NUEVA API Key (la que empieza por AIza...):");
+            API_KEY = prompt("Pega tu NUEVA API Key aquí:");
             if (API_KEY) localStorage.setItem('mi_llave_secreta', API_KEY);
         }
 
         const genAI = new GoogleGenerativeAI(API_KEY);
+        // CAMBIO A MODELO 1.5 FLASH PARA EVITAR ERROR 429
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-3.1-pro-preview", 
-            systemInstruction: "Eres un mentor sarcástico. Usuario: 1.77m, 57kg. Meta: UdeA. Proyecto: Splendor. Trabajo: Café Mall. Si pone excusas por el cansancio del café, búrlate. Sé breve y ácido."
+            model: "gemini-1.5-flash", 
+            systemInstruction: "Eres un mentor sarcástico. Usuario: 1.77m, 57kg. Meta: UdeA. Proyecto: Splendor. Trabajo: Café Mall. Sé ácido, breve y búrlate si no estudia por cansancio."
         });
 
         const chat = model.startChat({ history: [] });
@@ -53,7 +54,7 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        append('bot', "¿Vas a estudiar para la UdeA o vas a seguir perdiendo el tiempo?");
+        append('bot', "Vaya, despertaste después de las 11 am. ¿Vas a hacer algo por Splendor o el cansancio del café te tiene derrotado?");
 
         window.enviarMensaje = async () => {
             const input = document.getElementById('userInput');
@@ -65,13 +66,16 @@
                 const result = await chat.sendMessage(mensaje);
                 append('bot', result.response.text());
             } catch (e) {
-                append('bot', "Error. ¿Llave bloqueada? Dale a Aceptar para borrarla y poner una nueva.");
-                if(confirm("¿Quieres borrar la llave guardada e intentar con otra?")) {
+                console.error(e);
+                append('bot', "Error de cuota o conexión. Espera un minuto o revisa tu llave.");
+                if(confirm("¿Quieres intentar poner la llave de nuevo?")) {
                     localStorage.removeItem('mi_llave_secreta');
                     location.reload();
                 }
             }
         };
+
+        document.getElementById('userInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') enviarMensaje(); });
     </script>
 </body>
 </html>
