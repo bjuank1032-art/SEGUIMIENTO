@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sistema 3 de Junio Pro v12.7</title>
+    <title>Sistema 3 de Junio Pro v12.8</title>
     
     <!-- Configuración para App iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -53,13 +53,6 @@
             border-radius: 10px;
         }
 
-        .glass-modal {
-            background: rgba(23, 23, 23, 0.8) !important;
-            backdrop-filter: blur(25px) !important;
-            -webkit-backdrop-filter: blur(25px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
         .chat-bubble {
             max-width: 85%;
             padding: 1rem 1.2rem;
@@ -81,9 +74,7 @@
             transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .btn-gear-pro:active {
-            transform: scale(0.9) rotate(90deg);
-        }
+        .btn-gear-pro:active { transform: scale(0.9) rotate(90deg); }
     </style>
 </head>
 <body>
@@ -92,7 +83,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const apiKey = ""; // Constante vacía para usar la inyección del entorno o manual
+        const apiKey = ""; // Inyectada por entorno o manual
 
         const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
             const iconRef = useRef(null);
@@ -127,7 +118,7 @@
         };
 
         const App = () => {
-            const [activeTab, setActiveTab] = useState('asistente'); // Iniciamos en IA para tu prueba
+            const [activeTab, setActiveTab] = useState('asistente');
             const [habits, setHabits] = useState([]);
             const [startDate, setStartDate] = useState(getLocalISODate());
             const [userKey, setUserKey] = useState("");
@@ -136,7 +127,7 @@
             const [isAiLoading, setIsAiLoading] = useState(false);
             const [chatMessages, setChatMessages] = useState([{ 
                 role: 'ai', 
-                text: 'Hola. Soy el Asistente del Sistema 3 de Junio. Estoy listo para tu prueba de "Hola, estoy funcionando".' 
+                text: 'Hola. Soy el Asistente del Sistema 3 de Junio. Motor de IA en línea.' 
             }]);
             const [chatInput, setChatInput] = useState("");
             const chatEndRef = useRef(null);
@@ -154,7 +145,8 @@
                 setUserKey(savedKey);
 
                 if (savedKey) {
-                    setChatMessages(prev => [...prev, { role: 'ai', text: '✅ Llave detectada en memoria. Conexión lista.' }]);
+                    const masked = savedKey.slice(-3);
+                    setChatMessages(prev => [...prev, { role: 'ai', text: `✅ Llave vinculada: ...${masked}. Sistema listo.` }]);
                 }
             }, []);
 
@@ -172,7 +164,7 @@
                 const currentKey = userKey || apiKey;
                 if (!currentKey) throw new Error("LLAVE_FALTANTE");
 
-                // Usamos el modelo estable 1.5 flash para evitar errores de versión inexistente
+                // Modelo optimizado 1.5 flash
                 const model = "gemini-1.5-flash"; 
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${currentKey}`;
                 
@@ -181,16 +173,22 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: prompt }] }],
-                        systemInstruction: { parts: [{ text: "Eres el Asistente del Sistema 3 de Junio. Directo, funcional y motivador." }] }
+                        systemInstruction: { 
+                            parts: [{ text: "Eres el Asistente del Sistema 3 de Junio. Tu tono es directo, motivador y un poco serio. Responde de forma concisa." }] 
+                        },
+                        generationConfig: {
+                            temperature: 0.8,
+                            maxOutputTokens: 500,
+                        }
                     })
                 });
 
+                const data = await response.json();
+
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error?.message || "Error de API de Google");
+                    throw new Error(data.error?.message || "Fallo en la conexión");
                 }
 
-                const data = await response.json();
                 return data.candidates?.[0]?.content?.parts?.[0]?.text;
             };
 
@@ -206,7 +204,7 @@
                     setChatMessages(prev => [...prev, { role: 'ai', text: result }]);
                 } catch (e) {
                     let msg = `⚠️ Error: ${e.message}`;
-                    if (e.message === "LLAVE_FALTANTE") msg = "⚠️ No hay llave configurada. Ve a Ajustes (⚙️) y pega tu llave de Google AI Studio.";
+                    if (e.message === "LLAVE_FALTANTE") msg = "⚠️ No hay llave configurada. Ve a Ajustes (⚙️) y pega tu llave de Google.";
                     setChatMessages(prev => [...prev, { role: 'ai', text: msg }]);
                 } finally {
                     setIsAiLoading(false);
@@ -214,120 +212,151 @@
             };
 
             const calculatePorc = (h) => {
+                if (!startDate) return 0;
                 const start = new Date(startDate + "T12:00:00");
                 const hoy = new Date();
                 const diff = Math.max(1, Math.floor((hoy - start) / (1000 * 60 * 60 * 24)) + 1);
-                const p = Math.min(100, Math.round((h.history.length / diff) * 100));
-                return isNaN(p) ? 0 : p;
+                const p = Math.round((h.history.length / diff) * 100);
+                return isNaN(p) ? 0 : Math.min(100, p);
             };
 
-            const renderSeguimiento = () => (
-                <div className="animate-in pb-32">
-                    <header className="px-6 mb-8 flex justify-between items-center">
-                        <div>
-                            <h1 className="text-4xl font-black italic text-white uppercase leading-none">Metas</h1>
-                            <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mt-2">v12.7 • Gestión IA</p>
-                        </div>
-                        <button onClick={() => setShowSettings(true)} className="w-14 h-14 btn-gear-pro rounded-full flex items-center justify-center">
-                            <Icon name="Settings" className="w-6 h-6" color="white" />
-                        </button>
-                    </header>
-
-                    <div className="px-4 grid gap-5">
-                        {habits.map(h => (
-                            <div key={h.id} className="bg-neutral-900/40 border border-neutral-800 rounded-[2.5rem] p-7" style={{ borderLeft: `10px solid ${h.color}` }}>
-                                <div className="flex justify-between items-center mb-4">
-                                    <div className="flex items-center gap-4">
-                                        <Icon name={h.icon} className="w-7 h-7" />
-                                        <h3 className="text-xl font-bold text-white italic">{h.name}</h3>
-                                    </div>
-                                    <button onClick={() => setHabits(prev => prev.map(item => item.id === h.id ? {...item, history: [...item.history, getLocalISODate()]} : item))} className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center active:scale-90 transition-all">
-                                        <Icon name="Check" className="w-6 h-6" color="white" />
-                                    </button>
-                                </div>
-                                <div className="h-2.5 bg-black rounded-full overflow-hidden">
-                                    <div className="h-full transition-all duration-1000" style={{ width: `${calculatePorc(h)}%`, backgroundColor: h.color }} />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-
-            const renderAsistente = () => (
-                <div className="animate-in h-[85vh] flex flex-col px-6 pb-40">
-                    <header className="mb-6 border-b border-neutral-800 pb-4">
-                        <div className="flex items-center gap-3">
-                            <Icon name="✨" className="w-6 h-6 text-yellow-400" />
-                            <h2 className="text-2xl font-black italic text-white uppercase">IA Asistente</h2>
-                        </div>
-                        <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Conexión Gemini 1.5 • Test de Respuesta</p>
-                    </header>
-                    <div className="flex-1 overflow-y-auto space-y-6 custom-scrollbar mb-4 pr-2">
-                        {chatMessages.map((msg, i) => (
-                            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in`}>
-                                <div className={`chat-bubble shadow-xl ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-neutral-900 border border-neutral-800 text-neutral-200 italic'}`}>
-                                    {msg.text}
-                                </div>
-                            </div>
-                        ))}
-                        {isAiLoading && <div className="text-[10px] font-black text-neutral-600 uppercase tracking-widest animate-pulse ml-2">Analizando...</div>}
-                        <div ref={chatEndRef} />
-                    </div>
-                    <div className="bg-neutral-900 border border-neutral-800 p-3 rounded-[2rem] flex gap-3 shadow-2xl items-center mb-10">
-                        <input 
-                            type="text" 
-                            value={chatInput} 
-                            onChange={e => setChatInput(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleSend()}
-                            placeholder="Dime 'Hola' para probar..." 
-                            className="flex-1 bg-transparent outline-none text-white px-4 h-12 text-sm"
-                        />
-                        <button onClick={handleSend} disabled={isAiLoading || !chatInput.trim()} className="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center active:scale-90 transition-all disabled:opacity-20">
-                            <Icon name="Send" className="w-5 h-5" color="black" />
-                        </button>
-                    </div>
-                </div>
-            );
+            const getGlobalStats = () => {
+                if (!habits || habits.length === 0) return 0;
+                let total = 0;
+                habits.forEach(h => total += calculatePorc(h));
+                const res = Math.round(total / habits.length);
+                return isNaN(res) ? 0 : res;
+            };
 
             return (
                 <div className="min-h-screen bg-black text-neutral-200">
                     <div className="max-w-4xl mx-auto pt-6 h-screen flex flex-col">
-                        {activeTab === 'seguimiento' && renderSeguimiento()}
-                        {activeTab === 'asistente' && renderAsistente()}
-                        {activeTab === 'roadmap' && (
-                            <div className="px-6 pb-40">
-                                <h2 className="text-3xl font-black italic text-white uppercase mb-8">Plan Maestro</h2>
-                                <p className="text-neutral-500 italic text-sm">Visualización de fases del proyecto.</p>
+                        
+                        {/* PESTAÑA SEGUIMIENTO */}
+                        {activeTab === 'seguimiento' && (
+                            <div className="animate-in pb-32">
+                                <header className="px-6 mb-8 flex justify-between items-center">
+                                    <div>
+                                        <h1 className="text-4xl font-black italic text-white uppercase leading-none">Metas</h1>
+                                        <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mt-2">v12.8 • AI Active</p>
+                                    </div>
+                                    <button onClick={() => setShowSettings(true)} className="w-14 h-14 btn-gear-pro rounded-full flex items-center justify-center">
+                                        <Icon name="Settings" className="w-6 h-6" color="white" />
+                                    </button>
+                                </header>
+                                <div className="mx-4 bg-neutral-900/60 border border-neutral-800 p-8 rounded-[2.8rem] mb-10 shadow-2xl backdrop-blur-md">
+                                    <div className="flex justify-between items-baseline mb-5">
+                                        <span className="text-[11px] font-black text-neutral-500 tracking-widest uppercase">Eficacia</span>
+                                        <span className="text-5xl font-black text-white italic tracking-tighter">{getGlobalStats()}%</span>
+                                    </div>
+                                    <div className="h-4 bg-black rounded-full overflow-hidden border border-neutral-800 p-[2px]">
+                                        <div className="h-full bg-gradient-to-r from-blue-600 to-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${getGlobalStats()}%` }} />
+                                    </div>
+                                </div>
+                                <div className="px-4 grid gap-5">
+                                    {habits.map(h => (
+                                        <div key={h.id} className="bg-neutral-900/40 border border-neutral-800 rounded-[2.5rem] p-7" style={{ borderLeft: `10px solid ${h.color}` }}>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <div className="flex items-center gap-4">
+                                                    <Icon name={h.icon} className="w-7 h-7" />
+                                                    <h3 className="text-xl font-bold text-white italic">{h.name}</h3>
+                                                </div>
+                                                <button onClick={() => setHabits(prev => prev.map(item => item.id === h.id ? {...item, history: [...item.history, getLocalISODate()]} : item))} className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center active:scale-90 transition-all">
+                                                    <Icon name="Check" className="w-6 h-6" color="white" />
+                                                </button>
+                                            </div>
+                                            <div className="h-2.5 bg-black rounded-full overflow-hidden">
+                                                <div className="h-full transition-all duration-1000" style={{ width: `${calculatePorc(h)}%`, backgroundColor: h.color }} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
 
+                        {/* PESTAÑA ASISTENTE IA */}
+                        {activeTab === 'asistente' && (
+                            <div className="animate-in h-[85vh] flex flex-col px-6 pb-40">
+                                <header className="mb-6 border-b border-neutral-800 pb-4 pt-4">
+                                    <div className="flex items-center gap-3">
+                                        <Icon name="✨" className="w-6 h-6 text-yellow-400" />
+                                        <h2 className="text-2xl font-black italic text-white uppercase leading-none">Asistente IA</h2>
+                                    </div>
+                                    <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-2">Conectado a Google Gemini 1.5</p>
+                                </header>
+                                <div className="flex-1 overflow-y-auto space-y-6 custom-scrollbar mb-4 pr-2">
+                                    {chatMessages.map((msg, i) => (
+                                        <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in`}>
+                                            <div className={`chat-bubble shadow-xl ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-neutral-900 border border-neutral-800 text-neutral-200 rounded-bl-none italic'}`}>
+                                                {msg.text}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {isAiLoading && <div className="text-[10px] font-black text-neutral-600 uppercase tracking-widest animate-pulse ml-2 italic">Analizando...</div>}
+                                    <div ref={chatEndRef} />
+                                </div>
+                                <div className="bg-neutral-900 border border-neutral-800 p-3 rounded-[2rem] flex gap-3 shadow-2xl items-center mb-10">
+                                    <input 
+                                        type="text" 
+                                        value={chatInput} 
+                                        onChange={e => setChatInput(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && handleSend()}
+                                        placeholder="Escribe 'Dime Hola'..." 
+                                        className="flex-1 bg-transparent outline-none text-white px-4 h-12 text-sm"
+                                    />
+                                    <button onClick={handleSend} disabled={isAiLoading || !chatInput.trim()} className="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center active:scale-90 transition-all disabled:opacity-20 shadow-lg">
+                                        <Icon name="Send" className="w-5 h-5" color="black" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* PESTAÑA RUTA */}
+                        {activeTab === 'roadmap' && (
+                            <div className="px-6 pb-40 pt-4 animate-in">
+                                <h2 className="text-3xl font-black italic text-white uppercase mb-8">Plan Maestro</h2>
+                                <p className="text-neutral-500 italic text-sm leading-relaxed mb-10">Disciplina total hasta el 3 de Junio.</p>
+                                <div className="space-y-6">
+                                    <div className="p-8 bg-neutral-900/50 border border-neutral-800 rounded-[2.5rem]">
+                                        <h3 className="text-xl font-bold text-blue-400 italic mb-2">Fase de Resiliencia</h3>
+                                        <div className="h-1.5 w-full bg-neutral-800 rounded-full mt-4">
+                                            <div className="h-full w-1/4 bg-blue-500 rounded-full"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* NAVEGACIÓN */}
                         <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-neutral-900/90 backdrop-blur-3xl border border-neutral-800 rounded-[3.5rem] p-2.5 flex gap-2 shadow-2xl z-[100] w-[90%] max-w-sm">
-                            <button onClick={() => setActiveTab('seguimiento')} className={`flex-1 py-4 rounded-[3rem] font-black uppercase text-[10px] transition-all ${activeTab === 'seguimiento' ? 'bg-white text-black' : 'text-neutral-500'}`}>Metas</button>
-                            <button onClick={() => setActiveTab('asistente')} className={`flex-1 py-4 rounded-[3rem] font-black uppercase text-[10px] transition-all ${activeTab === 'asistente' ? 'bg-white text-black' : 'text-neutral-500'}`}>IA</button>
-                            <button onClick={() => setActiveTab('roadmap')} className={`flex-1 py-4 rounded-[3rem] font-black uppercase text-[10px] transition-all ${activeTab === 'roadmap' ? 'bg-white text-black' : 'text-neutral-500'}`}>Ruta</button>
+                            <button onClick={() => setActiveTab('seguimiento')} className={`flex-1 py-4 rounded-[3rem] font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'seguimiento' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'}`}>Metas</button>
+                            <button onClick={() => setActiveTab('asistente')} className={`flex-1 py-4 rounded-[3rem] font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'asistente' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'}`}>IA</button>
+                            <button onClick={() => setActiveTab('roadmap')} className={`flex-1 py-4 rounded-[3rem] font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'roadmap' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'}`}>Ruta</button>
                         </nav>
 
+                        {/* MODAL AJUSTES */}
                         {showSettings && (
                             <div className="fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-5 animate-in backdrop-blur-md">
-                                <div className="glass-modal w-full max-w-md rounded-[3.5rem] p-10 shadow-2xl">
-                                    <div className="flex justify-between items-center mb-8">
-                                        <h2 className="text-2xl font-black italic text-white uppercase">Ajustes</h2>
-                                        <button onClick={() => setShowSettings(false)} className="text-[10px] font-black text-neutral-500 uppercase">Cerrar</button>
+                                <div className="glass-modal w-full max-w-md rounded-[3.5rem] p-10 shadow-2xl border border-white/5">
+                                    <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-4">
+                                        <h2 className="text-2xl font-black italic text-white uppercase leading-none">Ajustes</h2>
+                                        <button onClick={() => setShowSettings(false)} className="text-[10px] font-black text-neutral-500 uppercase tracking-widest hover:text-white">Cerrar</button>
                                     </div>
-                                    <div className="space-y-6">
+                                    <div className="space-y-8">
                                         <div>
-                                            <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Llave Gemini (Privada)</label>
+                                            <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Llave Gemini (API Key)</label>
                                             <input 
                                                 type="password" 
                                                 value={userKey} 
-                                                onChange={e => setUserKey(e.target.value)} 
-                                                className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none focus:border-blue-500 text-sm" 
-                                                placeholder="Pega tu API Key aquí..."
+                                                onChange={e => setUserKey(e.target.value.trim())} 
+                                                className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none focus:border-blue-500 text-sm shadow-inner" 
+                                                placeholder="Pega tu llave aquí..."
                                             />
-                                            <p className="text-[9px] text-neutral-600 mt-3 italic font-bold">La llave se guarda al escribir. Cierra este panel para probar el chat.</p>
+                                            <p className="text-[9px] text-neutral-600 mt-3 italic font-bold leading-relaxed">Pega la llave que termina en -9EI para activar al Juez.</p>
                                         </div>
-                                        <button onClick={() => { localStorage.clear(); location.reload(); }} className="w-full py-4 border border-red-500/20 text-red-500 rounded-2xl text-[10px] font-black uppercase">Borrar Todo</button>
+                                        <div className="pt-6 border-t border-white/5">
+                                            <button onClick={() => { if(confirm("¿Purgar todos los datos?")) { localStorage.clear(); location.reload(); } }} className="w-full py-4 border border-red-500/20 text-red-500 rounded-2xl text-[10px] font-black uppercase tracking-widest active:bg-red-500 active:text-white transition-all">Borrar Todo</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
