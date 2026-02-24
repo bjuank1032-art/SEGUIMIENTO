@@ -208,26 +208,36 @@
                 if (diff > 7) setShowJuez(true);
             };
 
-            const callGemini = async (prompt) => {
-                const currentKey = (userKey || apiKey).trim();
-                if (!currentKey) throw new Error("LLAVE_FALTANTE");
+           const callGemini = async (prompt) => {
+    const currentKey = (userKey || apiKey).trim();
+    if (!currentKey) throw new Error("LLAVE_FALTANTE");
 
-                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${currentKey}`;
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ 
-                            role: "user",
-                            parts: [{ text: prompt }] 
-                        }],
-                        generationConfig: {
-                            temperature: 0.7,
-                            maxOutputTokens: 800
-                        }
-                    })
-                });
+    // Endpoint v1 estable con el nombre de modelo corregido
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${currentKey}`;
+    
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ 
+                parts: [{ text: prompt }] 
+            }],
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 800
+            }
+        })
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+        // Esto nos dirá exactamente qué falta si vuelve a fallar
+        throw new Error(data.error?.message || "Fallo en la conexión");
+    }
+
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+};
 
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error?.message || "Fallo en la conexión");
@@ -472,3 +482,4 @@
     </script>
 </body>
 </html>
+
