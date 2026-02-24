@@ -3,25 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Splendor Mentor - V1.5</title>
+    <title>Splendor Mentor - Oficial</title>
     <style>
         :root { --primary: #00ff88; --bg: #121212; }
-        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        #chat { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .msg { max-width: 80%; padding: 12px; border-radius: 15px; font-size: 0.95rem; line-height: 1.4; }
-        .bot { background: #2a2a2a; color: var(--primary); align-self: flex-start; border-left: 3px solid var(--primary); }
-        .user { background: var(--primary); color: black; align-self: flex-end; font-weight: bold; }
-        .input-area { background: #1e1e1e; padding: 15px; display: flex; gap: 10px; border-top: 1px solid #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 15px; line-height: 1.4; font-size: 1rem; }
+        .bot { background: #2a2a2a; color: var(--primary); align-self: flex-start; border-bottom-left-radius: 2px; border-left: 4px solid var(--primary); font-style: italic; }
+        .user { background: var(--primary); color: black; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: bold; }
+        .input-area { background: #1e1e1e; padding: 20px; display: flex; gap: 10px; border-top: 1px solid #333; }
         input { flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; outline: none; }
-        button { background: var(--primary); border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        button { background: var(--primary); color: black; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .header { padding: 15px; text-align: center; border-bottom: 1px solid #333; background: #1a1a1a; }
     </style>
 </head>
 <body>
-    <div style="padding:15px; text-align:center; background:#1a1a1a; border-bottom:1px solid #333;">
-        <h1 style="font-size:1.2rem; color:var(--primary); margin:0;">Splendor Mentor 💀</h1>
-        <small style="color:#666;">Modelo: 1.5 Flash (Rápido)</small>
+
+    <div class="header">
+        <h1 style="margin:0; font-size: 1.2rem; color: var(--primary);">Splendor Mentor 💀</h1>
+        <small style="color: #666;">UdeA | Splendor | Meta: Masa Muscular</small>
     </div>
-    <div id="chat"></div>
+
+    <div id="chat-container"></div>
+
     <div class="input-area">
         <input type="text" id="userInput" placeholder="Escribe tu excusa aquí...">
         <button onclick="enviarMensaje()">Enviar</button>
@@ -30,23 +34,33 @@
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
+        // LÓGICA DE SEGURIDAD: Recupera o pide la llave nueva que termina en Vhas
         let API_KEY = localStorage.getItem('mi_llave_secreta');
+
         if (!API_KEY || API_KEY === "null") {
-            API_KEY = prompt("Pega tu NUEVA API Key aquí:");
+            API_KEY = prompt("Pega aquí tu NUEVA API Key (la que termina en Vhas):");
             if (API_KEY) localStorage.setItem('mi_llave_secreta', API_KEY);
         }
 
         const genAI = new GoogleGenerativeAI(API_KEY);
-        // CAMBIO A MODELO 1.5 FLASH PARA EVITAR ERROR 429
+        
+        // Usamos el alias estable para evitar errores de cuota
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-flash", 
-            systemInstruction: "Eres un mentor sarcástico. Usuario: 1.77m, 57kg. Meta: UdeA. Proyecto: Splendor. Trabajo: Café Mall. Sé ácido, breve y búrlate si no estudia por cansancio."
+            model: "gemini-flash-latest", 
+            systemInstruction: `Eres un mentor sarcástico y pesado. 
+            DATOS DEL USUARIO:
+            - Físico: 1.77m, 57kg. Meta: Ganar masa muscular.
+            - Trabajo: Empleado en un café de un mall.
+            - Metas: Entrar a la UdeA y lanzar la marca de ropa 'Splendor'.
+            - Hábito: Hoy 24 de febrero empezó a dejar la marihuana.
+            
+            Tu misión: Si el usuario se queja del cansancio del café, búrlate. Dile que con 57kg y sin estudiar no va a llegar a ningún lado. Sé breve, ácido y directo.`
         });
 
         const chat = model.startChat({ history: [] });
-        const container = document.getElementById('chat');
+        const container = document.getElementById('chat-container');
 
-        function append(role, text) {
+        function appendMessage(role, text) {
             const div = document.createElement('div');
             div.className = `msg ${role}`;
             div.innerText = text;
@@ -54,28 +68,37 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        append('bot', "Vaya, despertaste después de las 11 am. ¿Vas a hacer algo por Splendor o el cansancio del café te tiene derrotado?");
+        // Saludo inicial del mentor
+        appendMessage('bot', "Vaya, al fin apareces. ¿Vas a llorar por el turno del café o vas a estudiar para la UdeA?");
 
         window.enviarMensaje = async () => {
             const input = document.getElementById('userInput');
             const mensaje = input.value.trim();
             if (!mensaje) return;
-            append('user', mensaje);
+
+            appendMessage('user', mensaje);
             input.value = '';
+
             try {
                 const result = await chat.sendMessage(mensaje);
-                append('bot', result.response.text());
-            } catch (e) {
-                console.error(e);
-                append('bot', "Error de cuota o conexión. Espera un minuto o revisa tu llave.");
-                if(confirm("¿Quieres intentar poner la llave de nuevo?")) {
+                const respuesta = result.response.text();
+                appendMessage('bot', respuesta);
+            } catch (error) {
+                console.error("Error detectado:", error);
+                appendMessage('bot', "Error de conexión. ¿Seguro que la llave Vhas está activa?");
+                
+                // Si falla, da la opción de resetear la llave
+                if(confirm("Hubo un error (posiblemente la llave). ¿Quieres borrarla y ponerla de nuevo?")) {
                     localStorage.removeItem('mi_llave_secreta');
                     location.reload();
                 }
             }
         };
 
-        document.getElementById('userInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') enviarMensaje(); });
+        // Enviar con la tecla Enter
+        document.getElementById('userInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') enviarMensaje();
+        });
     </script>
 </body>
 </html>
