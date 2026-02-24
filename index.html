@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sistema 3 de Junio Pro v12.3</title>
+    <title>Sistema 3 de Junio Pro v12.4</title>
     
     <!-- Configuración para App iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://img.icons8.com/color/96/cannabis.png">
     
-    <!-- Scripts de Dependencias -->
+    <!-- Scripts de Dependencias (Versión UMD de Lucide para estabilidad) -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -47,7 +47,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Animación de Vibración de Peligro */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-3px) rotate(-1deg); }
@@ -137,37 +136,39 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
+        // --- COMPONENTE ICON ULTRA-ROBUSTO (v12.4) ---
         const Icon = ({ name, className = "w-5 h-5", color = "currentColor", fill = "none" }) => {
             const iconRef = useRef(null);
 
             useEffect(() => {
-                if (iconRef.current) {
-                    iconRef.current.innerHTML = '';
-                    try {
-                        const iconKey = name.toLowerCase(); 
-                        const lucideName = name.charAt(0).toUpperCase() + name.slice(1);
-                        const iconData = lucide[name] || lucide[lucideName] || lucide[iconKey] || lucide.Settings;
+                const renderIcon = () => {
+                    if (iconRef.current && window.lucide) {
+                        iconRef.current.innerHTML = ''; 
+                        const i = document.createElement('i');
                         
-                        if (iconData) {
-                            lucide.createIcons({
-                                icons: { [name]: iconData },
-                                attrs: { 
-                                    class: className,
-                                    stroke: color,
-                                    fill: fill,
-                                    'stroke-width': 2.5 
-                                }
-                            });
-                        } else {
-                            iconRef.current.innerHTML = `<span class="emoji-container flex items-center justify-center">${name}</span>`;
-                        }
-                    } catch (e) {
-                        iconRef.current.innerHTML = `<span class="emoji-container">${name}</span>`;
+                        // Normalización a kebab-case (ej: BarChart3 -> bar-chart-3)
+                        const dataName = name
+                            .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+                            .replace(/([a-zA-Z])([0-9])/g, '$1-$2') // Maneja números como Undo2 -> undo-2
+                            .toLowerCase();
+                            
+                        i.setAttribute('data-lucide', dataName);
+                        i.className = className;
+                        i.style.stroke = color;
+                        i.style.fill = fill;
+                        i.style.strokeWidth = "2.5";
+                        
+                        iconRef.current.appendChild(i);
+                        window.lucide.createIcons(); // Disparo manual tras inyección
                     }
-                }
+                };
+
+                // El truco: esperar un frame para que React suelte el control del DOM
+                const timeout = setTimeout(renderIcon, 0);
+                return () => clearTimeout(timeout);
             }, [name, className, color, fill]);
 
-            return <span ref={iconRef} className="flex items-center justify-center pointer-events-none"></span>;
+            return <span ref={iconRef} className="inline-flex items-center justify-center pointer-events-none"></span>;
         };
 
         const API_KEY = "AIzaSyBcEYRrKA_dIp7iTMiztuAnqujvqa6-9EI"; 
@@ -224,7 +225,6 @@
             const checkJuezStatus = (currentHabits) => {
                 const mock = localStorage.getItem(KEY_M);
                 let ultima;
-
                 if (mock) {
                     ultima = new Date(mock + "T12:00:00");
                 } else if (currentHabits.length > 0) {
@@ -238,11 +238,9 @@
                     if (fechasValidas.length === 0) return;
                     ultima = new Date(Math.max(...fechasValidas));
                 } else return;
-
                 const hoy = new Date();
                 hoy.setHours(12, 0, 0, 0);
                 ultima.setHours(12, 0, 0, 0);
-
                 const diff = Math.floor((hoy - ultima) / (1000 * 60 * 60 * 24));
                 if (diff > 7) setShowJuez(true);
             };
@@ -250,7 +248,6 @@
             const consultarAlJuez = async () => {
                 if (reflection.trim().length < 20) return;
                 setIsAiLoading(true);
-                
                 if (!API_KEY) {
                     setTimeout(() => {
                         setAiFeedback("MODO RESCATE: IA no detectada. Reflexión aceptada.");
@@ -259,26 +256,18 @@
                     }, 1500);
                     return;
                 }
-
                 try {
-                    const prompt = `Actúa como un Juez implacable del "Sistema 3 de Junio".
-                    Contexto: Usuario inactivo 7+ días. Metas: Splendor, detox y disciplina.
-                    Reflexión: "${reflection}".
-                    Responde un JSON: { "valid": boolean, "verdict": "string corto y potente" }`;
-                    
+                    const prompt = `Actúa como un Juez implacable del "Sistema 3 de Junio". Reflexión: "${reflection}". Responde JSON: { "valid": boolean, "verdict": "string" }`;
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
-                    
                     const res = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
                     });
-                    
                     const data = await res.json();
                     let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
                     text = text.replace(/```json|```/gi, "").trim(); 
                     const result = JSON.parse(text);
-                    
                     setAiFeedback(result.verdict);
                     setVerdictValid(result.valid);
                 } catch (e) {
@@ -327,27 +316,14 @@
 
             const saveHabit = () => {
                 if (!newName) return;
-                
                 if (editingHabitId) {
-                    setHabits(prev => prev.map(h => 
-                        h.id === editingHabitId 
-                        ? { ...h, name: newName, icon: newIcon, color: selectedColor } 
-                        : h
-                    ));
+                    setHabits(prev => prev.map(h => h.id === editingHabitId ? { ...h, name: newName, icon: newIcon, color: selectedColor } : h));
                     setEditingHabitId(null);
                 } else {
-                    const newHabit = {
-                        id: 'h' + Date.now(),
-                        name: newName,
-                        icon: newIcon,
-                        color: selectedColor,
-                        history: []
-                    };
+                    const newHabit = { id: 'h' + Date.now(), name: newName, icon: newIcon, color: selectedColor, history: [] };
                     setHabits([...habits, newHabit]);
                 }
-                
                 setNewName("");
-                setNewIcon("Flame");
                 setShowAddModal(false);
             };
 
@@ -366,11 +342,11 @@
             ];
 
             const steps = [
-                { id: 1, title: "Nivel 1: El Reset Bioquímico", icon: 'Flame', tag: "24 Feb - 24 Mar", objectives: ["1", "6", "7"], tasks: ["Purga de parafernalia estricta", "Cero contacto con círculos de consumo", "Dormir 10:30 PM / Despertar 6:30 AM", "Uso obligatorio del Seguimiento Pro"], impact: "Limpiar el cerebro es el paso único para recuperar la voluntad.", color: "border-red-500/50", iconColor: "text-red-400" },
-                { id: 2, title: "Nivel 2: Mente y Estabilidad", icon: 'Brain', tag: "24 Feb - 24 Mar", objectives: ["2", "3", "4", "5", "9"], tasks: ["Meditación AM/PM (10 min)", "Rutina de ejercicio diaria", "Búsqueda activa de empleo", "Definición académica final"], impact: "Eliminas la incertidumbre y aseguras sustento.", color: "border-orange-500/50", iconColor: "text-orange-400" },
-                { id: 3, title: "Nivel 3: Deep Work", icon: 'BookOpen', tag: "Marzo - Abril", objectives: ["8"], tasks: ["Inscripción Inglés", "Lectura 15 páginas diarias", "Dedicación total a Excel", "Estudio profundo sin celular"], impact: "Pasas de la intención a la competencia técnica.", color: "border-blue-500/50", iconColor: "text-blue-400" },
-                { id: 4, title: "Nivel 4: Consolidación", icon: 'Wallet', tag: "Abril - Mayo", objectives: ["11", "12"], tasks: ["Gestión de primeros ingresos", "Inicio Tratamiento Capilar", "Inversión en alimentación/gym", "Ahorro específico movilidad"], impact: "El dinero pasa a ser herramienta de inversión.", color: "border-emerald-500/50", iconColor: "text-emerald-400" },
-                { id: 5, title: "Nivel 5: Cúspide Splendor", icon: 'Palette', tag: "3 de Junio", objectives: ["10", "11"], tasks: ["Lanzamiento Marca SPLENDOR", "Trámite Licencia / Ahorro Moto", "Renovación de imagen personal", "Nueva identidad libre de humo"], impact: "Manifestación final del proceso al 3 de Junio.", color: "border-purple-500/50", iconColor: "text-purple-400" }
+                { id: 1, title: "Nivel 1: El Reset Bioquímico", icon: 'Flame', tag: "24 Feb - 24 Mar", objectives: ["1", "6", "7"], tasks: ["Purga de parafernalia estricta", "Cero contacto con círculos de consumo", "Dormir 10:30 PM / Despertar 6:30 AM", "Uso obligatorio del Seguimiento Pro"], impact: "Limpiar el cerebro es el paso único para recuperar la voluntad.", color: "border-red-500/50", iconColor: "#f87171" },
+                { id: 2, title: "Nivel 2: Mente y Estabilidad", icon: 'Brain', tag: "24 Feb - 24 Mar", objectives: ["2", "3", "4", "5", "9"], tasks: ["Meditación AM/PM (10 min)", "Rutina de ejercicio diaria", "Búsqueda activa de empleo", "Definición académica final"], impact: "Eliminas la incertidumbre y aseguras sustento.", color: "border-orange-500/50", iconColor: "#fb923c" },
+                { id: 3, title: "Nivel 3: Deep Work", icon: 'BookOpen', tag: "Marzo - Abril", objectives: ["8"], tasks: ["Inscripción Inglés", "Lectura 15 páginas diarias", "Dedicación total a Excel", "Estudio profundo sin celular"], impact: "Pasas de la intención a la competencia técnica.", color: "border-blue-500/50", iconColor: "#60a5fa" },
+                { id: 4, title: "Nivel 4: Consolidación", icon: 'Wallet', tag: "Abril - Mayo", objectives: ["11", "12"], tasks: ["Gestión de primeros ingresos", "Inicio Tratamiento Capilar", "Inversión en alimentación/gym", "Ahorro específico movilidad"], impact: "El dinero pasa a ser herramienta de inversión.", color: "border-emerald-500/50", iconColor: "#34d399" },
+                { id: 5, title: "Nivel 5: Cúspide Splendor", icon: 'Palette', tag: "3 de Junio", objectives: ["10", "11"], tasks: ["Lanzamiento Marca SPLENDOR", "Trámite Licencia / Ahorro Moto", "Renovación de imagen personal", "Nueva identidad libre de humo"], impact: "Manifestación final del proceso al 3 de Junio.", color: "border-purple-500/50", iconColor: "#a78bfa" }
             ];
 
             const renderSeguimiento = () => (
@@ -380,15 +356,8 @@
                             <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase leading-none">Seguimiento</h1>
                             <p className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mt-3">Consistencia Activa • {habits.length} Metas</p>
                         </div>
-                        <button 
-                            onClick={() => setShowSettings(true)} 
-                            className="w-16 h-16 btn-gear-pro rounded-full flex items-center justify-center text-white active:rotate-90 transition-transform"
-                        >
-                            <Icon 
-                                name="Settings" 
-                                className="w-8 h-8 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" 
-                                color="#F2F2F7" 
-                            />
+                        <button onClick={() => setShowSettings(true)} className="w-16 h-16 btn-gear-pro rounded-full flex items-center justify-center text-white active:rotate-90 transition-transform">
+                            <Icon name="Settings" className="w-8 h-8 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" color="#F2F2F7" />
                         </button>
                     </header>
 
@@ -408,8 +377,8 @@
                             return (
                                 <div key={h.id} onClick={() => handleMark(h.id)} className="bg-neutral-900/40 border border-neutral-800 rounded-[2.5rem] p-7 relative group cursor-pointer active:scale-95 transition-all overflow-hidden" style={{ borderLeft: `12px solid ${h.color}` }}>
                                     <div className="flex justify-between items-center mb-5">
-                                        <h3 className="text-2xl font-bold text-white flex items-center gap-4 italic">
-                                            <Icon name={h.icon} className="w-7 h-7" /> {h.name}
+                                        <h3 className="text-2xl font-bold text-white flex items-center gap-4 italic uppercase">
+                                            <Icon name={h.icon} className="w-7 h-7" color={h.color} /> {h.name}
                                         </h3>
                                         <button onClick={(e) => handleUndo(h.id, e)} className="w-12 h-12 bg-black rounded-2xl border border-neutral-800 flex items-center justify-center text-neutral-500 hover:text-red-500 active:bg-red-500/10 transition-colors shadow-inner">
                                             <Icon name="Undo2" className="w-6 h-6" />
@@ -437,7 +406,7 @@
                 <div className="animate-in pb-32 px-4">
                     <header className="mb-10 border-b border-neutral-800 pb-8 pt-4">
                         <div className="flex items-center gap-4 mb-3">
-                            <Icon name="Zap" className="text-yellow-400 w-8 h-8" fill="yellow" />
+                            <Icon name="Zap" className="text-yellow-400 w-8 h-8" fill="#FACC15" color="#FACC15" />
                             <h1 className="text-3xl font-black tracking-tighter text-white uppercase italic">Plan Maestro</h1>
                         </div>
                         <p className="text-[11px] text-neutral-500 font-bold uppercase tracking-[0.3em]">Reingeniería Personal • 3 DE JUNIO</p>
@@ -446,15 +415,15 @@
                         <div className="lg:col-span-4 space-y-8">
                             <div className="bg-neutral-900/40 border border-neutral-800/60 p-7 rounded-[2.8rem] sticky top-8 backdrop-blur-md shadow-2xl">
                                 <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-neutral-400 mb-8 flex items-center gap-3">
-                                    <Icon name="ListChecks" className="w-5 h-5 text-purple-400" /> Los 12 Objetivos
+                                    <Icon name="ListChecks" className="w-5 h-5" color="#a78bfa" /> Los 12 Objetivos
                                 </h2>
                                 <div className="space-y-3">
                                     {allObjectives.map((obj) => (
                                         <div key={obj.id} className="flex items-center gap-4 p-2 rounded-xl border border-transparent hover:bg-white/5 transition-all group">
-                                            <div className="w-7 h-7 rounded-xl bg-neutral-800 group-hover:bg-neutral-700 flex items-center justify-center text-[10px] font-bold text-neutral-400 italic shrink-0 shadow-lg">
+                                            <div className="w-7 h-7 rounded-xl bg-neutral-800 group-hover:bg-neutral-700 flex items-center justify-center text-[10px] font-bold text-neutral-400 italic">
                                                 {obj.id}
                                             </div>
-                                            <span className="text-xs font-medium text-neutral-200 group-hover:text-white truncate tracking-tight">{obj.text}</span>
+                                            <span className="text-xs font-medium text-neutral-200 group-hover:text-white truncate tracking-tight uppercase">{obj.text}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -472,7 +441,7 @@
                                             <div className="flex flex-col md:flex-row justify-between items-start gap-5 mb-8">
                                                 <div className="flex items-center gap-5">
                                                     <div className="p-3 bg-neutral-800 rounded-2xl shadow-inner">
-                                                        <Icon name={step.icon} className={`w-6 h-6 ${step.iconColor}`} />
+                                                        <Icon name={step.icon} className="w-6 h-6" color={step.iconColor} />
                                                     </div>
                                                     <h3 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter leading-none">{step.title}</h3>
                                                 </div>
@@ -484,7 +453,7 @@
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-in">
                                                     <div className="space-y-5">
                                                         <h4 className="text-[11px] font-black text-neutral-500 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-neutral-800 pb-3">
-                                                            <Icon name="Zap" className="w-4 h-4 text-yellow-500" fill="yellow" /> Ejecución
+                                                            <Icon name="Zap" className="w-4 h-4" color="#FACC15" /> Ejecución
                                                         </h4>
                                                         <ul className="space-y-4">
                                                             {step.tasks.map((task, i) => (
@@ -529,9 +498,7 @@
                             <div className="fixed inset-0 bg-black/50 z-[2000] flex items-center justify-center p-5 animate-in">
                                 <div className="glass-modal w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[3.5rem] p-10 relative flex flex-col shadow-[0_0_60px_rgba(0,0,0,1)]">
                                     <div className="flex justify-between items-center mb-10 border-b border-neutral-800 pb-6">
-                                        <h2 className="text-3xl font-black italic tracking-tighter text-white uppercase">
-                                            {editingHabitId ? "Editar Meta" : "Crear Meta"}
-                                        </h2>
+                                        <h2 className="text-3xl font-black italic tracking-tighter text-white uppercase">{editingHabitId ? "Editar Meta" : "Crear Meta"}</h2>
                                         <button onClick={() => { setShowAddModal(false); setEditingHabitId(null); }} className="modal-header-btn">Cerrar</button>
                                     </div>
                                     <div className="space-y-8">
@@ -541,7 +508,7 @@
                                         </div>
                                         <div className="grid grid-cols-2 gap-6">
                                             <div>
-                                                <label className="text-[11px] font-black text-neutral-500 uppercase tracking-[0.25em] mb-4 block">Icono o Emoji</label>
+                                                <label className="text-[11px] font-black text-neutral-500 uppercase tracking-[0.25em] mb-4 block">Icono</label>
                                                 <input type="text" value={newIcon} onChange={e => setNewIcon(e.target.value)} className="w-full bg-black/40 border border-neutral-800 rounded-3xl p-5 text-white outline-none text-center" placeholder="Flame o 🔥" />
                                             </div>
                                             <div>
@@ -552,9 +519,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <button onClick={saveHabit} className="w-full bg-white text-black font-black py-6 rounded-3xl mt-6 uppercase text-sm tracking-[0.25em] hover:scale-[1.03] active:scale-95 transition-all shadow-2xl">
-                                            {editingHabitId ? "Guardar Cambios" : "Confirmar Meta"}
-                                        </button>
+                                        <button onClick={saveHabit} className="w-full bg-white text-black font-black py-6 rounded-3xl mt-6 uppercase text-sm tracking-[0.25em] hover:scale-[1.03] active:scale-95 transition-all shadow-2xl">Confirmar</button>
                                     </div>
                                 </div>
                             </div>
@@ -578,23 +543,14 @@
                                             <div className="space-y-4">
                                                 {habits.map((h) => (
                                                     <div key={h.id} className="flex justify-between items-center bg-black/40 border border-neutral-800 p-5 rounded-3xl shadow-inner group transition-all">
-                                                        <span className="text-sm font-bold text-neutral-300 flex items-center gap-3">
-                                                            ≡ <Icon name={h.icon} className="w-4 h-4" /> {h.name}
+                                                        <span className="text-sm font-bold text-neutral-300 flex items-center gap-3 uppercase">
+                                                            ≡ <Icon name={h.icon} className="w-4 h-4" color={h.color} /> {h.name}
                                                         </span>
                                                         <div className="flex gap-3">
-                                                            {/* BOTÓN EDITAR OPTIMIZADO v12.3 */}
-                                                            <button 
-                                                                onClick={() => openEditModal(h)} 
-                                                                className="p-4 bg-neutral-800/80 hover:bg-neutral-700 rounded-2xl transition-all active:scale-90 border border-neutral-700 shadow-lg flex items-center justify-center"
-                                                            >
+                                                            <button onClick={() => openEditModal(h)} className="p-4 bg-neutral-800/80 hover:bg-neutral-700 rounded-2xl transition-all active:scale-90 border border-neutral-700 shadow-lg flex items-center justify-center">
                                                                 <Icon name="Pencil" className="w-5 h-5" color="#ffffff" />
                                                             </button>
-                                                            
-                                                            {/* BOTÓN ELIMINAR CON VIBRACIÓN v12.3 */}
-                                                            <button 
-                                                                onClick={() => { if(confirm("¿Eliminar meta?")) setHabits(habits.filter(hab => hab.id !== h.id)); }} 
-                                                                className="p-4 bg-red-500/10 hover:bg-red-500/20 rounded-2xl transition-all active:scale-90 btn-danger-shake border border-red-500/20 shadow-lg flex items-center justify-center"
-                                                            >
+                                                            <button onClick={() => { if(confirm("¿Eliminar?")) setHabits(habits.filter(hab => hab.id !== h.id)); }} className="p-4 bg-red-500/10 hover:bg-red-500/20 rounded-2xl transition-all active:scale-90 btn-danger-shake border border-red-500/20 shadow-lg flex items-center justify-center">
                                                                 <Icon name="Trash2" className="w-5 h-5" color="#ff3b30" />
                                                             </button>
                                                         </div>
@@ -603,9 +559,7 @@
                                             </div>
                                         </div>
                                         <div className="pt-6 border-t border-neutral-800">
-                                            <button onClick={() => { if(confirm("¿Purgar todos los datos?")) { localStorage.clear(); location.reload(); } }} className="w-full border-2 border-red-500/40 text-red-500 font-black py-5 rounded-[2rem] uppercase text-[11px] tracking-[0.3em] active:bg-red-500 active:text-white transition-all shadow-xl">
-                                                Purgar Memoria Total
-                                            </button>
+                                            <button onClick={() => { if(confirm("¿Purgar?")) { localStorage.clear(); location.reload(); } }} className="w-full border-2 border-red-500/40 text-red-500 font-black py-5 rounded-[2rem] uppercase text-[11px] tracking-[0.3em] active:bg-red-500 active:text-white transition-all shadow-xl">Purgar Memoria</button>
                                         </div>
                                     </div>
                                 </div>
@@ -615,35 +569,22 @@
                         {showJuez && (
                             <div className="fixed inset-0 bg-black/60 z-[3000] flex items-center justify-center p-5 animate-in">
                                 <div className="glass-modal w-full max-w-lg rounded-[4rem] p-12 text-center shadow-[0_0_120px_rgba(255,59,48,0.25)]">
-                                    <Icon name="ShieldAlert" className="w-20 h-20 text-red-500 mx-auto mb-8 shadow-2xl" />
-                                    <h2 className="text-[11px] font-black text-red-500 uppercase tracking-[0.6em] mb-4">Tribunal de Resiliencia</h2>
+                                    <Icon name="ShieldAlert" className="w-20 h-20" color="#ef4444" />
+                                    <h2 className="text-[11px] font-black text-red-500 uppercase tracking-[0.6em] mb-4">Tribunal</h2>
                                     <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase mb-8 leading-none">Disciplina Quebrada</h1>
-                                    <p className="text-neutral-400 text-sm mb-10 px-6 font-medium leading-relaxed tracking-tight">Has abandonado el Sistema 3 de Junio por más de 7 días. El tribunal de SPLENDOR exige tu declaración inmediata.</p>
-                                    <textarea value={reflection} onChange={e => setReflection(e.target.value)} placeholder="¿Por qué abandonaste tu proceso?..." className="w-full bg-black/50 border border-neutral-800 rounded-[2.5rem] p-7 text-white text-base outline-none focus:border-red-500 transition-all mb-8 min-h-[160px] shadow-inner" />
+                                    <p className="text-neutral-400 text-sm mb-10 px-6 font-medium leading-relaxed tracking-tight">Abandono detectado. Presenta tu declaración.</p>
+                                    <textarea value={reflection} onChange={e => setReflection(e.target.value)} placeholder="..." className="w-full bg-black/50 border border-neutral-800 rounded-[2.5rem] p-7 text-white text-base outline-none focus:border-red-500 transition-all mb-8 min-h-[160px] shadow-inner" />
                                     {aiFeedback && <div className="bg-white/5 border border-white/10 p-6 rounded-3xl text-neutral-300 text-sm italic mb-8 animate-in shadow-inner">{aiFeedback}</div>}
-                                    
-                                    <button 
-                                        onClick={consultarAlJuez} 
-                                        disabled={isAiLoading || verdictValid !== null} 
-                                        className={`w-full font-black py-7 rounded-3xl uppercase text-xs tracking-[0.3em] transition-all shadow-2xl ${
-                                            verdictValid === true ? 'bg-green-500 text-white' : 
-                                            verdictValid === false ? 'bg-red-600 text-white' : 
-                                            reflection.length < 20 ? 'bg-white/10 text-neutral-500 btn-defense-waiting border-2 border-red-500/30' : 
-                                            'bg-white text-black hover:scale-[1.03]'
-                                        }`}
-                                    >
-                                        {isAiLoading ? 'PROCESANDO AUDIENCIA...' : verdictValid === true ? 'VOLVER AL CAMINO' : verdictValid === false ? 'SENTENCIA: REINICIO' : 'PRESENTAR DEFENSA'}
+                                    <button onClick={consultarAlJuez} disabled={isAiLoading || verdictValid !== null} className={`w-full font-black py-7 rounded-3xl uppercase text-xs tracking-[0.3em] transition-all shadow-2xl ${verdictValid === true ? 'bg-green-500 text-white' : verdictValid === false ? 'bg-red-600 text-white' : reflection.length < 20 ? 'bg-white/10 text-neutral-500 btn-defense-waiting border-2 border-red-500/30' : 'bg-white text-black hover:scale-[1.03]'}`}>
+                                        {isAiLoading ? 'DELIBERANDO...' : verdictValid === true ? 'VOLVER' : verdictValid === false ? 'SENTENCIA' : 'PRESENTAR'}
                                     </button>
-
-                                    {verdictValid === true && <button onClick={() => { localStorage.setItem(KEY_M, getLocalISODate()); setShowJuez(false); }} className="mt-8 text-[11px] font-black text-neutral-500 uppercase tracking-widest underline underline-offset-8 active:text-white transition-all">Ingresar al Sistema</button>}
+                                    {verdictValid === true && <button onClick={() => { localStorage.setItem(KEY_M, getLocalISODate()); setShowJuez(false); }} className="mt-8 text-[11px] font-black text-neutral-500 uppercase tracking-widest underline active:text-white transition-all">Ingresar al Sistema</button>}
                                 </div>
                             </div>
                         )}
 
                         <footer className="mt-24 text-center pb-40">
-                            <p className="text-[10px] font-black text-neutral-800 uppercase tracking-[0.7em] px-6">
-                                SPLENDOR • SISTEMA 3 DE JUNIO • v12.3
-                            </p>
+                            <p className="text-[10px] font-black text-neutral-800 uppercase tracking-[0.7em] px-6">SPLENDOR • SISTEMA 3 DE JUNIO • v12.4</p>
                         </footer>
                     </div>
                 </div>
