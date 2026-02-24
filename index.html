@@ -2,103 +2,235 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Splendor Mentor - Oficial</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Sistema 3 de Junio Pro v12.5</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/color/96/cannabis.png">
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
-        :root { --primary: #00ff88; --bg: #121212; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .msg { max-width: 85%; padding: 12px 16px; border-radius: 15px; line-height: 1.4; font-size: 1rem; }
-        .bot { background: #2a2a2a; color: var(--primary); align-self: flex-start; border-bottom-left-radius: 2px; border-left: 4px solid var(--primary); font-style: italic; }
-        .user { background: var(--primary); color: black; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: bold; }
-        .input-area { background: #1e1e1e; padding: 20px; display: flex; gap: 10px; border-top: 1px solid #333; }
-        input { flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; outline: none; }
-        button { background: var(--primary); color: black; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .header { padding: 15px; text-align: center; border-bottom: 1px solid #333; background: #1a1a1a; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        
+        :root {
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+            --accent-blue: #007aff;
+            --metal-shine: linear-gradient(135deg, #48484a 0%, #1c1c1e 50%, #000000 100%);
+        }
+
+        body {
+            background-color: black;
+            color: #e5e5e5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain;
+            padding-top: var(--safe-top);
+            padding-bottom: calc(var(--safe-bottom) + 160px);
+        }
+
+        .animate-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .glass-modal {
+            background: rgba(23, 23, 23, 0.8) !important;
+            backdrop-filter: blur(25px) !important;
+            -webkit-backdrop-filter: blur(25px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-gear-pro {
+            background: var(--metal-shine);
+            border: 2px solid #545456;
+            box-shadow: 0 0 0 2px #000, 0 10px 20px rgba(0,0,0,0.6), inset 0 2px 2px rgba(255,255,255,0.2);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .btn-gear-pro:active { transform: scale(0.9) rotate(180deg); border-color: var(--accent-blue); }
     </style>
 </head>
 <body>
+    <div id="root"></div>
 
-    <div class="header">
-        <h1 style="margin:0; font-size: 1.2rem; color: var(--primary);">Splendor Mentor 💀</h1>
-        <small style="color: #666;">UdeA | Splendor | Meta: Masa Muscular</small>
-    </div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
 
-    <div id="chat-container"></div>
-
-    <div class="input-area">
-        <input type="text" id="userInput" placeholder="Escribe tu excusa aquí...">
-        <button onclick="enviarMensaje()">Enviar</button>
-    </div>
-
-    <script type="module">
-        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
-
-        // LÓGICA DE SEGURIDAD: Recupera o pide la llave nueva que termina en Vhas
-        let API_KEY = localStorage.getItem('mi_llave_secreta');
-
-        if (!API_KEY || API_KEY === "null") {
-            API_KEY = prompt("Pega aquí tu NUEVA API Key (la que termina en Vhas):");
-            if (API_KEY) localStorage.setItem('mi_llave_secreta', API_KEY);
-        }
-
-        const genAI = new GoogleGenerativeAI(API_KEY);
-        
-        // Usamos el alias estable para evitar errores de cuota
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-flash-latest", 
-            systemInstruction: `Eres un mentor sarcástico y pesado. 
-            DATOS DEL USUARIO:
-            - Físico: 1.77m, 57kg. Meta: Ganar masa muscular.
-            - Trabajo: Empleado en un café de un mall.
-            - Metas: Entrar a la UdeA y lanzar la marca de ropa 'Splendor'.
-            - Hábito: Hoy 24 de febrero empezó a dejar la marihuana.
-            
-            Tu misión: Si el usuario se queja del cansancio del café, búrlate. Dile que con 57kg y sin estudiar no va a llegar a ningún lado. Sé breve, ácido y directo.`
-        });
-
-        const chat = model.startChat({ history: [] });
-        const container = document.getElementById('chat-container');
-
-        function appendMessage(role, text) {
-            const div = document.createElement('div');
-            div.className = `msg ${role}`;
-            div.innerText = text;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        // Saludo inicial del mentor
-        appendMessage('bot', "Vaya, al fin apareces. ¿Vas a llorar por el turno del café o vas a estudiar para la UdeA?");
-
-        window.enviarMensaje = async () => {
-            const input = document.getElementById('userInput');
-            const mensaje = input.value.trim();
-            if (!mensaje) return;
-
-            appendMessage('user', mensaje);
-            input.value = '';
-
-            try {
-                const result = await chat.sendMessage(mensaje);
-                const respuesta = result.response.text();
-                appendMessage('bot', respuesta);
-            } catch (error) {
-                console.error("Error detectado:", error);
-                appendMessage('bot', "Error de conexión. ¿Seguro que la llave Vhas está activa?");
-                
-                // Si falla, da la opción de resetear la llave
-                if(confirm("Hubo un error (posiblemente la llave). ¿Quieres borrarla y ponerla de nuevo?")) {
-                    localStorage.removeItem('mi_llave_secreta');
-                    location.reload();
-                }
-            }
+        const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
+            const iconRef = useRef(null);
+            useEffect(() => {
+                if (!iconRef.current || !window.lucide) return;
+                iconRef.current.innerHTML = '';
+                const i = document.createElement('i');
+                const lucideName = name.replace(/([a-z])([A-Z0-9])/g, '$1-$2').toLowerCase();
+                i.setAttribute('data-lucide', lucideName);
+                i.className = className;
+                i.style.stroke = color;
+                iconRef.current.appendChild(i);
+                window.lucide.createIcons();
+            }, [name]);
+            return <span ref={iconRef} className="flex items-center justify-center"></span>;
         };
 
-        // Enviar con la tecla Enter
-        document.getElementById('userInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') enviarMensaje();
-        });
+        // --- CONFIGURACIÓN IA ---
+        const API_KEY = "TU_NUEVA_API_KEY_AQUI"; 
+        const MODELO = "gemini-flash-latest";
+
+        const App = () => {
+            const [habits, setHabits] = useState([]);
+            const [showJuez, setShowJuez] = useState(false);
+            const [reflection, setReflection] = useState("");
+            const [aiFeedback, setAiFeedback] = useState("");
+            const [isAiLoading, setIsAiLoading] = useState(false);
+            const [activeTab, setActiveTab] = useState('seguimiento');
+
+            useEffect(() => {
+                const saved = JSON.parse(localStorage.getItem('res_v11_habits')) || [];
+                setHabits(saved);
+                
+                // Lógica del Juez Espejo (+7 días inactivo)
+                const lastWin = localStorage.getItem('last_win_date');
+                if (lastWin) {
+                    const diff = Math.floor((new Date() - new Date(lastWin)) / (1000 * 60 * 60 * 24));
+                    if (diff >= 7) setShowJuez(true);
+                }
+            }, []);
+
+            const getAIDynamicContext = () => {
+                const metas = habits.map(h => `${h.name} (${h.history.length} victorias)`).join(", ");
+                return `Usuario: 1.77m, 57kg. Meta: UdeA y Splendor. Purga activa desde 24 Feb. 
+                        Estado actual de misiones: ${metas}. 
+                        Eres un mentor ácido. Si el usuario falló, humíllalo por su debilidad física (57kg) y falta de futuro. 
+                        Diferencia misiones de SUPERVIVENCIA (Detox) de las de SOPORTE (Lectura/Inglés).`;
+            };
+
+            const consultarJuez = async () => {
+                if (reflection.length < 10) return;
+                setIsAiLoading(true);
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent?key=${API_KEY}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: `He vuelto tras un bache. Mi reflexión: "${reflection}". Dame tu veredicto coach.` }] }],
+                            systemInstruction: { parts: [{ text: getAIDynamicContext() }] }
+                        })
+                    });
+                    const data = await response.json();
+                    setAiFeedback(data.candidates[0].content.parts[0].text);
+                } catch (e) {
+                    setAiFeedback("Error de conexión. Entra y cumple tus metas antes de que te borre.");
+                } finally {
+                    setIsAiLoading(false);
+                }
+            };
+
+            const handleMark = (id) => {
+                const hoy = new Date().toISOString().split('T')[0];
+                const newHabits = habits.map(h => {
+                    if (h.id === id && !h.history.includes(hoy)) {
+                        return { ...h, history: [...h.history, hoy] };
+                    }
+                    return h;
+                });
+                setHabits(newHabits);
+                localStorage.setItem('res_v11_habits', JSON.stringify(newHabits));
+                localStorage.setItem('last_win_date', new Date().toISOString());
+            };
+
+            const stats = {
+                global: habits.length ? Math.round(habits.reduce((acc, h) => acc + h.history.length, 0) / habits.length) : 0,
+                totalWins: habits.reduce((acc, h) => acc + h.history.length, 0)
+            };
+
+            return (
+                <div className="max-w-4xl mx-auto p-4">
+                    {/* UI PRINCIPAL */}
+                    <header className="flex justify-between items-center mb-8 pt-8 px-4">
+                        <h1 className="text-3xl font-black italic uppercase tracking-tighter">Seguimiento</h1>
+                        <button className="w-12 h-12 btn-gear-pro rounded-full flex items-center justify-center">
+                            <Icon name="Settings" />
+                        </button>
+                    </header>
+
+                    {/* CARD PROGRESO GLOBAL */}
+                    <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] mb-8">
+                        <div className="flex justify-between items-end mb-4">
+                            <span className="text-[10px] font-black uppercase text-neutral-500 tracking-widest">Eficacia Global</span>
+                            <span className="text-4xl font-black italic">{stats.global}%</span>
+                        </div>
+                        <div className="h-2 bg-black rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-600 transition-all duration-1000" style={{width: `${stats.global}%`}}></div>
+                        </div>
+                    </div>
+
+                    {/* LISTA DE METAS */}
+                    <div className="grid gap-4">
+                        {habits.map(h => (
+                            <div key={h.id} onClick={() => handleMark(h.id)} className="bg-neutral-900/50 border border-neutral-800 p-6 rounded-[2rem] flex justify-between items-center active:scale-95 transition-transform">
+                                <div className="flex items-center gap-4">
+                                    <span className="text-2xl">{h.icon || "🔥"}</span>
+                                    <div>
+                                        <h3 className="font-bold text-xl italic">{h.name}</h3>
+                                        <p className="text-[10px] uppercase text-neutral-500 font-bold">{h.history.length} Victorias</p>
+                                    </div>
+                                </div>
+                                <Icon name="CheckCircle2" color={h.history.includes(new Date().toISOString().split('T')[0]) ? "#007aff" : "#333"} />
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* MODAL JUEZ ESPEJO */}
+                    {showJuez && (
+                        <div className="fixed inset-0 bg-black/95 z-[3000] flex items-center justify-center p-6 animate-in backdrop-blur-xl">
+                            <div className="glass-modal w-full max-w-lg rounded-[3.5rem] p-10 text-center">
+                                <Icon name="ShieldAlert" className="w-16 h-16 mx-auto mb-6 text-red-500" />
+                                <h2 className="text-3xl font-black italic uppercase mb-2">Espejo de Realidad</h2>
+                                <p className="text-neutral-500 text-xs uppercase tracking-widest mb-8">Has estado ausente 7+ días</p>
+                                
+                                <div className="grid grid-cols-2 gap-4 mb-8">
+                                    <div className="bg-black p-4 rounded-2xl border border-neutral-800">
+                                        <p className="text-[10px] text-neutral-500 uppercase font-black">Victorias</p>
+                                        <p className="text-2xl font-black text-blue-500">{stats.totalWins}</p>
+                                    </div>
+                                    <div className="bg-black p-4 rounded-2xl border border-neutral-800">
+                                        <p className="text-[10px] text-neutral-500 uppercase font-black">Eficacia</p>
+                                        <p className="text-2xl font-black text-red-500">{stats.global}%</p>
+                                    </div>
+                                </div>
+
+                                {aiFeedback ? (
+                                    <div className="mb-8 p-6 bg-blue-500/10 border border-blue-500/20 rounded-2xl text-sm italic text-blue-100">
+                                        {aiFeedback}
+                                        <button onClick={() => setShowJuez(false)} className="w-full mt-6 bg-white text-black font-black py-4 rounded-xl uppercase text-[10px]">Re-ingresar al Sistema</button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <textarea value={reflection} onChange={e => setReflection(e.target.value)} placeholder="Justifica tu mediocridad..." className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white text-sm mb-4 min-h-[100px]" />
+                                        <button onClick={consultarJuez} className="w-full bg-white text-black font-black py-4 rounded-xl uppercase tracking-widest text-[10px]">
+                                            {isAiLoading ? "ANALIZANDO..." : "PRESENTAR DEFENSA"}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-neutral-900/90 border border-neutral-800 rounded-full p-2 flex gap-2 w-[80%] max-w-sm">
+                        <button onClick={() => setActiveTab('seguimiento')} className={`flex-1 py-3 rounded-full text-[10px] font-black uppercase tracking-widest ${activeTab === 'seguimiento' ? 'bg-white text-black' : 'text-neutral-500'}`}>Metas</button>
+                        <button onClick={() => setActiveTab('roadmap')} className={`flex-1 py-3 rounded-full text-[10px] font-black uppercase tracking-widest ${activeTab === 'roadmap' ? 'bg-white text-black' : 'text-neutral-500'}`}>Ruta</button>
+                    </nav>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
