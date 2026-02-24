@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sistema 3 de Junio Pro v12.8</title>
+    <title>Sistema 3 de Junio Pro v12.9</title>
     
     <!-- Configuración para App iPhone -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -67,6 +67,13 @@
             line-height: 1;
         }
 
+        .glass-modal {
+            background: rgba(23, 23, 23, 0.8) !important;
+            backdrop-filter: blur(25px) !important;
+            -webkit-backdrop-filter: blur(25px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
         .btn-gear-pro {
             background: var(--metal-shine);
             border: 2px solid #545456;
@@ -83,17 +90,22 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const apiKey = ""; // Inyectada por entorno o manual
+        const apiKey = ""; // Inyectada o manual
 
+        // COMPONENTE ICON ACTUALIZADO: Detección de Emoji vs Lucide
         const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
             const iconRef = useRef(null);
+            
             useEffect(() => {
                 if (!iconRef.current) return;
-                iconRef.current.innerHTML = '';
+                
+                // Regex para detectar si el string contiene emojis
                 const isEmoji = /\p{Emoji}/u.test(name) && !/^[a-zA-Z0-9-]+$/.test(name);
+                
                 if (isEmoji) {
                     iconRef.current.innerHTML = `<span class="emoji-span">${name}</span>`;
                 } else if (window.lucide) {
+                    iconRef.current.innerHTML = '';
                     const i = document.createElement('i');
                     const lucideName = name.replace(/([a-z])([A-Z0-9])/g, '$1-$2').toLowerCase();
                     i.setAttribute('data-lucide', lucideName);
@@ -104,12 +116,14 @@
                     window.lucide.createIcons();
                 }
             }, [name, className, color]);
+
             return <span ref={iconRef} className="flex items-center justify-center min-w-[1.5rem] min-h-[1.5rem]"></span>;
         };
 
         const KEY_H = 'res_v12_habits';
         const KEY_S = 'res_v12_start';
         const KEY_AK = 'res_v12_user_key';
+        const KEY_M = 'res_v12_mock_last';
 
         const getLocalISODate = () => {
             const hoy = new Date();
@@ -118,24 +132,26 @@
         };
 
         const App = () => {
-            const [activeTab, setActiveTab] = useState('asistente');
+            const [activeTab, setActiveTab] = useState('seguimiento');
             const [habits, setHabits] = useState([]);
             const [startDate, setStartDate] = useState(getLocalISODate());
             const [userKey, setUserKey] = useState("");
             
             const [showSettings, setShowSettings] = useState(false);
             const [isAiLoading, setIsAiLoading] = useState(false);
+            const [showJuez, setShowJuez] = useState(false);
+            const [reflection, setReflection] = useState("");
             const [chatMessages, setChatMessages] = useState([{ 
                 role: 'ai', 
-                text: 'Hola. Soy el Asistente del Sistema 3 de Junio. Motor de IA en línea.' 
+                text: 'Hola. Soy el Asistente del Sistema 3 de Junio. Motor de IA en v1 Estable.' 
             }]);
             const [chatInput, setChatInput] = useState("");
             const chatEndRef = useRef(null);
 
             useEffect(() => {
                 const savedHabits = JSON.parse(localStorage.getItem(KEY_H)) || [
-                    { id: 'h1', name: "Ejercicio", icon: "🏋️", color: "#007aff", history: [] },
-                    { id: 'h2', name: "Splendor", icon: "✨", color: "#ff9500", history: [] }
+                    { id: 'h1', name: "Ejercicio", icon: "🏋️", color: "#007aff", history: [], createdAt: getLocalISODate() },
+                    { id: 'h2', name: "Splendor", icon: "✨", color: "#ff9500", history: [], createdAt: getLocalISODate() }
                 ];
                 const savedStart = localStorage.getItem(KEY_S) || getLocalISODate();
                 const savedKey = localStorage.getItem(KEY_AK) || "";
@@ -146,8 +162,10 @@
 
                 if (savedKey) {
                     const masked = savedKey.slice(-3);
-                    setChatMessages(prev => [...prev, { role: 'ai', text: `✅ Llave vinculada: ...${masked}. Sistema listo.` }]);
+                    setChatMessages(prev => [...prev, { role: 'ai', text: `✅ Llave vinculada: ...${masked}.` }]);
                 }
+
+                checkInactivity(savedHabits);
             }, []);
 
             useEffect(() => {
@@ -160,11 +178,38 @@
                 chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
             }, [chatMessages]);
 
+            const checkInactivity = (currentHabits) => {
+                if (currentHabits.length === 0) return;
+                
+                const mock = localStorage.getItem(KEY_M);
+                let ultimaActividad;
+
+                if (mock) {
+                    ultimaActividad = new Date(mock + "T12:00:00");
+                } else {
+                    let fechas = [];
+                    currentHabits.forEach(h => {
+                        if (h.history.length > 0) {
+                            fechas.push(new Date([...h.history].sort().reverse()[0] + "T12:00:00"));
+                        }
+                    });
+                    if (fechas.length === 0) return;
+                    ultimaActividad = new Date(Math.max(...fechas));
+                }
+
+                const hoy = new Date();
+                hoy.setHours(12, 0, 0, 0);
+                ultimaActividad.setHours(12, 0, 0, 0);
+
+                const diff = Math.floor((hoy - ultimaActividad) / (1000 * 60 * 60 * 24));
+                if (diff > 7) setShowJuez(true);
+            };
+
             const callGemini = async (prompt) => {
                 const currentKey = userKey || apiKey;
                 if (!currentKey) throw new Error("LLAVE_FALTANTE");
 
-                // Cambiamos a v1 y nos aseguramos del nombre del modelo completo según recomendaciones técnicas
+                // MIGRACIÓN A ENDPOINT V1 ESTABLE
                 const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${currentKey}`;
                 
                 const response = await fetch(url, {
@@ -172,7 +217,6 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: prompt }] }]
-                        // Eliminamos systemInstruction temporalmente para asegurar conexión base estable
                     })
                 });
 
@@ -197,7 +241,7 @@
                     setChatMessages(prev => [...prev, { role: 'ai', text: result }]);
                 } catch (e) {
                     let msg = `⚠️ Error: ${e.message}`;
-                    if (e.message === "LLAVE_FALTANTE") msg = "⚠️ No hay llave configurada. Ve a Ajustes (⚙️) y pega tu llave de Google.";
+                    if (e.message === "LLAVE_FALTANTE") msg = "⚠️ Sin llave configurada. Ve a Ajustes (⚙️).";
                     setChatMessages(prev => [...prev, { role: 'ai', text: msg }]);
                 } finally {
                     setIsAiLoading(false);
@@ -205,12 +249,16 @@
             };
 
             const calculatePorc = (h) => {
-                if (!startDate) return 0;
-                const start = new Date(startDate + "T12:00:00");
+                // CÁLCULO DE EFICACIA DINÁMICA: Basado en createdAt o startDate
+                const baseDate = h.createdAt || startDate;
+                const start = new Date(baseDate + "T12:00:00");
                 const hoy = new Date();
+                hoy.setHours(12, 0, 0, 0);
+                
                 const diff = Math.max(1, Math.floor((hoy - start) / (1000 * 60 * 60 * 24)) + 1);
                 const p = Math.round((h.history.length / diff) * 100);
-                return isNaN(p) ? 0 : Math.min(100, p);
+                
+                return isNaN(p) || p < 0 ? 0 : Math.min(100, p);
             };
 
             const getGlobalStats = () => {
@@ -220,6 +268,37 @@
                 const res = Math.round(total / habits.length);
                 return isNaN(res) ? 0 : res;
             };
+
+            // RENDERIZADO CONDICIONAL ESTRICTO DEL JUEZ (Bloqueo Ineludible)
+            if (showJuez) {
+                return (
+                    <div className="min-h-screen bg-black flex items-center justify-center p-6 animate-in">
+                        <div className="glass-modal w-full max-w-lg rounded-[4rem] p-12 text-center border-red-500/30 border">
+                            <Icon name="ShieldAlert" className="w-20 h-20 text-red-500 mx-auto mb-8" />
+                            <h1 className="text-4xl font-black italic text-white uppercase mb-6 tracking-tighter">Audiencia Obligatoria</h1>
+                            <p className="text-neutral-400 text-sm mb-10 leading-relaxed italic">Has estado ausente más de 7 días. El Sistema se ha bloqueado. Presenta tu defensa.</p>
+                            
+                            <textarea 
+                                value={reflection} 
+                                onChange={e => setReflection(e.target.value)} 
+                                placeholder="Escribe aquí tu reflexión o motivo de ausencia..." 
+                                className="w-full bg-black border border-neutral-800 rounded-[2.5rem] p-7 text-white text-base outline-none focus:border-red-500 transition-all mb-8 min-h-[180px] shadow-inner" 
+                            />
+                            
+                            <button 
+                                onClick={() => {
+                                    if (reflection.length < 10) return;
+                                    localStorage.setItem(KEY_M, getLocalISODate());
+                                    setShowJuez(false);
+                                }} 
+                                className="w-full bg-white text-black font-black py-7 rounded-3xl uppercase text-xs tracking-[0.3em] active:scale-95 transition-all shadow-2xl"
+                            >
+                                PRESENTAR AL JUEZ
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
 
             return (
                 <div className="min-h-screen bg-black text-neutral-200">
@@ -231,7 +310,7 @@
                                 <header className="px-6 mb-8 flex justify-between items-center">
                                     <div>
                                         <h1 className="text-4xl font-black italic text-white uppercase leading-none">Metas</h1>
-                                        <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mt-2">v12.8 • AI Active</p>
+                                        <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mt-2">v12.9 • Ineludible</p>
                                     </div>
                                     <button onClick={() => setShowSettings(true)} className="w-14 h-14 btn-gear-pro rounded-full flex items-center justify-center">
                                         <Icon name="Settings" className="w-6 h-6" color="white" />
@@ -247,22 +326,25 @@
                                     </div>
                                 </div>
                                 <div className="px-4 grid gap-5">
-                                    {habits.map(h => (
-                                        <div key={h.id} className="bg-neutral-900/40 border border-neutral-800 rounded-[2.5rem] p-7" style={{ borderLeft: `10px solid ${h.color}` }}>
-                                            <div className="flex justify-between items-center mb-4">
-                                                <div className="flex items-center gap-4">
-                                                    <Icon name={h.icon} className="w-7 h-7" />
-                                                    <h3 className="text-xl font-bold text-white italic">{h.name}</h3>
+                                    {habits.map(h => {
+                                        const p = calculatePorc(h);
+                                        return (
+                                            <div key={h.id} className="bg-neutral-900/40 border border-neutral-800 rounded-[2.5rem] p-7" style={{ borderLeft: `10px solid ${h.color}` }}>
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <div className="flex items-center gap-4">
+                                                        <Icon name={h.icon} className="w-8 h-8" />
+                                                        <h3 className="text-xl font-bold text-white italic">{h.name}</h3>
+                                                    </div>
+                                                    <button onClick={() => setHabits(prev => prev.map(item => item.id === h.id ? {...item, history: [...item.history, getLocalISODate()]} : item))} className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center active:scale-90 transition-all">
+                                                        <Icon name="Check" className="w-6 h-6" color="white" />
+                                                    </button>
                                                 </div>
-                                                <button onClick={() => setHabits(prev => prev.map(item => item.id === h.id ? {...item, history: [...item.history, getLocalISODate()]} : item))} className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center active:scale-90 transition-all">
-                                                    <Icon name="Check" className="w-6 h-6" color="white" />
-                                                </button>
+                                                <div className="h-2.5 bg-black rounded-full overflow-hidden">
+                                                    <div className="h-full transition-all duration-1000" style={{ width: `${p}%`, backgroundColor: h.color }} />
+                                                </div>
                                             </div>
-                                            <div className="h-2.5 bg-black rounded-full overflow-hidden">
-                                                <div className="h-full transition-all duration-1000" style={{ width: `${calculatePorc(h)}%`, backgroundColor: h.color }} />
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -272,10 +354,10 @@
                             <div className="animate-in h-[85vh] flex flex-col px-6 pb-40">
                                 <header className="mb-6 border-b border-neutral-800 pb-4 pt-4">
                                     <div className="flex items-center gap-3">
-                                        <Icon name="✨" className="w-6 h-6 text-yellow-400" />
-                                        <h2 className="text-2xl font-black italic text-white uppercase leading-none">Asistente IA</h2>
+                                        <Icon name="Zap" className="w-6 h-6 text-yellow-400" />
+                                        <h2 className="text-2xl font-black italic text-white uppercase leading-none">Asistente</h2>
                                     </div>
-                                    <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-2">Conectado a Google Gemini 1.5</p>
+                                    <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-2">v1 Stable • Conexión Directa</p>
                                 </header>
                                 <div className="flex-1 overflow-y-auto space-y-6 custom-scrollbar mb-4 pr-2">
                                     {chatMessages.map((msg, i) => (
@@ -294,7 +376,7 @@
                                         value={chatInput} 
                                         onChange={e => setChatInput(e.target.value)}
                                         onKeyDown={e => e.key === 'Enter' && handleSend()}
-                                        placeholder="Escribe 'Dime Hola'..." 
+                                        placeholder="Habla con tu conciencia..." 
                                         className="flex-1 bg-transparent outline-none text-white px-4 h-12 text-sm"
                                     />
                                     <button onClick={handleSend} disabled={isAiLoading || !chatInput.trim()} className="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center active:scale-90 transition-all disabled:opacity-20 shadow-lg">
@@ -307,13 +389,13 @@
                         {/* PESTAÑA RUTA */}
                         {activeTab === 'roadmap' && (
                             <div className="px-6 pb-40 pt-4 animate-in">
-                                <h2 className="text-3xl font-black italic text-white uppercase mb-8">Plan Maestro</h2>
-                                <p className="text-neutral-500 italic text-sm leading-relaxed mb-10">Disciplina total hasta el 3 de Junio.</p>
+                                <h2 className="text-3xl font-black italic text-white uppercase mb-8">Ruta Maestro</h2>
                                 <div className="space-y-6">
-                                    <div className="p-8 bg-neutral-900/50 border border-neutral-800 rounded-[2.5rem]">
-                                        <h3 className="text-xl font-bold text-blue-400 italic mb-2">Fase de Resiliencia</h3>
-                                        <div className="h-1.5 w-full bg-neutral-800 rounded-full mt-4">
-                                            <div className="h-full w-1/4 bg-blue-500 rounded-full"></div>
+                                    <div className="p-8 bg-neutral-900/50 border border-neutral-800 rounded-[2.5rem] flex items-center gap-6">
+                                        <Icon name="Map" className="w-8 h-8 text-blue-500" />
+                                        <div>
+                                            <h3 className="font-black text-white italic uppercase tracking-tighter">Fase de Resiliencia</h3>
+                                            <p className="text-xs text-neutral-500">Iniciada el 3 de Junio.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -330,7 +412,7 @@
                         {/* MODAL AJUSTES */}
                         {showSettings && (
                             <div className="fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-5 animate-in backdrop-blur-md">
-                                <div className="glass-modal w-full max-w-md rounded-[3.5rem] p-10 shadow-2xl border border-white/5">
+                                <div className="glass-modal w-full max-w-md rounded-[3.5rem] p-10 shadow-2xl">
                                     <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-4">
                                         <h2 className="text-2xl font-black italic text-white uppercase leading-none">Ajustes</h2>
                                         <button onClick={() => setShowSettings(false)} className="text-[10px] font-black text-neutral-500 uppercase tracking-widest hover:text-white">Cerrar</button>
@@ -343,12 +425,11 @@
                                                 value={userKey} 
                                                 onChange={e => setUserKey(e.target.value.trim())} 
                                                 className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none focus:border-blue-500 text-sm shadow-inner" 
-                                                placeholder="Pega tu llave aquí..."
+                                                placeholder="Pega tu API Key aquí..."
                                             />
-                                            <p className="text-[9px] text-neutral-600 mt-3 italic font-bold leading-relaxed">Pega la llave que termina en -9EI para activar al Juez.</p>
                                         </div>
                                         <div className="pt-6 border-t border-white/5">
-                                            <button onClick={() => { if(confirm("¿Purgar todos los datos?")) { localStorage.clear(); location.reload(); } }} className="w-full py-4 border border-red-500/20 text-red-500 rounded-2xl text-[10px] font-black uppercase tracking-widest active:bg-red-500 active:text-white transition-all">Borrar Todo</button>
+                                            <button onClick={() => { if(confirm("¿Purgar todos los datos?")) { localStorage.clear(); location.reload(); } }} className="w-full py-4 border border-red-500/20 text-red-500 rounded-2xl text-[10px] font-black uppercase tracking-widest active:bg-red-500 active:text-white transition-all">Borrar Memoria Total</button>
                                         </div>
                                     </div>
                                 </div>
