@@ -2,405 +2,99 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sistema 3 de Junio Pro v13.2</title>
-    
-    <!-- Configuración para App iPhone -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <!-- Scripts de Dependencias -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splendor Mentor - Chat</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        :root { --primary: #00ff88; --bg: #121212; --card: #1e1e1e; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         
-        :root {
-            --safe-top: env(safe-area-inset-top);
-            --safe-bottom: env(safe-area-inset-bottom);
-            --accent-blue: #007aff;
-            --metal-shine: linear-gradient(135deg, #48484a 0%, #1c1c1e 50%, #000000 100%);
-        }
+        /* Contenedor de Chat */
+        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 15px; line-height: 1.4; font-size: 0.95rem; }
+        .bot { background: #2a2a2a; color: var(--primary); align-self: flex-start; border-bottom-left-radius: 2px; border-left: 3px solid var(--primary); font-style: italic; }
+        .user { background: var(--primary); color: black; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: 500; }
 
-        body {
-            background-color: black;
-            color: #e5e5e5;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            overscroll-behavior-y: contain;
-            padding-top: var(--safe-top);
-            padding-bottom: calc(var(--safe-bottom) + 160px);
-        }
-
-        .animate-in {
-            animation: fadeIn 0.4s ease-out forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #2c2c2e;
-            border-radius: 10px;
-        }
-
-        .chat-bubble {
-            max-width: 85%;
-            padding: 1rem 1.2rem;
-            border-radius: 1.5rem;
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-
-        .emoji-span {
-            font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
-            font-size: 1.6rem;
-            line-height: 1;
-        }
-
-        .glass-modal {
-            background: rgba(23, 23, 23, 0.8) !important;
-            backdrop-filter: blur(25px) !important;
-            -webkit-backdrop-filter: blur(25px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .btn-gear-pro {
-            background: var(--metal-shine);
-            border: 2px solid #545456;
-            box-shadow: 0 0 0 2px #000, 0 10px 20px rgba(0,0,0,0.6);
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .btn-gear-pro:active { transform: scale(0.9) rotate(90deg); }
+        /* Area de Input */
+        .input-area { background: #1e1e1e; padding: 20px; display: flex; gap: 10px; border-top: 1px solid #333; }
+        input { flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; outline: none; }
+        button { background: var(--primary); color: black; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        
+        .header { padding: 15px; text-align: center; border-bottom: 1px solid #333; background: #1a1a1a; }
+        .header h1 { font-size: 1.2rem; margin: 0; color: var(--primary); }
     </style>
 </head>
 <body>
-    <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef, useMemo } = React;
+    <div class="header">
+        <h1>Splendor Mentor 💀</h1>
+        <small style="color: #666;">Meta: UdeA | Café Mall</small>
+    </div>
 
-        const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
-            const isEmoji = useMemo(() => /\p{Emoji}/u.test(name) && !/^[a-zA-Z0-9-]+$/.test(name), [name]);
-            const iconRef = useRef(null);
+    <div id="chat-container">
+        </div>
+
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Escribe tu excusa aquí...">
+        <button onclick="enviarMensaje()">Enviar</button>
+    </div>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+        const API_KEY = "AIzaSyBcEYRrKA_dIp7iTMiztuAnqujvqa6-9EI";
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        
+        // Configuración del modelo con personalidad
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-1.5-flash",
+            systemInstruction: `Eres un mentor sarcástico y pesado. Tu usuario trabaja en un café de un mall, quiere entrar a la UdeA y crear su marca 'Splendor'. 
+            Tu objetivo no es ser amable, es recordarle que el tiempo se agota. Si te da excusas sobre el cansancio del trabajo, búrlate de ellas. 
+            Responde siempre de forma corta, directa y ácida.`
+        });
+
+        const chat = model.startChat({
+            history: [
+                { role: "user", parts: [{ text: "Hola, soy el dueño de Splendor. Trabajo en el café y quiero entrar a la UdeA." }] },
+                { role: "model", parts: [{ text: "Ah, el futuro diseñador que prefiere servir lattes que estudiar. ¿Qué excusa me tienes hoy?" }] },
+            ],
+        });
+
+        const container = document.getElementById('chat-container');
+
+        // Función para mostrar mensajes en pantalla
+        function appendMessage(role, text) {
+            const div = document.createElement('div');
+            div.className = `msg ${role}`;
+            div.innerText = text;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Mostrar saludo inicial
+        appendMessage('bot', "Vaya, apareciste. ¿Vas a estudiar para la UdeA o vas a seguir perdiendo el tiempo?");
+
+        window.enviarMensaje = async () => {
+            const input = document.getElementById('userInput');
+            const mensaje = input.value.trim();
             
-            useEffect(() => {
-                if (!isEmoji && window.lucide && iconRef.current) {
-                    iconRef.current.innerHTML = '';
-                    const i = document.createElement('i');
-                    const lucideName = name.replace(/([a-z])([A-Z0-9])/g, '$1-$2').toLowerCase();
-                    i.setAttribute('data-lucide', lucideName);
-                    i.className = className;
-                    i.style.stroke = color;
-                    i.style.strokeWidth = "2.5";
-                    iconRef.current.appendChild(i);
-                    window.lucide.createIcons();
-                }
-            }, [name, className, color, isEmoji]);
+            if (!mensaje) return;
 
-            if (isEmoji) {
-                return (
-                    <span className={`flex items-center justify-center min-w-[1.5rem] min-h-[1.5rem] ${className}`}>
-                        <span className="emoji-span">{name}</span>
-                    </span>
-                );
+            appendMessage('user', mensaje);
+            input.value = '';
+
+            try {
+                const result = await chat.sendMessage(mensaje);
+                const respuesta = result.response.text();
+                appendMessage('bot', respuesta);
+            } catch (error) {
+                appendMessage('bot', "Error en la conexión. Hasta para eso tienes mala suerte.");
             }
-
-            return <span ref={iconRef} className={`flex items-center justify-center min-w-[1.5rem] min-h-[1.5rem]`}></span>;
         };
 
-        const KEY_H = 'res_v12_habits';
-        const KEY_S = 'res_v12_start';
-        const KEY_M = 'res_v12_mock_last';
-
-        const getLocalISODate = () => {
-            const hoy = new Date();
-            const offset = hoy.getTimezoneOffset() * 60000;
-            return (new Date(hoy - offset)).toISOString().split('T')[0];
-        };
-
-        const App = () => {
-            const [activeTab, setActiveTab] = useState('seguimiento');
-            const [habits, setHabits] = useState([]);
-            const [startDate, setStartDate] = useState(getLocalISODate());
-            
-            const [showSettings, setShowSettings] = useState(false);
-            const [showJuez, setShowJuez] = useState(false);
-            const [reflection, setReflection] = useState("");
-            const [chatMessages, setChatMessages] = useState([{ 
-                role: 'ai', 
-                text: 'Hola. Soy tu Asistente Local. El sistema de IA está en mantenimiento, pero puedo ayudarte con tu registro diario.' 
-            }]);
-            const [chatInput, setChatInput] = useState("");
-            const chatEndRef = useRef(null);
-
-            useEffect(() => {
-                const savedHabits = JSON.parse(localStorage.getItem(KEY_H)) || [
-                    { id: 'h1', name: "Ejercicio", icon: "🏋️", color: "#007aff", history: [], createdAt: getLocalISODate() },
-                    { id: 'h2', name: "Splendor", icon: "✨", color: "#ff9500", history: [], createdAt: getLocalISODate() }
-                ];
-                const savedStart = localStorage.getItem(KEY_S) || getLocalISODate();
-                
-                setHabits(savedHabits);
-                setStartDate(savedStart);
-
-                checkInactivity(savedHabits);
-            }, []);
-
-            useEffect(() => {
-                localStorage.setItem(KEY_H, JSON.stringify(habits));
-                localStorage.setItem(KEY_S, startDate);
-            }, [habits, startDate]);
-
-            useEffect(() => {
-                chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }, [chatMessages]);
-
-            const checkInactivity = (currentHabits) => {
-                if (currentHabits.length === 0) return;
-                
-                const mock = localStorage.getItem(KEY_M);
-                let ultimaActividad;
-
-                if (mock) {
-                    ultimaActividad = new Date(mock + "T12:00:00");
-                } else {
-                    let fechas = [];
-                    currentHabits.forEach(h => {
-                        if (h.history.length > 0) {
-                            fechas.push(new Date([...h.history].sort().reverse()[0] + "T12:00:00"));
-                        }
-                    });
-                    if (fechas.length === 0) return;
-                    ultimaActividad = new Date(Math.max(...fechas));
-                }
-
-                const hoy = new Date();
-                hoy.setHours(12, 0, 0, 0);
-                ultimaActividad.setHours(12, 0, 0, 0);
-
-                const diff = Math.floor((hoy - ultimaActividad) / (1000 * 60 * 60 * 24));
-                if (diff > 7) setShowJuez(true);
-            };
-
-            const handleSend = () => {
-                if (!chatInput.trim()) return;
-                const text = chatInput;
-                setChatMessages(prev => [...prev, { role: 'user', text }]);
-                setChatInput("");
-                
-                // Respuesta local simple
-                setTimeout(() => {
-                    setChatMessages(prev => [...prev, { 
-                        role: 'ai', 
-                        text: 'Entendido. Estoy registrando tus pensamientos localmente. La IA avanzada volverá pronto.' 
-                    }]);
-                }, 600);
-            };
-
-            const validarDefensa = () => {
-                if (reflection.length < 30) {
-                    alert("Tu reflexión es muy corta. El Juez requiere al menos 30 caracteres de honestidad.");
-                    return;
-                }
-                
-                localStorage.setItem(KEY_M, getLocalISODate());
-                setShowJuez(false);
-                setReflection("");
-                setChatMessages(prev => [...prev, { 
-                    role: 'ai', 
-                    text: '✅ Acceso restaurado. El Juez ha aceptado tu reflexión local.' 
-                }]);
-            };
-
-            const calculatePorc = (h) => {
-                const baseDate = h.createdAt || startDate;
-                const start = new Date(baseDate + "T12:00:00");
-                const hoy = new Date();
-                hoy.setHours(12, 0, 0, 0);
-                
-                const diff = Math.max(1, Math.floor((hoy - start) / (1000 * 60 * 60 * 24)) + 1);
-                const p = Math.round((h.history.length / diff) * 100);
-                
-                return isNaN(p) || p < 0 ? 0 : Math.min(100, p);
-            };
-
-            const getGlobalStats = () => {
-                if (!habits || habits.length === 0) return 0;
-                let total = 0;
-                habits.forEach(h => total += calculatePorc(h));
-                const res = Math.round(total / habits.length);
-                return isNaN(res) ? 0 : res;
-            };
-
-            if (showJuez) {
-                return (
-                    <div className="min-h-screen bg-black flex items-center justify-center p-6 animate-in">
-                        <div className="glass-modal w-full max-w-lg rounded-[4rem] p-12 text-center border-red-500/30 border">
-                            <Icon name="ShieldAlert" className="w-20 h-20 text-red-500 mx-auto mb-8" />
-                            <h1 className="text-4xl font-black italic text-white uppercase mb-6 tracking-tighter leading-none">Tribunal de Conciencia</h1>
-                            <p className="text-neutral-400 text-sm mb-10 leading-relaxed italic">Has estado ausente más de 7 días. Escribe tu compromiso para retomar el reto.</p>
-                            
-                            <textarea 
-                                value={reflection} 
-                                onChange={e => setReflection(e.target.value)} 
-                                placeholder="Escribe aquí tu reflexión honesta (min. 30 letras)..." 
-                                className="w-full bg-black border border-neutral-800 rounded-[2.5rem] p-7 text-white text-base outline-none focus:border-red-500 transition-all mb-8 min-h-[180px] shadow-inner" 
-                            />
-                            
-                            <button 
-                                onClick={validarDefensa} 
-                                className="w-full font-black py-7 rounded-3xl uppercase text-xs tracking-[0.3em] bg-white text-black active:scale-95 transition-all shadow-2xl"
-                            >
-                                RESTAURAR SISTEMA
-                            </button>
-                        </div>
-                    </div>
-                );
-            }
-
-            return (
-                <div className="min-h-screen bg-black text-neutral-200">
-                    <div className="max-w-4xl mx-auto pt-6 h-screen flex flex-col">
-                        
-                        {activeTab === 'seguimiento' && (
-                            <div className="animate-in pb-32">
-                                <header className="px-6 mb-8 flex justify-between items-center">
-                                    <div>
-                                        <h1 className="text-4xl font-black italic text-white uppercase leading-none">Seguimiento</h1>
-                                        <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mt-2">v13.2 • Local Estable</p>
-                                    </div>
-                                    <button onClick={() => setShowSettings(true)} className="w-14 h-14 btn-gear-pro rounded-full flex items-center justify-center">
-                                        <Icon name="Settings" className="w-6 h-6" color="white" />
-                                    </button>
-                                </header>
-                                <div className="mx-4 glass-modal p-8 rounded-[2.8rem] mb-10 shadow-2xl">
-                                    <div className="flex justify-between items-baseline mb-5">
-                                        <span className="text-[11px] font-black text-neutral-500 tracking-widest uppercase">Eficacia Total</span>
-                                        <span className="text-5xl font-black text-white italic tracking-tighter">{getGlobalStats()}%</span>
-                                    </div>
-                                    <div className="h-4 bg-black rounded-full overflow-hidden border border-neutral-800 p-[2px]">
-                                        <div className="h-full bg-gradient-to-r from-blue-600 to-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${getGlobalStats()}%` }} />
-                                    </div>
-                                </div>
-                                <div className="px-4 grid gap-5">
-                                    {habits.map(h => {
-                                        const p = calculatePorc(h);
-                                        return (
-                                            <div key={h.id} className="bg-neutral-900/40 border border-neutral-800 rounded-[2.5rem] p-7" style={{ borderLeft: `12px solid ${h.color}` }}>
-                                                <div className="flex justify-between items-center mb-4">
-                                                    <div className="flex items-center gap-4">
-                                                        <Icon name={h.icon} className="w-8 h-8" />
-                                                        <h3 className="text-xl font-bold text-white italic">{h.name}</h3>
-                                                    </div>
-                                                    <button onClick={() => setHabits(prev => prev.map(item => item.id === h.id ? {...item, history: [...item.history, getLocalISODate()]} : item))} className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center active:scale-90 transition-all">
-                                                        <Icon name="Check" className="w-6 h-6" color="white" />
-                                                    </button>
-                                                </div>
-                                                <div className="h-2.5 bg-black rounded-full overflow-hidden">
-                                                    <div className="h-full transition-all duration-1000" style={{ width: `${p}%`, backgroundColor: h.color }} />
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'asistente' && (
-                            <div className="animate-in h-[85vh] flex flex-col px-6 pb-40">
-                                <header className="mb-6 border-b border-neutral-800 pb-4 pt-4">
-                                    <div className="flex items-center gap-3">
-                                        <Icon name="Zap" className="w-6 h-6 text-neutral-400" />
-                                        <h2 className="text-2xl font-black italic text-white uppercase leading-none">Asistente</h2>
-                                    </div>
-                                    <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-2">Modo Local • Offline</p>
-                                </header>
-                                <div className="flex-1 overflow-y-auto space-y-6 custom-scrollbar mb-4 pr-2">
-                                    {chatMessages.map((msg, i) => (
-                                        <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in`}>
-                                            <div className={`chat-bubble shadow-xl ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-neutral-900 border border-neutral-800 text-neutral-200 rounded-bl-none italic'}`}>
-                                                {msg.text}
-                                            </div>
-                                        </div>
-                                    ))}
-                                    <div ref={chatEndRef} />
-                                </div>
-                                <div className="bg-neutral-900 border border-neutral-800 p-3 rounded-[2rem] flex gap-3 shadow-2xl items-center mb-10">
-                                    <input 
-                                        type="text" 
-                                        value={chatInput} 
-                                        onChange={e => setChatInput(e.target.value)}
-                                        onKeyDown={e => e.key === 'Enter' && handleSend()}
-                                        placeholder="Escribe una nota local..." 
-                                        className="flex-1 bg-transparent outline-none text-white px-4 h-12 text-sm"
-                                    />
-                                    <button onClick={handleSend} className="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center active:scale-90 transition-all shadow-lg">
-                                        <Icon name="Send" className="w-5 h-5" color="black" />
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'roadmap' && (
-                            <div className="px-6 pb-40 pt-4 animate-in">
-                                <h2 className="text-3xl font-black italic text-white uppercase mb-8 leading-none">Ruta Maestro</h2>
-                                <div className="space-y-6">
-                                    <div className="p-8 glass-modal rounded-[2.5rem] flex items-center gap-6 border border-blue-500/20">
-                                        <Icon name="Map" className="w-8 h-8 text-blue-500" />
-                                        <div>
-                                            <h3 className="font-black text-white italic uppercase tracking-tighter">Fase de Resiliencia</h3>
-                                            <p className="text-xs text-neutral-500 mt-1">Meta final: 3 de Junio.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-neutral-900/90 backdrop-blur-3xl border border-neutral-800 rounded-[3.5rem] p-2.5 flex gap-2 shadow-2xl z-[100] w-[90%] max-w-sm">
-                            <button onClick={() => setActiveTab('seguimiento')} className={`flex-1 py-4 rounded-[3rem] font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'seguimiento' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'}`}>Metas</button>
-                            <button onClick={() => setActiveTab('asistente')} className={`flex-1 py-4 rounded-[3rem] font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'asistente' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'}`}>Notas</button>
-                            <button onClick={() => setActiveTab('roadmap')} className={`flex-1 py-4 rounded-[3rem] font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'roadmap' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'}`}>Ruta</button>
-                        </nav>
-
-                        {showSettings && (
-                            <div className="fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-5 animate-in backdrop-blur-md">
-                                <div className="glass-modal w-full max-w-md rounded-[3.5rem] p-10 shadow-2xl">
-                                    <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-4">
-                                        <h2 className="text-2xl font-black italic text-white uppercase leading-none">Ajustes</h2>
-                                        <button onClick={() => setShowSettings(false)} className="text-[10px] font-black text-neutral-500 uppercase tracking-widest hover:text-white">Cerrar</button>
-                                    </div>
-                                    <div className="space-y-8">
-                                        <div>
-                                            <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Configuración de Reto</label>
-                                            <div className="bg-black/40 p-4 rounded-2xl border border-white/5 text-[10px] text-neutral-500 italic">
-                                                Sistema operando en modo local para máxima estabilidad. Todos tus datos se guardan en este dispositivo.
-                                            </div>
-                                        </div>
-                                        <div className="pt-6 border-t border-white/5">
-                                            <button onClick={() => { if(confirm("¿Purgar todos los datos?")) { localStorage.clear(); location.reload(); } }} className="w-full py-4 border border-red-500/20 text-red-500 rounded-2xl text-[10px] font-black uppercase tracking-widest active:bg-red-500 active:text-white transition-all">Borrar Memoria Total</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        // Enviar con tecla Enter
+        document.getElementById('userInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') enviarMensaje();
+        });
     </script>
 </body>
 </html>
