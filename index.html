@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sistema 3 de Junio Pro v12.7</title>
+    <title>Sistema 3 de Junio Pro v12.8</title>
     
     <!-- Configuración para App iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -91,6 +91,14 @@
             animation: pulse-red-soft 2s infinite;
         }
 
+        .emoji-span {
+            font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         input, textarea {
             font-size: 16px !important;
         }
@@ -102,13 +110,21 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- COMPONENTE ICON ULTRA-ROBUSTO ---
+        // --- COMPONENTE ICON HÍBRIDO (SOPORTA EMOJIS O LUCIDE) ---
         const Icon = ({ name, className = "w-5 h-5", color = "currentColor", fill = "none" }) => {
             const iconRef = useRef(null);
+
             useEffect(() => {
                 const renderIcon = () => {
-                    if (iconRef.current && window.lucide) {
-                        iconRef.current.innerHTML = ''; 
+                    if (!iconRef.current) return;
+                    iconRef.current.innerHTML = '';
+
+                    // Detectar si el nombre es un emoji (no alfanumérico o contiene caracteres especiales de emoji)
+                    const isEmoji = !/^[a-zA-Z0-9]+$/.test(name);
+
+                    if (isEmoji) {
+                        iconRef.current.innerHTML = `<span class="emoji-span text-2xl">${name}</span>`;
+                    } else if (window.lucide) {
                         const i = document.createElement('i');
                         const dataName = name
                             .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
@@ -126,7 +142,8 @@
                 const timeout = setTimeout(renderIcon, 0);
                 return () => clearTimeout(timeout);
             }, [name, className, color, fill]);
-            return <span ref={iconRef} className="inline-flex items-center justify-center pointer-events-none"></span>;
+
+            return <span ref={iconRef} className="inline-flex items-center justify-center pointer-events-none min-w-[1.5rem] min-h-[1.5rem]"></span>;
         };
 
         const KEY_H = 'res_v12_habits';
@@ -153,7 +170,7 @@
                 restDays: ['dom'], history: [] 
             },
             { id: 'h2', name: "Leer Libro", icon: "BookOpen", color: "#af52de", type: "simple", history: [] },
-            { id: 'h3', name: "Meditar", icon: "Brain", color: "#34c759", type: "simple", history: [] }
+            { id: 'h3', name: "Meditar", icon: "🧘", color: "#34c759", type: "simple", history: [] }
         ];
 
         const App = () => {
@@ -227,7 +244,7 @@
                 
                 if (!geminiKey) {
                     setTimeout(() => {
-                        setAiFeedback("MODO RESCATE: IA no detectada. Reflexión aceptada localmente.");
+                        setAiFeedback("IA Desactivada. Reflexión aceptada localmente.");
                         setVerdictValid(true);
                         setIsAiLoading(false);
                     }, 1500);
@@ -235,7 +252,7 @@
                 }
 
                 try {
-                    const prompt = `Actúa como un Juez implacable del "Sistema 3 de Junio". El usuario ha fallado por más de 7 días. Su reflexión es: "${reflection}". Responde estrictamente en JSON: { "valid": boolean, "verdict": "string corto" }`;
+                    const prompt = `Actúa como un Juez implacable. Reflexión: "${reflection}". Responde en JSON: { "valid": boolean, "verdict": "string" }`;
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
                     const res = await fetch(url, {
                         method: 'POST',
@@ -249,7 +266,7 @@
                     setAiFeedback(result.verdict);
                     setVerdictValid(result.valid);
                 } catch (e) {
-                    setAiFeedback("Error de conexión con el tribunal. Acceso manual concedido.");
+                    setAiFeedback("Error de conexión. Desbloqueo habilitado.");
                     setVerdictValid(true);
                 } finally {
                     setIsAiLoading(false);
@@ -336,11 +353,11 @@
             ];
 
             const steps = [
-                { id: 1, title: "Nivel 1: Reset Bioquímico", icon: 'Flame', tag: "Fase 1", color: "border-red-500/50", iconColor: "#f87171", tasks: ["Purga de parafernalia", "Cero contacto círculos consumo", "Higiene de sueño estricta"], impact: "Recuperar la voluntad biológica." },
-                { id: 2, title: "Nivel 2: Estabilidad Vital", icon: 'Brain', tag: "Fase 2", color: "border-orange-500/50", iconColor: "#fb923c", tasks: ["Meditación y Deporte", "Búsqueda activa empleo", "Definición académica"], impact: "Eliminar la incertidumbre." },
-                { id: 3, title: "Nivel 3: Deep Work", icon: 'BookOpen', tag: "Fase 3", color: "border-blue-500/50", iconColor: "#60a5fa", tasks: ["Inscripción Inglés", "Dedicación total Excel", "Lectura profunda"], impact: "Construir competencia técnica." },
-                { id: 4, title: "Nivel 4: Consolidación", icon: 'Wallet', tag: "Fase 4", color: "border-emerald-500/50", iconColor: "#34d399", tasks: ["Inversión capilar", "Ahorro movilidad", "Gestión ingresos"], impact: "El dinero como herramienta." },
-                { id: 5, title: "Nivel 5: Cúspide Splendor", icon: 'Palette', tag: "3 de Junio", color: "border-purple-500/50", iconColor: "#a78bfa", tasks: ["Lanzamiento Marca", "Trámite Licencia Moto", "Nueva identidad libre"], impact: "Manifestación final del proceso." }
+                { id: 1, title: "Nivel 1: Reset Bioquímico", icon: 'Flame', tag: "Fase 1", color: "border-red-500/50", iconColor: "#f87171", tasks: ["Purga de parafernalia", "Higiene de sueño estricta"], impact: "Recuperar la voluntad biológica." },
+                { id: 2, title: "Nivel 2: Estabilidad Vital", icon: 'Brain', tag: "Fase 2", color: "border-orange-500/50", iconColor: "#fb923c", tasks: ["Meditación y Deporte", "Búsqueda activa empleo"], impact: "Eliminar la incertidumbre." },
+                { id: 3, title: "Nivel 3: Deep Work", icon: 'BookOpen', tag: "Fase 3", color: "border-blue-500/50", iconColor: "#60a5fa", tasks: ["Inscripción Inglés", "Excel Pro"], impact: "Construir competencia técnica." },
+                { id: 4, title: "Nivel 4: Consolidación", icon: 'Wallet', tag: "Fase 4", color: "border-emerald-500/50", iconColor: "#34d399", tasks: ["Inversión capilar", "Gestión ingresos"], impact: "El dinero como herramienta." },
+                { id: 5, title: "Nivel 5: Cúspide Splendor", icon: 'Palette', tag: "3 de Junio", color: "border-purple-500/50", iconColor: "#a78bfa", tasks: ["Lanzamiento Marca", "Nueva identidad"], impact: "Manifestación final del proceso." }
             ];
 
             const renderSeguimiento = () => (
@@ -385,8 +402,8 @@
                                 >
                                     <div className="flex justify-between items-center">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center border border-neutral-800">
-                                                <Icon name={h.icon} className="w-6 h-6" color={isRest ? '#666' : h.color} />
+                                            <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center border border-neutral-800 shadow-inner">
+                                                <Icon name={h.icon} className="w-7 h-7" color={isRest ? '#666' : h.color} />
                                             </div>
                                             <div>
                                                 <h3 className="text-xl font-black italic uppercase tracking-tight text-white">{h.name}</h3>
@@ -415,7 +432,7 @@
                                                     <h4 className="text-[9px] font-black text-neutral-500 uppercase tracking-widest">Manual de Operación</h4>
                                                 </div>
                                                 <p className="text-sm font-bold italic text-neutral-200 leading-relaxed">
-                                                    {isRest ? "Recuperación estratégica activa." : (h.routine?.[hoyDayName] || "Falla en el manual: Sin tarea")}
+                                                    {isRest ? "Recuperación estratégica." : (h.routine?.[hoyDayName] || "Sin tarea")}
                                                 </p>
                                             </div>
                                             {!isRest && !markedToday && (
@@ -511,9 +528,6 @@
                                                             </li>
                                                         ))}
                                                     </ul>
-                                                    <div className="p-5 bg-black/40 rounded-[2rem] border border-neutral-800">
-                                                        <p className="text-xs text-neutral-400 italic leading-relaxed">{step.impact}</p>
-                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -530,7 +544,6 @@
                     <div className="max-w-4xl mx-auto p-4 md:p-8">
                         {activeTab === 'seguimiento' ? renderSeguimiento() : renderRoadmap()}
 
-                        {/* NAVBAR INFERIOR TIPO IPHONE */}
                         <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-neutral-900/90 backdrop-blur-3xl border border-neutral-800 rounded-[3rem] p-2.5 flex gap-3 shadow-2xl z-[100] w-[90%] max-w-sm">
                             <button onClick={() => setActiveTab('seguimiento')} className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[2.5rem] transition-all duration-500 font-black uppercase text-[11px] tracking-[0.2em] ${activeTab === 'seguimiento' ? 'bg-white text-black shadow-2xl scale-105' : 'text-neutral-500 hover:text-white'}`}>
                                 <Icon name="BarChart3" className="w-4 h-4" /> <span>Metas</span>
@@ -540,12 +553,11 @@
                             </button>
                         </nav>
 
-                        {/* MODAL EDITOR AVANZADO */}
                         {showAddModal && (
                             <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[2000] flex items-center justify-center p-5 animate-in">
-                                <div className="glass-modal w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[3.5rem] p-8 relative flex flex-col custom-scrollbar">
+                                <div className="glass-modal w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[3.5rem] p-8 relative flex flex-col custom-scrollbar shadow-2xl">
                                     <button onClick={() => setShowAddModal(false)} className="absolute top-8 right-8 text-neutral-600"><Icon name="X" /></button>
-                                    <h2 className="text-3xl font-black italic uppercase text-white mb-8">{editingId ? 'Ajustar' : 'Crear'}</h2>
+                                    <h2 className="text-3xl font-black italic uppercase text-white mb-8">{editingId ? 'Editar' : 'Crear'}</h2>
                                     
                                     <div className="space-y-8">
                                         <div className="flex bg-black p-1.5 rounded-2xl border border-neutral-800">
@@ -554,8 +566,14 @@
                                         </div>
 
                                         <div className="grid grid-cols-1 gap-6">
-                                            <input type="text" value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none focus:border-blue-500 transition-all" placeholder="Nombre" />
-                                            <input type="text" value={newIcon} onChange={e => setNewIcon(e.target.value)} className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white text-center text-xl" placeholder="Icono (Dumbbell, etc)" />
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Nombre de la Misión</label>
+                                                <input type="text" value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none focus:border-blue-500" placeholder="Ej: Ejercicio" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Icono (Lucide) o Emoji (Keyboard)</label>
+                                                <input type="text" value={newIcon} onChange={e => setNewIcon(e.target.value)} className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white text-center text-xl" placeholder="Flame o 🔥" />
+                                            </div>
                                         </div>
 
                                         {habitType === 'routine' && (
@@ -567,17 +585,17 @@
                                                             <span className="text-[10px] font-black uppercase text-neutral-400">{day}</span>
                                                             <button 
                                                                 onClick={() => setRestDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])}
-                                                                className={`text-[8px] font-black px-3 py-1 rounded-full uppercase border transition-all ${restDays.includes(day) ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'border-neutral-800 text-neutral-600'}`}
+                                                                className={`text-[8px] font-black px-3 py-1 rounded-full uppercase border ${restDays.includes(day) ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'border-neutral-800 text-neutral-600'}`}
                                                             >
-                                                                {restDays.includes(day) ? 'Descanso Blindado' : 'Entrenamiento'}
+                                                                {restDays.includes(day) ? 'Descanso' : 'Misión'}
                                                             </button>
                                                         </div>
                                                         {!restDays.includes(day) && (
                                                             <textarea 
                                                                 value={routineData[day]} 
                                                                 onChange={e => setRoutineData({...routineData, [day]: e.target.value})}
-                                                                placeholder="Manual de hoy..."
-                                                                className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-neutral-300 min-h-[50px] resize-none focus:border-blue-500 transition-all"
+                                                                placeholder="¿Qué toca hoy?..."
+                                                                className="w-full bg-black border border-neutral-800 p-3 rounded-xl text-xs text-neutral-300 min-h-[50px] resize-none"
                                                             />
                                                         )}
                                                     </div>
@@ -591,13 +609,12 @@
                                             ))}
                                         </div>
 
-                                        <button onClick={saveHabit} className="w-full bg-white text-black font-black py-6 rounded-[2.5rem] uppercase text-[11px] tracking-widest shadow-2xl active:scale-95 transition-all">Guardar Sistema</button>
+                                        <button onClick={saveHabit} className="w-full bg-white text-black font-black py-6 rounded-[2.5rem] uppercase text-[11px] tracking-widest shadow-2xl active:scale-95">Guardar Sistema</button>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* MODAL GESTIÓN GLOBAL */}
                         {showSettings && (
                             <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[2000] flex items-center justify-center p-5 animate-in">
                                 <div className="glass-modal w-full max-w-md rounded-[3.5rem] p-10 relative flex flex-col custom-scrollbar shadow-2xl">
@@ -605,13 +622,13 @@
                                     <h2 className="text-2xl font-black italic uppercase text-white mb-8">Gestión</h2>
                                     <div className="space-y-4">
                                         {habits.map(h => (
-                                            <div key={h.id} className="flex justify-between items-center bg-black/40 border border-neutral-800 p-5 rounded-3xl shadow-inner group">
+                                            <div key={h.id} className="flex justify-between items-center bg-black/40 border border-neutral-800 p-5 rounded-3xl shadow-inner">
                                                 <span className="text-sm font-bold text-neutral-300 uppercase italic flex items-center gap-3">
-                                                    <Icon name={h.icon} className="w-4 h-4" color={h.color} /> {h.name}
+                                                    <Icon name={h.icon} className="w-5 h-5" color={h.color} /> {h.name}
                                                 </span>
                                                 <div className="flex gap-3">
-                                                    <button onClick={() => openEdit(h)} className="p-4 bg-neutral-800/80 hover:bg-neutral-700 rounded-2xl transition-all border border-neutral-700 shadow-lg"><Icon name="Pencil" className="w-5 h-5" color="#fff" /></button>
-                                                    <button onClick={() => setHabits(habits.filter(hab => hab.id !== h.id))} className="p-4 bg-red-500/10 hover:bg-red-500/20 rounded-2xl transition-all border border-red-500/20 shadow-lg"><Icon name="Trash2" className="w-5 h-5" color="#ff3b30" /></button>
+                                                    <button onClick={() => openEdit(h)} className="p-4 bg-neutral-800/80 hover:bg-neutral-700 rounded-2xl border border-neutral-700 shadow-lg"><Icon name="Pencil" className="w-5 h-5" color="#fff" /></button>
+                                                    <button onClick={() => setHabits(habits.filter(hab => hab.id !== h.id))} className="p-4 bg-red-500/10 hover:bg-red-500/20 rounded-2xl border border-red-500/20 shadow-lg"><Icon name="Trash2" className="w-5 h-5" color="#ff3b30" /></button>
                                                 </div>
                                             </div>
                                         ))}
@@ -629,15 +646,12 @@
                             </div>
                         )}
 
-                        {/* MODAL JUEZ (BLOQUEO) */}
                         {showJuez && (
                             <div className="fixed inset-0 bg-black/60 backdrop-blur-3xl z-[3000] flex items-center justify-center p-6 animate-in">
                                 <div className="glass-modal w-full max-w-lg rounded-[4rem] p-12 text-center shadow-2xl border-red-500/20">
                                     <Icon name="ShieldAlert" className="w-20 h-20 text-red-500 mx-auto mb-8 shadow-2xl" />
-                                    <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase mb-8">Disciplina Quebrada</h1>
-                                    <p className="text-neutral-400 text-sm mb-10 px-4 font-medium leading-relaxed">Más de 7 días de inactividad detectados. El Tribunal exige tu declaración inmediata.</p>
+                                    <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase mb-8">Audiencia</h1>
                                     <textarea value={reflection} onChange={e => setReflection(e.target.value)} placeholder="¿Por qué abandonaste tu proceso?..." className="w-full bg-black border border-neutral-800 rounded-[2.5rem] p-7 text-white text-base outline-none focus:border-red-500 transition-all mb-8 min-h-[160px] shadow-inner" />
-                                    {aiFeedback && <div className="bg-white/5 border border-white/10 p-6 rounded-3xl text-neutral-300 text-sm italic mb-8 animate-in">{aiFeedback}</div>}
                                     <button 
                                         onClick={consultarAlJuez} 
                                         disabled={isAiLoading || verdictValid !== null}
@@ -647,15 +661,15 @@
                                             'bg-white text-black hover:scale-[1.03]'
                                         }`}
                                     >
-                                        {isAiLoading ? 'AUDIENCIA EN CURSO...' : verdictValid === true ? 'RECONECTAR CON EL CAMINO' : 'PRESENTAR DEFENSA'}
+                                        {isAiLoading ? 'DELIBERANDO...' : verdictValid === true ? 'CONTINUAR' : 'PRESENTAR DEFENSA'}
                                     </button>
                                     {verdictValid === true && <button onClick={() => setShowJuez(false)} className="mt-8 text-[11px] font-black text-neutral-500 uppercase tracking-widest underline active:text-white transition-all">Ingresar al Sistema</button>}
                                 </div>
                             </div>
                         )}
 
-                        <footer className="mt-20 text-center">
-                            <p className="text-[9px] font-black text-neutral-800 uppercase tracking-[0.6em]">SPLENDOR • v12.7 • SISTEMA DE RESILIENCIA DEFINITIVO</p>
+                        <footer className="mt-20 text-center pb-40">
+                            <p className="text-[9px] font-black text-neutral-800 uppercase tracking-[0.6em]">SPLENDOR • v12.8 • SISTEMA HÍBRIDO (EMOJI + LUCIDE)</p>
                         </footer>
                     </div>
                 </div>
