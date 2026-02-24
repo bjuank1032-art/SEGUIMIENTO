@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sistema 3 de Junio Pro v11.5</title>
+    <title>Sistema 3 de Junio Pro v11.6</title>
     
     <!-- Configuración para App iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -26,6 +26,7 @@
         :root {
             --safe-top: env(safe-area-inset-top);
             --safe-bottom: env(safe-area-inset-bottom);
+            --accent-blue: #007aff;
         }
 
         body {
@@ -59,31 +60,45 @@
             font-size: 16px !important;
         }
 
-        /* Botón de Ajustes Premium */
-        .btn-settings-header {
-            background: linear-gradient(145deg, #1c1c1e, #0a0a0a);
-            border: 1px solid #2c2c2e;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Botón de Ajustes Industrial Premium */
+        .btn-settings-pro {
+            background: linear-gradient(145deg, #2c2c2e, #1a1a1c);
+            border: 1.5px solid #3a3a3c;
+            box-shadow: 
+                0 4px 12px rgba(0,0,0,0.6),
+                inset 0 1px 1px rgba(255,255,255,0.1);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #d1d1d6;
         }
 
-        .btn-settings-header:active {
-            transform: scale(0.9) rotate(15deg);
-            background: #2c2c2e;
-            border-color: #444;
+        .btn-settings-pro:active {
+            transform: scale(0.85) rotate(45deg);
+            background: #3a3a3c;
+            border-color: var(--accent-blue);
+            color: white;
+            box-shadow: 0 0 15px rgba(0, 122, 255, 0.4);
         }
 
-        /* Estilos para que parezca una App nativa */
+        /* Estilos de Modales */
         .modal-header-btn {
             padding: 10px 18px;
             background: rgba(255,255,255,0.07);
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 800;
-            color: #fff;
+            border-radius: 14px;
+            font-size: 11px;
+            font-weight: 900;
+            color: #ffffff;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            border: 1px solid rgba(255,255,255,0.1);
+            letter-spacing: 1.5px;
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .modal-header-btn:active {
+            background: rgba(255,255,255,0.2);
+            transform: scale(0.95);
         }
     </style>
 </head>
@@ -318,23 +333,22 @@
 
             const renderSeguimiento = () => (
                 <div className="animate-in pb-32">
-                    <header className="mb-8 px-6 flex justify-between items-center">
+                    <header className="mb-10 px-6 flex justify-between items-center">
                         <div>
                             <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase leading-none">Seguimiento</h1>
-                            <p className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mt-2">Consistencia Activa • {habits.length} Metas</p>
+                            <p className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mt-3">Consistencia Activa • {habits.length} Metas</p>
                         </div>
-                        {/* Botón de Ajustes Rediseñado */}
+                        {/* BOTÓN AJUSTES - REDISEÑO TUERCA */}
                         <button 
                             onClick={() => setShowSettings(true)} 
-                            className="w-14 h-14 btn-settings-header rounded-full flex items-center justify-center text-white"
-                            aria-label="Ajustes"
+                            className="w-14 h-14 btn-settings-pro rounded-2xl shadow-lg"
                         >
-                            <Icon name="Settings" className="w-6 h-6" />
+                            <Icon name="Settings" className="w-7 h-7" />
                         </button>
                     </header>
 
-                    <div className="mx-4 bg-neutral-900/60 border border-neutral-800 p-8 rounded-[2.5rem] mb-8 shadow-2xl backdrop-blur-md">
-                        <div className="flex justify-between items-baseline mb-4">
+                    <div className="mx-4 bg-neutral-900/60 border border-neutral-800 p-8 rounded-[2.8rem] mb-10 shadow-2xl backdrop-blur-md">
+                        <div className="flex justify-between items-baseline mb-5">
                             <span className="text-[11px] font-black text-neutral-500 tracking-[0.2em] uppercase">Progreso Global</span>
                             <span className="text-5xl font-black text-white italic tracking-tighter">{getGlobalStats()}%</span>
                         </div>
@@ -343,33 +357,33 @@
                         </div>
                     </div>
 
-                    <div className="px-4 grid gap-4">
+                    <div className="px-4 grid gap-5">
                         {habits.map(h => {
                             const porc = calculatePorc(h);
                             return (
-                                <div key={h.id} onClick={() => handleMark(h.id)} className="bg-neutral-900/40 border border-neutral-800 rounded-[2.2rem] p-6 relative group cursor-pointer active:scale-95 transition-all overflow-hidden" style={{ borderLeft: `10px solid ${h.color}` }}>
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className="text-xl font-bold text-white flex items-center gap-3 italic">
-                                            <Icon name={h.icon} className="w-6 h-6" /> {h.name}
+                                <div key={h.id} onClick={() => handleMark(h.id)} className="bg-neutral-900/40 border border-neutral-800 rounded-[2.5rem] p-7 relative group cursor-pointer active:scale-95 transition-all overflow-hidden" style={{ borderLeft: `12px solid ${h.color}` }}>
+                                    <div className="flex justify-between items-center mb-5">
+                                        <h3 className="text-2xl font-bold text-white flex items-center gap-4 italic">
+                                            <Icon name={h.icon} className="w-7 h-7" /> {h.name}
                                         </h3>
-                                        <button onClick={(e) => handleUndo(h.id, e)} className="w-10 h-10 bg-black rounded-xl border border-neutral-800 flex items-center justify-center text-neutral-500 hover:text-red-500 active:bg-red-500/10 transition-colors">
-                                            <Icon name="Undo2" className="w-5 h-5" />
+                                        <button onClick={(e) => handleUndo(h.id, e)} className="w-12 h-12 bg-black rounded-2xl border border-neutral-800 flex items-center justify-center text-neutral-500 hover:text-red-500 active:bg-red-500/10 transition-colors shadow-inner">
+                                            <Icon name="Undo2" className="w-6 h-6" />
                                         </button>
                                     </div>
-                                    <div className="h-3 bg-black rounded-full overflow-hidden mb-3 border border-neutral-800">
+                                    <div className="h-3.5 bg-black rounded-full overflow-hidden mb-4 border border-neutral-800">
                                         <div className="h-full transition-all duration-1000 rounded-full" style={{ width: `${porc}%`, backgroundColor: h.color }} />
                                     </div>
-                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-neutral-500">
+                                    <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-neutral-500">
                                         <span>Victorias: {h.history.length}</span>
-                                        <span style={{ color: h.color }}>{porc}% Éxito</span>
+                                        <span style={{ color: h.color }}>{porc}% Eficacia</span>
                                     </div>
                                 </div>
                             );
                         })}
 
-                        <div onClick={() => setShowAddModal(true)} className="border-2 border-dashed border-neutral-800 rounded-[2.2rem] p-10 flex flex-col items-center justify-center gap-3 text-neutral-600 hover:border-neutral-500 hover:text-neutral-400 transition-all cursor-pointer bg-neutral-900/10">
-                            <Icon name="Plus" className="w-8 h-8" />
-                            <span className="text-xs font-black uppercase tracking-widest">Añadir Nueva Meta</span>
+                        <div onClick={() => setShowAddModal(true)} className="border-2 border-dashed border-neutral-800 rounded-[2.5rem] p-12 flex flex-col items-center justify-center gap-4 text-neutral-600 hover:border-neutral-500 hover:text-neutral-400 transition-all cursor-pointer bg-neutral-900/10 shadow-inner mt-2">
+                            <Icon name="Plus" className="w-10 h-10" />
+                            <span className="text-xs font-black uppercase tracking-[0.2em]">Nueva Meta</span>
                         </div>
                     </div>
                 </div>
@@ -377,27 +391,27 @@
 
             const renderRoadmap = () => (
                 <div className="animate-in pb-32 px-4">
-                    <header className="mb-8 border-b border-neutral-800 pb-8 pt-4">
-                        <div className="flex items-center gap-3 mb-2">
-                            <Icon name="Zap" className="text-yellow-400 w-6 h-6" fill="yellow" />
+                    <header className="mb-10 border-b border-neutral-800 pb-8 pt-4">
+                        <div className="flex items-center gap-4 mb-3">
+                            <Icon name="Zap" className="text-yellow-400 w-8 h-8" fill="yellow" />
                             <h1 className="text-3xl font-black tracking-tighter text-white uppercase italic">Plan Maestro</h1>
                         </div>
-                        <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Reingeniería Personal • Inicio: 24 de Febrero</p>
+                        <p className="text-[11px] text-neutral-500 font-bold uppercase tracking-[0.3em]">Reingeniería Personal • 3 DE JUNIO</p>
                     </header>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <div className="lg:col-span-4 space-y-6">
-                            <div className="bg-neutral-900/40 border border-neutral-800/60 p-6 rounded-[2.5rem] sticky top-8 backdrop-blur-md">
-                                <h2 className="text-xs font-black uppercase tracking-widest text-neutral-400 mb-6 flex items-center gap-2">
-                                    <Icon name="ListChecks" className="w-4 h-4 text-purple-400" /> Los 12 Objetivos
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                        <div className="lg:col-span-4 space-y-8">
+                            <div className="bg-neutral-900/40 border border-neutral-800/60 p-7 rounded-[2.8rem] sticky top-8 backdrop-blur-md shadow-2xl">
+                                <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-neutral-400 mb-8 flex items-center gap-3">
+                                    <Icon name="ListChecks" className="w-5 h-5 text-purple-400" /> Los 12 Objetivos
                                 </h2>
-                                <div className="space-y-1">
+                                <div className="space-y-3">
                                     {allObjectives.map((obj) => (
-                                        <div key={obj.id} className="flex items-center gap-3 p-2 rounded-xl border border-transparent hover:bg-white/5 transition-all group">
-                                            <div className="w-6 h-6 rounded-lg bg-neutral-800 group-hover:bg-neutral-700 flex items-center justify-center text-[10px] font-bold text-neutral-400 italic shrink-0">
+                                        <div key={obj.id} className="flex items-center gap-4 p-2 rounded-xl border border-transparent hover:bg-white/5 transition-all group">
+                                            <div className="w-7 h-7 rounded-xl bg-neutral-800 group-hover:bg-neutral-700 flex items-center justify-center text-[10px] font-bold text-neutral-400 italic shrink-0 shadow-lg">
                                                 {obj.id}
                                             </div>
-                                            <span className="text-[11px] font-bold text-neutral-300 group-hover:text-white truncate">{obj.text}</span>
+                                            <span className="text-xs font-bold text-neutral-300 group-hover:text-white truncate tracking-tight">{obj.text}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -405,44 +419,44 @@
                         </div>
 
                         <div className="lg:col-span-8 relative">
-                            <div className="absolute left-6 top-0 bottom-0 w-px bg-neutral-800/30"></div>
-                            <div className="space-y-6">
+                            <div className="absolute left-6 top-0 bottom-0 w-px bg-neutral-800/40"></div>
+                            <div className="space-y-8">
                                 {steps.map((step) => (
                                     <div key={step.id} onClick={() => setExpandedStep(step.id)} className="relative pl-16 group cursor-pointer">
-                                        <div className={`absolute left-0 top-0 w-12 h-12 rounded-2xl flex items-center justify-center z-10 border transition-all duration-300 ${expandedStep === step.id ? 'bg-white text-black border-white shadow-xl scale-110' : 'bg-black text-neutral-600 border-neutral-800'}`}>
-                                            <span className="font-black italic text-base">{step.id}</span>
+                                        <div className={`absolute left-0 top-0 w-14 h-14 rounded-[1.2rem] flex items-center justify-center z-10 border-2 transition-all duration-500 ${expandedStep === step.id ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.2)] scale-110' : 'bg-black text-neutral-600 border-neutral-800'}`}>
+                                            <span className="font-black italic text-xl">{step.id}</span>
                                         </div>
-                                        <div className={`p-6 md:p-8 rounded-[2.5rem] border-2 transition-all duration-500 ${expandedStep === step.id ? `${step.color} bg-neutral-900/60 shadow-2xl backdrop-blur-md` : 'border-transparent bg-neutral-900/10 opacity-30 group-hover:opacity-50'}`}>
-                                            <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="p-2.5 bg-neutral-800 rounded-xl">
-                                                        <Icon name={step.icon} className={`w-5 h-5 ${step.iconColor}`} />
+                                        <div className={`p-8 md:p-10 rounded-[3rem] border-2 transition-all duration-500 ${expandedStep === step.id ? `${step.color} bg-neutral-900/60 shadow-2xl backdrop-blur-md` : 'border-transparent bg-neutral-900/10 opacity-30 group-hover:opacity-60'}`}>
+                                            <div className="flex flex-col md:flex-row justify-between items-start gap-5 mb-8">
+                                                <div className="flex items-center gap-5">
+                                                    <div className="p-3 bg-neutral-800 rounded-2xl shadow-inner">
+                                                        <Icon name={step.icon} className={`w-6 h-6 ${step.iconColor}`} />
                                                     </div>
-                                                    <h3 className="text-xl md:text-2xl font-black text-white italic uppercase tracking-tighter leading-tight">{step.title}</h3>
+                                                    <h3 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter leading-none">{step.title}</h3>
                                                 </div>
-                                                <span className="text-[10px] font-black uppercase tracking-widest bg-white text-black px-4 py-1.5 rounded-full whitespace-nowrap">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-white text-black px-5 py-2 rounded-full whitespace-nowrap shadow-lg">
                                                     {step.tag}
                                                 </span>
                                             </div>
                                             {expandedStep === step.id && (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in">
-                                                    <div className="space-y-4">
-                                                        <h4 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest flex items-center gap-2 border-b border-neutral-800 pb-2">
-                                                            <Icon name="Zap" className="w-3 h-3 text-yellow-500" fill="yellow" /> Acciones
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-in">
+                                                    <div className="space-y-5">
+                                                        <h4 className="text-[11px] font-black text-neutral-500 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-neutral-800 pb-3">
+                                                            <Icon name="Zap" className="w-4 h-4 text-yellow-500" fill="yellow" /> Ejecución
                                                         </h4>
-                                                        <ul className="space-y-3">
+                                                        <ul className="space-y-4">
                                                             {step.tasks.map((task, i) => (
-                                                                <li key={i} className="flex items-start gap-3 group/task">
-                                                                    <div className="mt-2 w-1.5 h-1.5 rounded-full bg-neutral-700 group-hover/task:bg-white shrink-0"></div>
-                                                                    <span className="text-xs font-semibold text-neutral-300 leading-tight group-hover/task:text-white">{task}</span>
+                                                                <li key={i} className="flex items-start gap-4 group/task">
+                                                                    <div className="mt-2.5 w-2 h-2 rounded-full bg-neutral-700 group-hover/task:bg-white shrink-0 transition-all"></div>
+                                                                    <span className="text-sm font-semibold text-neutral-300 leading-tight group-hover/task:text-white transition-colors">{task}</span>
                                                                 </li>
                                                             ))}
                                                         </ul>
                                                     </div>
-                                                    <div className="space-y-4">
-                                                        <div className="p-5 bg-black/50 rounded-[2rem] border border-neutral-800">
-                                                            <h4 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3">Impacto Final</h4>
-                                                            <p className="text-[11px] text-neutral-400 leading-relaxed italic font-medium">{step.impact}</p>
+                                                    <div className="space-y-6">
+                                                        <div className="p-6 bg-black/50 rounded-[2.5rem] border border-neutral-800 shadow-inner">
+                                                            <h4 className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.25em] mb-4">Meta Final</h4>
+                                                            <p className="text-xs text-neutral-400 leading-relaxed italic font-medium">{step.impact}</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -458,80 +472,79 @@
 
             return (
                 <div className="min-h-screen bg-black text-neutral-200 font-sans selection:bg-white selection:text-black">
-                    <div className="max-w-4xl mx-auto relative pt-4">
+                    <div className="max-w-4xl mx-auto relative pt-6">
                         
                         {activeTab === 'seguimiento' ? renderSeguimiento() : renderRoadmap()}
 
-                        {/* NAVBAR INFERIOR ESTILO IPHONE */}
-                        <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-neutral-900/90 backdrop-blur-2xl border border-neutral-800 rounded-[2.8rem] p-2 flex gap-2 shadow-2xl z-[100] w-[90%] max-w-sm">
-                            <button onClick={() => setActiveTab('seguimiento')} className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-[2.2rem] transition-all duration-300 font-black uppercase text-[10px] tracking-widest ${activeTab === 'seguimiento' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'}`}>
+                        {/* NAVBAR INFERIOR ESTILO IPHONE PRO */}
+                        <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-neutral-900/90 backdrop-blur-3xl border border-neutral-800 rounded-[3rem] p-2.5 flex gap-3 shadow-2xl z-[100] w-[90%] max-w-sm">
+                            <button onClick={() => setActiveTab('seguimiento')} className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[2.5rem] transition-all duration-500 font-black uppercase text-[11px] tracking-[0.2em] ${activeTab === 'seguimiento' ? 'bg-white text-black shadow-2xl scale-105' : 'text-neutral-500 hover:text-white'}`}>
                                 <Icon name="BarChart3" className="w-4 h-4" /> <span>Metas</span>
                             </button>
-                            <button onClick={() => setActiveTab('roadmap')} className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-[2.2rem] transition-all duration-300 font-black uppercase text-[10px] tracking-widest ${activeTab === 'roadmap' ? 'bg-white text-black shadow-lg scale-105' : 'text-neutral-500 hover:text-white'}`}>
+                            <button onClick={() => setActiveTab('roadmap')} className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[2.5rem] transition-all duration-500 font-black uppercase text-[11px] tracking-[0.2em] ${activeTab === 'roadmap' ? 'bg-white text-black shadow-2xl scale-105' : 'text-neutral-500 hover:text-white'}`}>
                                 <Icon name="Map" className="w-4 h-4" /> <span>Ruta</span>
                             </button>
                         </nav>
 
-                        {/* MODAL NUEVA META */}
+                        {/* MODALES REFORZADOS */}
                         {showAddModal && (
-                            <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[2000] flex items-center justify-center p-4 animate-in">
-                                <div className="bg-neutral-900 border border-neutral-800 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[3rem] p-8 relative flex flex-col custom-scrollbar">
-                                    <div className="flex justify-between items-center mb-8 border-b border-neutral-800 pb-4">
-                                        <h2 className="text-2xl font-black italic tracking-tighter text-white uppercase">Nueva Meta</h2>
+                            <div className="fixed inset-0 bg-black/90 backdrop-blur-2xl z-[2000] flex items-center justify-center p-5 animate-in">
+                                <div className="bg-neutral-900 border border-neutral-800 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[3.5rem] p-10 relative flex flex-col shadow-[0_0_60px_rgba(0,0,0,1)]">
+                                    <div className="flex justify-between items-center mb-10 border-b border-neutral-800 pb-6">
+                                        <h2 className="text-3xl font-black italic tracking-tighter text-white uppercase">Crear Meta</h2>
                                         <button onClick={() => setShowAddModal(false)} className="modal-header-btn">Cerrar</button>
                                     </div>
                                     
-                                    <div className="space-y-6">
+                                    <div className="space-y-8">
                                         <div>
-                                            <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Nombre de la meta</label>
-                                            <input type="text" value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none focus:border-white transition-all shadow-inner" placeholder="Ej: No fumar" />
+                                            <label className="text-[11px] font-black text-neutral-500 uppercase tracking-[0.25em] mb-4 block">Nombre</label>
+                                            <input type="text" value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-black border border-neutral-800 rounded-3xl p-5 text-white outline-none focus:border-white transition-all shadow-inner" placeholder="Ej: No fumar" />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-2 gap-6">
                                             <div>
-                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Icono (Lucide)</label>
-                                                <input type="text" value={newIcon} onChange={e => setNewIcon(e.target.value)} className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none text-center" placeholder="Flame" />
+                                                <label className="text-[11px] font-black text-neutral-500 uppercase tracking-[0.25em] mb-4 block">Icono</label>
+                                                <input type="text" value={newIcon} onChange={e => setNewIcon(e.target.value)} className="w-full bg-black border border-neutral-800 rounded-3xl p-5 text-white outline-none text-center" placeholder="Flame" />
                                             </div>
                                             <div>
-                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Color</label>
-                                                <div className="h-[58px] rounded-2xl border border-neutral-800 bg-black flex items-center justify-center relative overflow-hidden">
-                                                    <div className="w-6 h-6 rounded-full shadow-lg" style={{backgroundColor: selectedColor}}></div>
+                                                <label className="text-[11px] font-black text-neutral-500 uppercase tracking-[0.25em] mb-4 block">Color</label>
+                                                <div className="h-[68px] rounded-3xl border border-neutral-800 bg-black flex items-center justify-center relative overflow-hidden shadow-inner">
+                                                    <div className="w-8 h-8 rounded-full shadow-2xl" style={{backgroundColor: selectedColor}}></div>
                                                     <input type="color" className="absolute opacity-0 inset-0 cursor-pointer" onChange={e => setSelectedColor(e.target.value)} />
                                                 </div>
                                             </div>
                                         </div>
-                                        <button onClick={addHabit} className="w-full bg-white text-black font-black py-5 rounded-2xl mt-4 uppercase text-xs tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/5">Confirmar Meta</button>
+                                        <button onClick={addHabit} className="w-full bg-white text-black font-black py-6 rounded-3xl mt-6 uppercase text-sm tracking-[0.25em] hover:scale-[1.03] active:scale-95 transition-all shadow-2xl">Confirmar Meta</button>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* MODAL AJUSTES */}
                         {showSettings && (
-                            <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-[2000] flex items-center justify-center p-4 animate-in">
-                                <div className="bg-neutral-900 border border-neutral-800 w-full max-w-md max-h-[85vh] overflow-y-auto rounded-[3rem] p-8 relative flex flex-col custom-scrollbar">
-                                    <div className="flex justify-between items-center mb-8 border-b border-neutral-800 pb-4">
+                            <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl z-[2000] flex items-center justify-center p-5 animate-in">
+                                <div className="bg-neutral-900 border border-neutral-800 w-full max-w-md max-h-[88vh] overflow-y-auto rounded-[3.5rem] p-10 relative flex flex-col custom-scrollbar shadow-2xl">
+                                    <div className="flex justify-between items-center mb-10 border-b border-neutral-800 pb-6">
                                         <h2 className="text-3xl font-black italic tracking-tighter text-white uppercase">Ajustes</h2>
                                         <button onClick={() => setShowSettings(false)} className="modal-header-btn">Cerrar</button>
                                     </div>
 
-                                    <div className="space-y-8">
+                                    <div className="space-y-10">
                                         <div className="text-center">
-                                            <span className={`text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest ${API_KEY ? 'bg-green-500/10 text-green-500' : 'bg-orange-500/10 text-orange-500'}`}>
-                                                {API_KEY ? 'IA Gemini Activa ✅' : 'Modo Rescate ⚠️'}
+                                            <span className={`text-[11px] font-black px-5 py-3 rounded-2xl uppercase tracking-[0.2em] shadow-lg ${API_KEY ? 'bg-green-500/10 text-green-500' : 'bg-orange-500/10 text-orange-500'}`}>
+                                                {API_KEY ? 'IA Gemini Online ✅' : 'Modo Rescate Offline ⚠️'}
                                             </span>
                                         </div>
 
                                         {!isSynced && habits.length > 0 && (
-                                            <div className="bg-blue-500/5 border border-blue-500/20 p-6 rounded-[2.5rem]">
-                                                <h3 className="text-xs font-black uppercase text-blue-400 mb-4 tracking-widest">Migración de Datos</h3>
-                                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full bg-black border border-neutral-800 p-4 rounded-xl text-white mb-4" />
-                                                <div className="space-y-3">
+                                            <div className="bg-blue-500/5 border border-blue-500/20 p-8 rounded-[3rem] shadow-inner">
+                                                <h3 className="text-xs font-black uppercase text-blue-400 mb-6 tracking-[0.3em]">Migración de Datos</h3>
+                                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full bg-black border border-neutral-800 p-5 rounded-2xl text-white mb-6 shadow-inner" />
+                                                <div className="space-y-4">
                                                     {habits.map(h => (
-                                                        <div key={h.id} className="flex justify-between items-center bg-black/40 p-4 rounded-2xl border border-neutral-800">
+                                                        <div key={h.id} className="flex justify-between items-center bg-black/40 p-5 rounded-2xl border border-neutral-800">
                                                             <span className="text-xs font-bold text-neutral-300">{h.icon} {h.name}</span>
                                                             <input 
                                                                 type="number" placeholder="Wins" 
-                                                                className="bg-neutral-800 text-white w-16 p-2 rounded-lg text-center text-xs outline-none" 
+                                                                className="bg-neutral-800 text-white w-20 p-3 rounded-xl text-center text-xs outline-none focus:border-blue-500 transition-all" 
                                                                 onBlur={(e) => {
                                                                     const val = parseInt(e.target.value) || 0;
                                                                     setHabits(prev => prev.map(hab => {
@@ -551,27 +564,27 @@
                                                         </div>
                                                     ))}
                                                 </div>
-                                                <button onClick={() => setIsSynced(true)} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl mt-6 uppercase text-[10px] tracking-widest">Confirmar Migración</button>
+                                                <button onClick={() => setIsSynced(true)} className="w-full bg-blue-600 text-white font-black py-5 rounded-2xl mt-8 uppercase text-[11px] tracking-widest shadow-xl">Guardar Historial</button>
                                             </div>
                                         )}
 
                                         <div>
-                                            <h3 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-4">Metas Actuales</h3>
-                                            <div className="space-y-3">
+                                            <h3 className="text-[11px] font-black text-neutral-500 uppercase tracking-[0.3em] mb-6">Gestionar Metas</h3>
+                                            <div className="space-y-4">
                                                 {habits.map((h) => (
-                                                    <div key={h.id} className="flex justify-between items-center bg-black border border-neutral-800 p-4 rounded-2xl">
+                                                    <div key={h.id} className="flex justify-between items-center bg-black/40 border border-neutral-800 p-5 rounded-3xl shadow-inner group">
                                                         <span className="text-sm font-bold text-neutral-300">≡ {h.name}</span>
-                                                        <button onClick={() => setHabits(habits.filter(hab => hab.id !== h.id))} className="text-red-500 p-2 active:bg-red-500/10 rounded-xl transition-all">
-                                                            <Icon name="Trash2" className="w-4 h-4" />
+                                                        <button onClick={() => setHabits(habits.filter(hab => hab.id !== h.id))} className="text-red-500 p-3 active:bg-red-500/10 rounded-2xl transition-all">
+                                                            <Icon name="Trash2" className="w-5 h-5" />
                                                         </button>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
 
-                                        <div className="pt-4 border-t border-neutral-800">
-                                            <button onClick={() => { if(confirm("¿Purgar todos los datos?")) { localStorage.clear(); location.reload(); } }} className="w-full border-2 border-red-500/50 text-red-500 font-black py-4 rounded-2xl uppercase text-[10px] tracking-widest active:bg-red-500 active:text-white transition-all">
-                                                Purgar Memoria del Sistema
+                                        <div className="pt-6 border-t border-neutral-800">
+                                            <button onClick={() => { if(confirm("¿Purgar todos los datos?")) { localStorage.clear(); location.reload(); } }} className="w-full border-2 border-red-500/40 text-red-500 font-black py-5 rounded-[2rem] uppercase text-[11px] tracking-[0.3em] active:bg-red-500 active:text-white transition-all shadow-xl">
+                                                Purgar Memoria Total
                                             </button>
                                         </div>
                                     </div>
@@ -581,24 +594,25 @@
 
                         {/* MODAL JUEZ */}
                         {showJuez && (
-                            <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl z-[3000] flex items-center justify-center p-4 animate-in">
-                                <div className="bg-neutral-900 border-2 border-red-500/30 w-full max-w-lg rounded-[3.5rem] p-10 text-center shadow-[0_0_100px_rgba(255,59,48,0.2)]">
-                                    <Icon name="ShieldAlert" className="w-16 h-16 text-red-500 mx-auto mb-6" />
-                                    <h2 className="text-[10px] font-black text-red-500 uppercase tracking-[0.5em] mb-3">Audiencia de Resiliencia</h2>
-                                    <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase mb-6 leading-none">Consistencia Perdida</h1>
-                                    <textarea value={reflection} onChange={e => setReflection(e.target.value)} placeholder="¿Por qué abandonaste tu disciplina?..." className="w-full bg-black border border-neutral-800 rounded-3xl p-6 text-white text-sm outline-none focus:border-red-500 transition-all mb-6 min-h-[140px]" />
-                                    {aiFeedback && <div className="bg-white/5 border border-white/10 p-5 rounded-2xl text-neutral-300 text-xs italic mb-6 animate-in">{aiFeedback}</div>}
-                                    <button onClick={consultarAlJuez} disabled={isAiLoading || verdictValid !== null} className={`w-full font-black py-6 rounded-2xl uppercase text-xs tracking-[0.2em] transition-all shadow-xl ${verdictValid === true ? 'bg-green-500 text-white shadow-green-500/20' : verdictValid === false ? 'bg-red-600 text-white shadow-red-500/20' : 'bg-white text-black hover:scale-[1.02]'}`}>
-                                        {isAiLoading ? 'DELIBERANDO...' : verdictValid === true ? 'VERDICTO: VOLVER' : verdictValid === false ? 'SENTENCIA: REINICIO' : 'PRESENTAR AUDIENCIA'}
+                            <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl z-[3000] flex items-center justify-center p-5 animate-in">
+                                <div className="bg-neutral-900 border-2 border-red-500/30 w-full max-w-lg rounded-[4rem] p-12 text-center shadow-[0_0_120px_rgba(255,59,48,0.25)]">
+                                    <Icon name="ShieldAlert" className="w-20 h-20 text-red-500 mx-auto mb-8 shadow-2xl" />
+                                    <h2 className="text-[11px] font-black text-red-500 uppercase tracking-[0.6em] mb-4">Tribunal de Resiliencia</h2>
+                                    <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase mb-8 leading-none">Disciplina Quebrada</h1>
+                                    <p className="text-neutral-400 text-sm mb-10 px-6 font-medium leading-relaxed tracking-tight">Has abandonado el Sistema 3 de Junio por más de 7 días. El tribunal de SPLENDOR exige tu declaración inmediata.</p>
+                                    <textarea value={reflection} onChange={e => setReflection(e.target.value)} placeholder="¿Por qué abandonaste tu proceso?..." className="w-full bg-black border border-neutral-800 rounded-[2.5rem] p-7 text-white text-base outline-none focus:border-red-500 transition-all mb-8 min-h-[160px] shadow-inner" />
+                                    {aiFeedback && <div className="bg-white/5 border border-white/10 p-6 rounded-3xl text-neutral-300 text-sm italic mb-8 animate-in shadow-inner">{aiFeedback}</div>}
+                                    <button onClick={consultarAlJuez} disabled={isAiLoading || verdictValid !== null} className={`w-full font-black py-7 rounded-3xl uppercase text-xs tracking-[0.3em] transition-all shadow-2xl ${verdictValid === true ? 'bg-green-500 text-white shadow-green-500/20' : verdictValid === false ? 'bg-red-600 text-white shadow-red-500/20' : 'bg-white text-black hover:scale-[1.03]'}`}>
+                                        {isAiLoading ? 'PROCESANDO AUDIENCIA...' : verdictValid === true ? 'VOLVER AL CAMINO' : verdictValid === false ? 'SENTENCIA: REINICIO' : 'PRESENTAR DEFENSA'}
                                     </button>
-                                    {verdictValid === true && <button onClick={() => { localStorage.setItem(KEY_M, getLocalISODate()); setShowJuez(false); }} className="mt-6 text-xs font-black text-neutral-500 uppercase tracking-widest underline underline-offset-8 active:text-white">Entrar al Sistema</button>}
+                                    {verdictValid === true && <button onClick={() => { localStorage.setItem(KEY_M, getLocalISODate()); setShowJuez(false); }} className="mt-8 text-[11px] font-black text-neutral-500 uppercase tracking-widest underline underline-offset-8 active:text-white transition-all">Ingresar al Sistema</button>}
                                 </div>
                             </div>
                         )}
 
-                        <footer className="mt-20 text-center pb-32">
-                            <p className="text-[9px] font-black text-neutral-800 uppercase tracking-[0.6em] px-4">
-                                SPLENDOR • SISTEMA 3 DE JUNIO • v11.5
+                        <footer className="mt-24 text-center pb-40">
+                            <p className="text-[10px] font-black text-neutral-800 uppercase tracking-[0.7em] px-6">
+                                SPLENDOR • SISTEMA 3 DE JUNIO • v11.6
                             </p>
                         </footer>
                     </div>
