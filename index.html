@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sistema 3 de Junio Pro v11.4</title>
+    <title>Sistema 3 de Junio Pro v11.5</title>
     
     <!-- Configuración para App iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -59,16 +59,31 @@
             font-size: 16px !important;
         }
 
-        /* Ajuste para el botón de cerrar en móviles */
+        /* Botón de Ajustes Premium */
+        .btn-settings-header {
+            background: linear-gradient(145deg, #1c1c1e, #0a0a0a);
+            border: 1px solid #2c2c2e;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-settings-header:active {
+            transform: scale(0.9) rotate(15deg);
+            background: #2c2c2e;
+            border-color: #444;
+        }
+
+        /* Estilos para que parezca una App nativa */
         .modal-header-btn {
-            padding: 12px 20px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 14px;
-            font-size: 13px;
+            padding: 10px 18px;
+            background: rgba(255,255,255,0.07);
+            border-radius: 12px;
+            font-size: 12px;
             font-weight: 800;
-            color: #8e8e93;
+            color: #fff;
             text-transform: uppercase;
             letter-spacing: 1px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
     </style>
 </head>
@@ -303,13 +318,18 @@
 
             const renderSeguimiento = () => (
                 <div className="animate-in pb-32">
-                    <header className="mb-8 px-4 flex justify-between items-start">
+                    <header className="mb-8 px-6 flex justify-between items-center">
                         <div>
                             <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase leading-none">Seguimiento</h1>
                             <p className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mt-2">Consistencia Activa • {habits.length} Metas</p>
                         </div>
-                        <button onClick={() => setShowSettings(true)} className="p-3 bg-neutral-900 rounded-2xl border border-neutral-800 text-neutral-400">
-                            <Icon name="Settings" className="w-5 h-5" />
+                        {/* Botón de Ajustes Rediseñado */}
+                        <button 
+                            onClick={() => setShowSettings(true)} 
+                            className="w-14 h-14 btn-settings-header rounded-full flex items-center justify-center text-white"
+                            aria-label="Ajustes"
+                        >
+                            <Icon name="Settings" className="w-6 h-6" />
                         </button>
                     </header>
 
@@ -357,7 +377,7 @@
 
             const renderRoadmap = () => (
                 <div className="animate-in pb-32 px-4">
-                    <header className="mb-8 border-b border-neutral-800 pb-8">
+                    <header className="mb-8 border-b border-neutral-800 pb-8 pt-4">
                         <div className="flex items-center gap-3 mb-2">
                             <Icon name="Zap" className="text-yellow-400 w-6 h-6" fill="yellow" />
                             <h1 className="text-3xl font-black tracking-tighter text-white uppercase italic">Plan Maestro</h1>
@@ -456,30 +476,30 @@
                         {showAddModal && (
                             <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[2000] flex items-center justify-center p-4 animate-in">
                                 <div className="bg-neutral-900 border border-neutral-800 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[3rem] p-8 relative flex flex-col custom-scrollbar">
-                                    <div className="flex justify-between items-center mb-8">
-                                        <h2 className="text-2xl font-black italic tracking-tighter text-white uppercase">Añadir Meta</h2>
+                                    <div className="flex justify-between items-center mb-8 border-b border-neutral-800 pb-4">
+                                        <h2 className="text-2xl font-black italic tracking-tighter text-white uppercase">Nueva Meta</h2>
                                         <button onClick={() => setShowAddModal(false)} className="modal-header-btn">Cerrar</button>
                                     </div>
                                     
                                     <div className="space-y-6">
                                         <div>
                                             <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Nombre de la meta</label>
-                                            <input type="text" value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none focus:border-white transition-all" placeholder="Ej: Lectura Profunda" />
+                                            <input type="text" value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none focus:border-white transition-all shadow-inner" placeholder="Ej: No fumar" />
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Emoji / Icono</label>
+                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Icono (Lucide)</label>
                                                 <input type="text" value={newIcon} onChange={e => setNewIcon(e.target.value)} className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none text-center" placeholder="Flame" />
                                             </div>
                                             <div>
-                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Color Visual</label>
+                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-3 block">Color</label>
                                                 <div className="h-[58px] rounded-2xl border border-neutral-800 bg-black flex items-center justify-center relative overflow-hidden">
                                                     <div className="w-6 h-6 rounded-full shadow-lg" style={{backgroundColor: selectedColor}}></div>
                                                     <input type="color" className="absolute opacity-0 inset-0 cursor-pointer" onChange={e => setSelectedColor(e.target.value)} />
                                                 </div>
                                             </div>
                                         </div>
-                                        <button onClick={addHabit} className="w-full bg-white text-black font-black py-5 rounded-2xl mt-4 uppercase text-xs tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/5">Añadir Ahora</button>
+                                        <button onClick={addHabit} className="w-full bg-white text-black font-black py-5 rounded-2xl mt-4 uppercase text-xs tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/5">Confirmar Meta</button>
                                     </div>
                                 </div>
                             </div>
@@ -489,7 +509,7 @@
                         {showSettings && (
                             <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-[2000] flex items-center justify-center p-4 animate-in">
                                 <div className="bg-neutral-900 border border-neutral-800 w-full max-w-md max-h-[85vh] overflow-y-auto rounded-[3rem] p-8 relative flex flex-col custom-scrollbar">
-                                    <div className="flex justify-between items-center mb-8">
+                                    <div className="flex justify-between items-center mb-8 border-b border-neutral-800 pb-4">
                                         <h2 className="text-3xl font-black italic tracking-tighter text-white uppercase">Ajustes</h2>
                                         <button onClick={() => setShowSettings(false)} className="modal-header-btn">Cerrar</button>
                                     </div>
@@ -503,7 +523,7 @@
 
                                         {!isSynced && habits.length > 0 && (
                                             <div className="bg-blue-500/5 border border-blue-500/20 p-6 rounded-[2.5rem]">
-                                                <h3 className="text-xs font-black uppercase text-blue-400 mb-4 tracking-widest">Traslado de Historial</h3>
+                                                <h3 className="text-xs font-black uppercase text-blue-400 mb-4 tracking-widest">Migración de Datos</h3>
                                                 <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full bg-black border border-neutral-800 p-4 rounded-xl text-white mb-4" />
                                                 <div className="space-y-3">
                                                     {habits.map(h => (
@@ -531,7 +551,7 @@
                                                         </div>
                                                     ))}
                                                 </div>
-                                                <button onClick={() => setIsSynced(true)} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl mt-6 uppercase text-[10px] tracking-widest">Confirmar Traslado</button>
+                                                <button onClick={() => setIsSynced(true)} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl mt-6 uppercase text-[10px] tracking-widest">Confirmar Migración</button>
                                             </div>
                                         )}
 
@@ -578,7 +598,7 @@
 
                         <footer className="mt-20 text-center pb-32">
                             <p className="text-[9px] font-black text-neutral-800 uppercase tracking-[0.6em] px-4">
-                                SPLENDOR • SISTEMA 3 DE JUNIO • v11.4
+                                SPLENDOR • SISTEMA 3 DE JUNIO • v11.5
                             </p>
                         </footer>
                     </div>
