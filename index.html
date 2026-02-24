@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sistema 3 de Junio Pro v11.8</title>
+    <title>Sistema 3 de Junio Pro v12.0</title>
     
     <!-- Configuración para App iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,6 +27,7 @@
             --safe-top: env(safe-area-inset-top);
             --safe-bottom: env(safe-area-inset-bottom);
             --accent-blue: #007aff;
+            --metal-shine: linear-gradient(135deg, #48484a 0%, #1c1c1e 50%, #000000 100%);
         }
 
         body {
@@ -60,25 +61,32 @@
             font-size: 16px !important;
         }
 
-        /* Botón de Ajustes Industrial Mejorado */
-        .btn-settings-pro {
-            background: linear-gradient(145deg, #2c2c2e, #1a1a1c);
-            border: 1.5px solid #48484a; 
+        /* BOTÓN DE AJUSTES: ESTILO ENGRANAJE MECÁNICO */
+        .btn-gear-pro {
+            background: var(--metal-shine);
+            border: 2px solid #545456;
             box-shadow: 
-                0 4px 20px rgba(0,0,0,0.8),
-                inset 0 1px 1px rgba(255,255,255,0.1);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff; 
+                0 0 0 2px #000,
+                0 10px 20px rgba(0,0,0,0.6),
+                inset 0 2px 2px rgba(255,255,255,0.2);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
         }
 
-        .btn-settings-pro:active {
-            transform: scale(0.85) rotate(45deg);
-            background: #3a3a3c;
+        .btn-gear-pro::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 30%, rgba(255,255,255,0.05) 100%);
+        }
+
+        .btn-gear-pro:active {
+            transform: scale(0.8) rotate(90deg);
             border-color: var(--accent-blue);
-            box-shadow: 0 0 20px rgba(0, 122, 255, 0.5);
+            box-shadow: 
+                0 0 25px rgba(0, 122, 255, 0.6),
+                0 0 0 2px var(--accent-blue);
         }
 
         /* Estilos de Modales */
@@ -112,7 +120,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- ICON HELPER ---
+        // --- ICON HELPER CORREGIDO (v12.0) ---
         const Icon = ({ name, className = "w-5 h-5", color = "currentColor", fill = "none" }) => {
             const iconRef = useRef(null);
 
@@ -120,8 +128,12 @@
                 if (iconRef.current) {
                     iconRef.current.innerHTML = '';
                     try {
+                        // Normalizamos para evitar fallos de Case Sensitivity en el CDN
+                        const iconKey = name.toLowerCase(); 
                         const lucideName = name.charAt(0).toUpperCase() + name.slice(1);
-                        const iconData = lucide[name] || lucide[lucideName];
+                        
+                        // Buscamos en el objeto global lucide
+                        const iconData = lucide[name] || lucide[lucideName] || lucide[iconKey] || lucide.Settings;
                         
                         if (iconData) {
                             lucide.createIcons({
@@ -129,7 +141,8 @@
                                 attrs: { 
                                     class: className,
                                     stroke: color,
-                                    fill: fill
+                                    fill: fill,
+                                    'stroke-width': 2.5 // Más grosor para resaltar en el metal
                                 }
                             });
                         } else {
@@ -141,7 +154,7 @@
                 }
             }, [name, className, color, fill]);
 
-            return <span ref={iconRef} className="inline-flex items-center justify-center"></span>;
+            return <span ref={iconRef} className="flex items-center justify-center pointer-events-none"></span>;
         };
 
         // --- CONFIGURACIÓN ---
@@ -367,11 +380,16 @@
                             <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase leading-none">Seguimiento</h1>
                             <p className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mt-3">Consistencia Activa • {habits.length} Metas</p>
                         </div>
+                        {/* BOTÓN DE AJUSTES MEJORADO CON BRILLO (v12.0) */}
                         <button 
                             onClick={() => setShowSettings(true)} 
-                            className="w-14 h-14 btn-settings-pro rounded-2xl shadow-lg"
+                            className="w-16 h-16 btn-gear-pro rounded-full flex items-center justify-center text-white active:rotate-90 transition-transform"
                         >
-                            <Icon name="Settings" className="w-7 h-7" color="#ffffff" />
+                            <Icon 
+                                name="Settings" 
+                                className="w-8 h-8 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" 
+                                color="#e5e5e7" 
+                            />
                         </button>
                     </header>
 
@@ -657,7 +675,7 @@
 
                         <footer className="mt-24 text-center pb-40">
                             <p className="text-[10px] font-black text-neutral-800 uppercase tracking-[0.7em] px-6">
-                                SPLENDOR • SISTEMA 3 DE JUNIO • v11.8
+                                SPLENDOR • SISTEMA 3 DE JUNIO • v12.0
                             </p>
                         </footer>
                     </div>
