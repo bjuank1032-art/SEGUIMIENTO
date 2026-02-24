@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sistema 3 de Junio Pro v13.0</title>
+    <title>Sistema 3 de Junio Pro v13.1</title>
     
     <!-- Configuración para App iPhone -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -89,21 +89,17 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect, useRef, useMemo } = React;
 
         const apiKey = ""; // Inyectada o manual
 
+        // COMPONENTE ICON OPTIMIZADO: Reduce parpadeo y evita innerHTML excesivo
         const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
+            const isEmoji = useMemo(() => /\p{Emoji}/u.test(name) && !/^[a-zA-Z0-9-]+$/.test(name), [name]);
             const iconRef = useRef(null);
             
             useEffect(() => {
-                if (!iconRef.current) return;
-                
-                const isEmoji = /\p{Emoji}/u.test(name) && !/^[a-zA-Z0-9-]+$/.test(name);
-                
-                if (isEmoji) {
-                    iconRef.current.innerHTML = `<span class="emoji-span">${name}</span>`;
-                } else if (window.lucide) {
+                if (!isEmoji && window.lucide && iconRef.current) {
                     iconRef.current.innerHTML = '';
                     const i = document.createElement('i');
                     const lucideName = name.replace(/([a-z])([A-Z0-9])/g, '$1-$2').toLowerCase();
@@ -114,9 +110,17 @@
                     iconRef.current.appendChild(i);
                     window.lucide.createIcons();
                 }
-            }, [name, className, color]);
+            }, [name, className, color, isEmoji]);
 
-            return <span ref={iconRef} className="flex items-center justify-center min-w-[1.5rem] min-h-[1.5rem]"></span>;
+            if (isEmoji) {
+                return (
+                    <span className={`flex items-center justify-center min-w-[1.5rem] min-h-[1.5rem] ${className}`}>
+                        <span className="emoji-span">{name}</span>
+                    </span>
+                );
+            }
+
+            return <span ref={iconRef} className={`flex items-center justify-center min-w-[1.5rem] min-h-[1.5rem]`}></span>;
         };
 
         const KEY_H = 'res_v12_habits';
@@ -160,7 +164,7 @@
                 setUserKey(savedKey);
 
                 if (savedKey) {
-                    const masked = savedKey.slice(-3);
+                    const masked = savedKey.trim().slice(-3);
                     setChatMessages(prev => [...prev, { role: 'ai', text: `✅ Llave vinculada: ...${masked}.` }]);
                 }
 
@@ -170,7 +174,7 @@
             useEffect(() => {
                 localStorage.setItem(KEY_H, JSON.stringify(habits));
                 localStorage.setItem(KEY_S, startDate);
-                localStorage.setItem(KEY_AK, userKey);
+                localStorage.setItem(KEY_AK, userKey.trim());
             }, [habits, startDate, userKey]);
 
             useEffect(() => {
@@ -204,9 +208,8 @@
                 if (diff > 7) setShowJuez(true);
             };
 
-            // --- FUNCIÓN callGemini ROBUSTA (v13.0) ---
             const callGemini = async (prompt) => {
-                const currentKey = userKey || apiKey;
+                const currentKey = (userKey || apiKey).trim();
                 if (!currentKey) throw new Error("LLAVE_FALTANTE");
 
                 const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${currentKey}`;
@@ -229,7 +232,7 @@
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error?.message || "Fallo en la conexión");
 
-                return data.candidates?.[0]?.content?.parts?.[0]?.text;
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
             };
 
             const handleSend = async () => {
@@ -251,27 +254,25 @@
                 }
             };
 
-            // --- VALIDACIÓN DE DEFENSA CON IA (v13.0) ---
+            // --- VALIDACIÓN DE DEFENSA CON IA (v13.1) ---
             const validarDefensa = async () => {
                 if (reflection.length < 10) return;
                 setIsAiLoading(true);
                 try {
-                    const veredicto = await callGemini(`Actúa como el Juez del Sistema 3 de Junio. Analiza si esta reflexión del usuario es honesta y merece perdón para retomar el reto. Si es aceptable, termina tu mensaje con la palabra "DESBLOQUEO_APROBADO". Reflexión: "${reflection}"`);
+                    const veredicto = await callGemini(`Actúa como el Juez del Sistema 3 de Junio. Analiza si esta reflexión del usuario es honesta y merece perdón para retomar el reto. Si es aceptable, termina tu mensaje con la palabra "DESBLOQUEO_APROBADO". Si no, sé firme pero motivador. Reflexión: "${reflection}"`);
                     
-                    // Mostramos el veredicto en el chat para que el usuario lo lea al volver
                     setChatMessages(prev => [...prev, { role: 'ai', text: veredicto }]);
                     
-                    if (veredicto.includes("DESBLOQUEO_APROBADO")) {
+                    // Lógica de búsqueda flexible: case-insensitive y sin depender de posición exacta
+                    if (veredicto.toUpperCase().includes("DESBLOQUEO_APROBADO")) {
                         localStorage.setItem(KEY_M, getLocalISODate());
                         setShowJuez(false);
                         setReflection("");
                     } else {
-                        // Si no lo aprueba, mostramos un mensaje temporal en la audiencia
                         setReflection(prev => prev + "\n\n[SISTEMA: Veredicto negativo. Profundiza en tu honestidad.]");
                     }
                 } catch (e) {
                     setChatMessages(prev => [...prev, { role: 'ai', text: "El tribunal no puede deliberar sin conexión. (Fallo de Red)" }]);
-                    // Fallback de emergencia si falla la red para no dejar al usuario bloqueado por error técnico
                     if (confirm("Fallo de conexión con el tribunal. ¿Usar liberación de emergencia?")) {
                         localStorage.setItem(KEY_M, getLocalISODate());
                         setShowJuez(false);
@@ -301,7 +302,6 @@
                 return isNaN(res) ? 0 : res;
             };
 
-            // RENDERIZADO CONDICIONAL ESTRICTO DEL JUEZ (Bloqueo Ineludible)
             if (showJuez) {
                 return (
                     <div className="min-h-screen bg-black flex items-center justify-center p-6 animate-in">
@@ -339,7 +339,7 @@
                                 <header className="px-6 mb-8 flex justify-between items-center">
                                     <div>
                                         <h1 className="text-4xl font-black italic text-white uppercase leading-none">Metas</h1>
-                                        <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mt-2">v13.0 • The Purge Edition</p>
+                                        <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mt-2">v13.1 • Refuerzo</p>
                                     </div>
                                     <button onClick={() => setShowSettings(true)} className="w-14 h-14 btn-gear-pro rounded-full flex items-center justify-center">
                                         <Icon name="Settings" className="w-6 h-6" color="white" />
@@ -453,7 +453,7 @@
                                                 className="w-full bg-black border border-neutral-800 rounded-2xl p-4 text-white outline-none focus:border-blue-500 text-sm shadow-inner" 
                                                 placeholder="Pega tu API Key aquí..."
                                             />
-                                            <p className="text-[9px] text-neutral-600 mt-2 italic">Solo para uso local. No queda grabada en el código.</p>
+                                            <p className="text-[9px] text-neutral-600 mt-2 italic">La llave se limpia de espacios automáticamente para evitar errores.</p>
                                         </div>
                                         <div className="pt-6 border-t border-white/5">
                                             <button onClick={() => { if(confirm("¿Purgar todos los datos?")) { localStorage.clear(); location.reload(); } }} className="w-full py-4 border border-red-500/20 text-red-500 rounded-2xl text-[10px] font-black uppercase tracking-widest active:bg-red-500 active:text-white transition-all">Borrar Memoria Total</button>
