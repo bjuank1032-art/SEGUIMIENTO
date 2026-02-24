@@ -6,7 +6,7 @@
     <title>Sistema 3 de Junio Pro v12.8</title>
     
     <!-- Configuración para App iPhone -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <!-- Scripts de Dependencias -->
@@ -164,22 +164,15 @@
                 const currentKey = userKey || apiKey;
                 if (!currentKey) throw new Error("LLAVE_FALTANTE");
 
-                // Modelo optimizado 1.5 flash
-                const model = "gemini-1.5-flash"; 
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${currentKey}`;
+                // Cambiamos a v1 y nos aseguramos del nombre del modelo completo según recomendaciones técnicas
+                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${currentKey}`;
                 
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        systemInstruction: { 
-                            parts: [{ text: "Eres el Asistente del Sistema 3 de Junio. Tu tono es directo, motivador y un poco serio. Responde de forma concisa." }] 
-                        },
-                        generationConfig: {
-                            temperature: 0.8,
-                            maxOutputTokens: 500,
-                        }
+                        contents: [{ parts: [{ text: prompt }] }]
+                        // Eliminamos systemInstruction temporalmente para asegurar conexión base estable
                     })
                 });
 
