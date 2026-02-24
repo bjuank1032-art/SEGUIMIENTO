@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sistema 3 de Junio Pro v13.11</title>
+    <title>Sistema 3 de Junio Pro v13.1</title>
     
     <!-- Configuración para App iPhone -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -208,39 +208,32 @@
                 if (diff > 7) setShowJuez(true);
             };
 
-           const callGemini = async (prompt) => {
-    const currentKey = (userKey || apiKey).trim();
-    if (!currentKey) throw new Error("LLAVE_FALTANTE");
+            const callGemini = async (prompt) => {
+                const currentKey = (userKey || apiKey).trim();
+                if (!currentKey) throw new Error("LLAVE_FALTANTE");
 
-    // Endpoint v1 estable con el nombre de modelo corregido
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${currentKey}`;
-    
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{ 
-                parts: [{ text: prompt }] 
-            }],
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 800
-            }
-        })
-    });
-
-    const data = await response.json();
-    
-    if (!response.ok) {
-        // Esto nos dirá exactamente qué falta si vuelve a fallar
-        throw new Error(data.error?.message || "Fallo en la conexión");
-    }
-
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-};
+                // Endpoint v1beta para mayor compatibilidad con modelos flash
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${currentKey}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ 
+                            parts: [{ text: prompt }] 
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 800
+                        }
+                    })
+                });
 
                 const data = await response.json();
-                if (!response.ok) throw new Error(data.error?.message || "Fallo en la conexión");
+                
+                if (!response.ok) {
+                    throw new Error(data.error?.message || "Fallo en la conexión");
+                }
 
                 return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
             };
@@ -482,5 +475,3 @@
     </script>
 </body>
 </html>
-
-
