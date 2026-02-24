@@ -3,22 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Splendor Mentor - Chat</title>
+    <title>Splendor Mentor - Gemini 3</title>
     <style>
         :root { --primary: #00ff88; --bg: #121212; --card: #1e1e1e; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        
-        /* Contenedor de Chat */
         #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
         .msg { max-width: 80%; padding: 12px 16px; border-radius: 15px; line-height: 1.4; font-size: 0.95rem; }
         .bot { background: #2a2a2a; color: var(--primary); align-self: flex-start; border-bottom-left-radius: 2px; border-left: 3px solid var(--primary); font-style: italic; }
         .user { background: var(--primary); color: black; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: 500; }
-
-        /* Area de Input */
         .input-area { background: #1e1e1e; padding: 20px; display: flex; gap: 10px; border-top: 1px solid #333; }
         input { flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; outline: none; }
         button { background: var(--primary); color: black; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        
         .header { padding: 15px; text-align: center; border-bottom: 1px solid #333; background: #1a1a1a; }
         .header h1 { font-size: 1.2rem; margin: 0; color: var(--primary); }
     </style>
@@ -26,12 +21,11 @@
 <body>
 
     <div class="header">
-        <h1>Splendor Mentor 💀</h1>
-        <small style="color: #666;">Meta: UdeA | Café Mall</small>
+        <h1>Splendor Mentor 💀 (G3)</h1>
+        <small style="color: #666;">Modo: Mentor Sarcástico</small>
     </div>
 
-    <div id="chat-container">
-        </div>
+    <div id="chat-container"></div>
 
     <div class="input-area">
         <input type="text" id="userInput" placeholder="Escribe tu excusa aquí...">
@@ -41,27 +35,22 @@
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-        const API_KEY = "AIzaSyBcEYRrKA_dIp7iTMiztuAnqujvqa6-9EI";
+        // TU API KEY
+        const API_KEY = "AIzaSyBcEYRrKA_dIp7iTMiztuAnqujvqa6-9EI"; 
+
         const genAI = new GoogleGenerativeAI(API_KEY);
         
-        // Configuración del modelo con personalidad
+        // CONFIGURADO PARA GEMINI 3 FLASH PREVIEW
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-flash",
-            systemInstruction: `Eres un mentor sarcástico y pesado. Tu usuario trabaja en un café de un mall, quiere entrar a la UdeA y crear su marca 'Splendor'. 
-            Tu objetivo no es ser amable, es recordarle que el tiempo se agota. Si te da excusas sobre el cansancio del trabajo, búrlate de ellas. 
-            Responde siempre de forma corta, directa y ácida.`
+            model: "gemini-3-flash-preview", 
+            systemInstruction: `Eres un mentor sarcástico y ácido. 
+            Contexto: El usuario trabaja en un café de un mall, quiere entrar a la UdeA y crear su marca 'Splendor'. 
+            Instrucción: Si el usuario pone excusas, búrlate de su falta de disciplina. Sé muy breve y directo.`
         });
 
-        const chat = model.startChat({
-            history: [
-                { role: "user", parts: [{ text: "Hola, soy el dueño de Splendor. Trabajo en el café y quiero entrar a la UdeA." }] },
-                { role: "model", parts: [{ text: "Ah, el futuro diseñador que prefiere servir lattes que estudiar. ¿Qué excusa me tienes hoy?" }] },
-            ],
-        });
-
+        const chat = model.startChat({ history: [] });
         const container = document.getElementById('chat-container');
 
-        // Función para mostrar mensajes en pantalla
         function appendMessage(role, text) {
             const div = document.createElement('div');
             div.className = `msg ${role}`;
@@ -70,28 +59,27 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // Mostrar saludo inicial
-        appendMessage('bot', "Vaya, apareciste. ¿Vas a estudiar para la UdeA o vas a seguir perdiendo el tiempo?");
+        appendMessage('bot', "Vaya, parece que lograste conectar el modelo nuevo. ¿Ahora sí vas a estudiar o vas a seguir perdiendo el tiempo?");
 
         window.enviarMensaje = async () => {
             const input = document.getElementById('userInput');
             const mensaje = input.value.trim();
-            
             if (!mensaje) return;
 
             appendMessage('user', mensaje);
             input.value = '';
 
             try {
+                // En Gemini 3, usamos el envío estándar de mensajes
                 const result = await chat.sendMessage(mensaje);
                 const respuesta = result.response.text();
                 appendMessage('bot', respuesta);
             } catch (error) {
-                appendMessage('bot', "Error en la conexión. Hasta para eso tienes mala suerte.");
+                console.error("Error detallado:", error);
+                appendMessage('bot', "Sigue saliendo error. Revisa si en Google AI Studio tienes activo el 'Pay-as-you-go' o si la llave tiene restricciones.");
             }
         };
 
-        // Enviar con tecla Enter
         document.getElementById('userInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') enviarMensaje();
         });
