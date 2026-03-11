@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Splendor v13.1 - Meta Simple & Ruta Pro</title>
+    <title>Splendor v13.2 - Control de Fallos</title>
     
     <!-- [CONFIGURACIÓN APPLE] -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -24,7 +24,6 @@
             --espacio-superior-seguro: env(safe-area-inset-top);
             --espacio-inferior-seguro: env(safe-area-inset-bottom);
             --oro-victoria: #ffd700;
-            --oro-brillo: rgba(255, 215, 0, 0.2);
             --brillo-metalico: linear-gradient(135deg, #2c2c2e 0%, #000000 100%);
         }
 
@@ -38,11 +37,9 @@
             padding-bottom: calc(var(--espacio-inferior-seguro) + 140px);
         }
 
-        /* Animaciones */
         .AnimacionEntrada { animation: aparecer 0.4s ease-out forwards; }
         @keyframes aparecer { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Estética Victorias */
         .TarjetaVictoriaOro {
             background: linear-gradient(145deg, #0f0f0f 0%, #1a1a1a 100%);
             border: 2px solid var(--oro-victoria);
@@ -62,14 +59,12 @@
         @keyframes destello { 0% { left: -120%; } 15% { left: 150%; } 100% { left: 150%; } }
 
         .ContenedorDetallesRuta {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
             opacity: 0;
         }
-        .ContenedorDetallesRuta.Abierto { max-height: 1000px; opacity: 1; margin-top: 2rem; }
+        .ContenedorDetallesRuta.Abierto { max-height: 1200px; opacity: 1; margin-top: 1.5rem; }
 
-        /* UI Global */
         .VentanaCristal {
             background: rgba(15, 15, 15, 0.9);
             backdrop-filter: blur(30px);
@@ -81,6 +76,15 @@
         
         input[type="range"] { -webkit-appearance: none; background: #1a1a1a; height: 6px; border-radius: 10px; width: 100%; }
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: white; border-radius: 50%; border: 4px solid #000; cursor: pointer; }
+
+        .IndicadorDia { width: 12px; height: 12px; border-radius: 50%; transition: all 0.3s ease; }
+        
+        .CajaAscenso {
+            background: rgba(20, 20, 20, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 2rem;
+            padding: 1.5rem;
+        }
     </style>
 </head>
 <body>
@@ -89,7 +93,6 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        /* --- COMPONENTE ICONO --- */
         const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
             const iconRef = useRef(null);
             useEffect(() => {
@@ -111,11 +114,13 @@
             return <span ref={iconRef} className="flex items-center justify-center pointer-events-none"></span>;
         };
 
-        const KEY_H = 'res_v13_habits_simple';
+        const KEY_H = 'res_v13_habits_discipline';
         const KEY_R = 'res_v13_roadmap_pro';
         const PALETA = ["#ef4444", "#f97316", "#fbbf24", "#10b981", "#3b82f6", "#8b5cf6", "#d946ef"];
+        const DIAS_SEMANA = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
+        const DIAS_LABELS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
-        const getToday = () => {
+        const getTodayStr = () => {
             const d = new Date();
             const offset = d.getTimezoneOffset() * 60000;
             return (new Date(d - offset)).toISOString().split('T')[0];
@@ -125,19 +130,30 @@
             const [activeTab, setActiveTab] = useState('metas');
             const [habits, setHabits] = useState([]);
             const [steps, setSteps] = useState([
-                { id: 1, title: "Reset Bioquímico", icon: '🔥', aura: PALETA[0], purpose: "Limpiar dopamina barata.", tasks: ["AYUNO DOPAMINA"], victory: "15 días limpios." }
+                { 
+                    id: 1, 
+                    title: "RESET BIOQUÍMICO", 
+                    icon: '🔥', 
+                    aura: PALETA[0], 
+                    purpose: "Limpiar el ruido químico del cuerpo para recuperar la voluntad y la claridad mental.", 
+                    tasks: ["AYUNO DOPAMINA", "LIMPIEZA HEPÁTICA", "DUCHA FRÍA"], 
+                    victory: "15 DÍAS CONSECUTIVOS SIN DOPAMINA BARATA Y SUEÑO REGULADO." 
+                }
             ]);
             
             const [showHabitModal, setShowHabitModal] = useState(false);
             const [showRoadmapModal, setShowRoadmapModal] = useState(false);
             const [showSettings, setShowSettings] = useState(false);
-            const [expandedRoadmapId, setExpandedRoadmapId] = useState(null);
+            const [expandedRoadmapId, setExpandedRoadmapId] = useState(1);
             
             const [editingId, setEditingId] = useState(null);
+            const [editingRoadmapId, setEditingRoadmapId] = useState(null);
+
             const [fName, setFName] = useState("");
             const [fIcon, setFIcon] = useState("🔥");
             const [fColor, setFColor] = useState("#007aff");
             const [fTarget, setFTarget] = useState(21);
+            const [fActiveDays, setFActiveDays] = useState(['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab']);
 
             const [fRTitle, setFRTitle] = useState("");
             const [fRIcon, setFRIcon] = useState("⚡");
@@ -158,87 +174,189 @@
             }, [habits, steps]);
 
             const handleMark = (id) => {
-                const hoy = getToday();
-                setHabits(prev => prev.map(h => (h.id === id && !h.history.includes(hoy)) ? { ...h, history: [...h.history, hoy] } : h));
+                const hoy = getTodayStr();
+                setHabits(prev => prev.map(h => {
+                    if (h.id === id) {
+                        const d = new Date();
+                        const diaNombre = DIAS_SEMANA[d.getDay()];
+                        if (h.activeDays.includes(diaNombre) && !h.history.includes(hoy)) {
+                            return { ...h, history: [...h.history, hoy] };
+                        }
+                    }
+                    return h;
+                }));
             };
 
             const handleUndo = (id, e) => {
                 e.stopPropagation();
-                const hoy = getToday();
+                const hoy = getTodayStr();
                 setHabits(prev => prev.map(h => h.id === id ? { ...h, history: h.history.filter(d => d !== hoy) } : h));
             };
 
             const saveHabit = () => {
-                if (!fName) return;
-                const data = { name: fName, icon: fIcon, color: fColor, targetDays: fTarget };
+                if (!fName || fActiveDays.length === 0) return;
+                const data = { 
+                    name: fName, icon: fIcon, color: fColor, targetDays: fTarget, 
+                    activeDays: fActiveDays, createdAt: editingId ? habits.find(h=>h.id===editingId).createdAt : getTodayStr() 
+                };
                 if (editingId) setHabits(habits.map(h => h.id === editingId ? { ...h, ...data } : h));
                 else setHabits([...habits, { id: 'h'+Date.now(), ...data, history: [] }]);
-                setShowHabitModal(false); setEditingId(null); setFName(""); setFTarget(21);
+                setShowHabitModal(false); resetHabitForm();
+            };
+
+            const resetHabitForm = () => {
+                setEditingId(null); setFName(""); setFIcon("🔥"); setFColor("#007aff"); setFTarget(21); setFActiveDays(['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab']);
+            };
+
+            const resetRoadmapForm = () => {
+                setEditingRoadmapId(null); setFRTitle(""); setFRIcon("⚡"); setFRPurpose(""); setFRTasks(""); setFRVictory("");
             };
 
             const saveStep = () => {
                 if (!fRTitle) return;
                 const tasksArr = fRTasks.split('\n').filter(t => t.trim()).map(t => t.toUpperCase());
-                const aura = PALETA[steps.length] || PALETA[PALETA.length-1];
+                
                 const data = { 
-                    id: steps.length + 1, 
-                    title: fRTitle, 
+                    id: editingRoadmapId || (steps.length + 1), 
+                    title: fRTitle.toUpperCase(), 
                     icon: fRIcon, 
                     purpose: fRPurpose || "Propósito no definido", 
                     tasks: tasksArr.length > 0 ? tasksArr : ["PASO NO DEFINIDO"], 
-                    victory: fRVictory || "Victoria por definir", 
-                    aura 
+                    victory: fRVictory.toUpperCase() || "Victoria por definir", 
+                    aura: editingRoadmapId ? steps.find(s=>s.id===editingRoadmapId).aura : (PALETA[steps.length] || PALETA[PALETA.length-1])
                 };
-                setSteps([...steps, data]);
-                setShowRoadmapModal(false); setFRTitle(""); setFRPurpose(""); setFRTasks(""); setFRVictory("");
+
+                if (editingRoadmapId) {
+                    setSteps(steps.map(s => s.id === editingRoadmapId ? data : s));
+                } else {
+                    setSteps([...steps, data]);
+                }
+                
+                setShowRoadmapModal(false);
+                resetRoadmapForm();
+            };
+
+            const deleteStep = () => {
+                if (!editingRoadmapId) return;
+                const newSteps = steps.filter(s => s.id !== editingRoadmapId).map((s, idx) => ({ ...s, id: idx + 1 }));
+                setSteps(newSteps);
+                setShowRoadmapModal(false);
+                resetRoadmapForm();
+            };
+
+            const openEditRoadmap = (step) => {
+                setEditingRoadmapId(step.id);
+                setFRTitle(step.title);
+                setFRIcon(step.icon);
+                setFRPurpose(step.purpose);
+                setFRTasks(step.tasks.join('\n'));
+                setFRVictory(step.victory);
+                setShowRoadmapModal(true);
+            };
+
+            const toggleFDay = (day) => {
+                setFActiveDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
+            };
+
+            const getHabitStats = (h) => {
+                const hoy = new Date();
+                const inicio = new Date(h.createdAt);
+                let diasActivosPasados = 0;
+                let fallos = 0;
+                let historialUltimos7 = [];
+
+                for (let i = 6; i >= 0; i--) {
+                    const tempDate = new Date();
+                    tempDate.setDate(hoy.getDate() - i);
+                    const tempStr = tempDate.toISOString().split('T')[0];
+                    const tempDiaNombre = DIAS_SEMANA[tempDate.getDay()];
+                    
+                    const aplica = h.activeDays.includes(tempDiaNombre);
+                    const cumplido = h.history.includes(tempStr);
+                    const esPasado = tempDate < new Date(getTodayStr());
+
+                    let status = 'neutral';
+                    if (aplica) {
+                        if (cumplido) status = 'success';
+                        else if (esPasado) status = 'fail';
+                        else status = 'pending';
+                    }
+                    historialUltimos7.push({ date: tempStr, status });
+                }
+
+                const iter = new Date(inicio);
+                while (iter < new Date(getTodayStr())) {
+                    const iterStr = iter.toISOString().split('T')[0];
+                    const iterDiaNombre = DIAS_SEMANA[iter.getDay()];
+                    if (h.activeDays.includes(iterDiaNombre)) {
+                        diasActivosPasados++;
+                        if (!h.history.includes(iterStr)) fallos++;
+                    }
+                    iter.setDate(iter.getDate() + 1);
+                }
+
+                const porc = Math.round((h.history.length / h.targetDays) * 100);
+                return { porc, fallos, historialUltimos7 };
             };
 
             const activeHabits = habits.filter(h => h.history.length < (h.targetDays || 21));
             const completedHabits = habits.filter(h => h.history.length >= (h.targetDays || 21));
 
-            const obtenerEnergiaDeLinea = () => {
-                const colores = steps.map(s => s.aura || '#333');
-                if (colores.length === 0) return "#333";
-                if (colores.length === 1) return colores[0];
-                return `linear-gradient(to bottom, ${colores.join(', ')})`;
-            };
-
             const renderMetas = () => (
                 <div className="AnimacionEntrada pb-32">
                     <header className="px-6 py-10 flex justify-between items-center">
                         <div>
-                            <h1 className="text-4xl font-black italic tracking-tighter uppercase text-white leading-none">Seguimiento</h1>
-                            <p className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.3em] mt-3">Misión: {activeHabits.length} Objetivos</p>
+                            <h1 className="text-4xl font-black italic tracking-tighter uppercase text-white leading-none">Disciplina</h1>
+                            <p className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.3em] mt-3">Rigor • {activeHabits.length} Misiones</p>
                         </div>
-                        <button onClick={() => setShowSettings(true)} className="w-14 h-14 bg-neutral-900 border border-neutral-800 rounded-full flex items-center justify-center">
+                        <button onClick={() => setShowSettings(true)} className="w-14 h-14 bg-neutral-900 border border-neutral-800 rounded-full flex items-center justify-center shadow-xl active:scale-90 transition-transform">
                             <Icon name="Settings" className="w-6 h-6" color="#FFF" />
                         </button>
                     </header>
 
                     <div className="px-4 grid gap-5">
                         {activeHabits.map(h => {
-                            const target = h.targetDays || 21;
-                            const porc = Math.round((h.history.length / target) * 100);
-                            const done = h.history.includes(getToday());
+                            const { porc, fallos, historialUltimos7 } = getHabitStats(h);
+                            const doneToday = h.history.includes(getTodayStr());
+                            const tocaHoy = h.activeDays.includes(DIAS_SEMANA[new Date().getDay()]);
+                            
                             return (
-                                <div key={h.id} onClick={() => handleMark(h.id)} className={`bg-neutral-900/40 border border-neutral-800 rounded-[2.5rem] p-7 relative transition-all ${done ? 'opacity-40' : 'active:scale-95 cursor-pointer'}`} style={{ borderLeft: `10px solid ${h.color}` }}>
-                                    <div className="flex justify-between items-center mb-6">
+                                <div key={h.id} onClick={() => handleMark(h.id)} className={`bg-neutral-900/40 border border-neutral-800 rounded-[2.5rem] p-7 relative transition-all ${!tocaHoy ? 'opacity-30' : (doneToday ? 'opacity-50' : 'active:scale-95 cursor-pointer')}`} style={{ borderLeft: `10px solid ${h.color}` }}>
+                                    <div className="flex justify-between items-start mb-6">
                                         <div className="flex items-center gap-5">
-                                            <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center border border-neutral-800"><Icon name={h.icon} className="w-8 h-8" /></div>
+                                            <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center border border-neutral-800 shadow-inner"><Icon name={h.icon} className="w-8 h-8" /></div>
                                             <div>
-                                                <h3 className="text-2xl font-bold text-white italic leading-none">{h.name}</h3>
-                                                <span className="text-[10px] font-black text-neutral-500 uppercase">{h.history.length} / {target} Días</span>
+                                                <h3 className="text-2xl font-bold text-white italic leading-none mb-1">{h.name}</h3>
+                                                <div className="flex gap-2 items-center">
+                                                    <span className="text-[9px] font-black text-neutral-500 uppercase">{h.history.length} / {h.targetDays} ÉXITOS</span>
+                                                    {fallos > 0 && <span className="text-[9px] font-black text-red-500 uppercase">!! {fallos} FALLOS</span>}
+                                                </div>
                                             </div>
                                         </div>
-                                        <button onClick={(e) => handleUndo(h.id, e)} className="w-10 h-10 bg-black rounded-xl border border-neutral-800 flex items-center justify-center text-neutral-600 hover:text-white transition-colors"><Icon name="RotateCcw" className="w-4 h-4" /></button>
+                                        <button onClick={(e) => handleUndo(h.id, e)} className="w-10 h-10 bg-black rounded-xl border border-neutral-800 flex items-center justify-center text-neutral-600 hover:text-red-500 transition-colors"><Icon name="RotateCcw" className="w-4 h-4" /></button>
                                     </div>
+
+                                    <div className="flex justify-between items-center mb-6 px-1">
+                                        {historialUltimos7.map((d, i) => (
+                                            <div key={i} className="flex flex-col items-center gap-2">
+                                                <div className="IndicadorDia" style={{ 
+                                                    backgroundColor: d.status === 'success' ? h.color : (d.status === 'fail' ? '#ef4444' : '#1a1a1a'),
+                                                    boxShadow: d.status === 'success' ? `0 0 8px ${h.color}66` : 'none',
+                                                    border: d.status === 'pending' ? `1px solid ${h.color}44` : 'none'
+                                                }} />
+                                                <span className="text-[7px] font-black text-neutral-700 uppercase">{DIAS_LABELS[new Date(d.date + "T12:00:00").getDay()]}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
                                     <div className="h-3 bg-black rounded-full overflow-hidden border border-neutral-800 p-[2px]">
                                         <div className="h-full transition-all duration-1000 rounded-full" style={{ width: `${porc}%`, backgroundColor: h.color }} />
                                     </div>
+                                    {!tocaHoy && <div className="absolute inset-0 bg-black/20 flex items-center justify-center rounded-[2.5rem] pointer-events-none"><span className="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-500 rotate-[-5deg] border border-neutral-800 px-4 py-2 bg-black rounded-xl shadow-2xl">Día de Reposo</span></div>}
                                 </div>
                             );
                         })}
-                        <button onClick={() => setShowHabitModal(true)} className="border-2 border-dashed border-neutral-800 rounded-[2.5rem] p-12 flex flex-col items-center gap-3 text-neutral-700 bg-neutral-900/10 hover:border-neutral-600 transition-colors">
+                        <button onClick={() => { resetHabitForm(); setShowHabitModal(true); }} className="border-2 border-dashed border-neutral-800 rounded-[2.5rem] p-12 flex flex-col items-center gap-3 text-neutral-700 bg-neutral-900/10 hover:border-neutral-600 transition-colors">
                             <Icon name="Plus" className="w-8 h-8" />
                             <span className="text-xs font-black uppercase tracking-widest">Nueva Misión</span>
                         </button>
@@ -250,10 +368,9 @@
                 <div className="AnimacionEntrada pb-32 px-4">
                     <header className="py-20 text-center">
                         <h1 className="text-5xl font-black italic text-[#ffd700] uppercase tracking-tighter">Salón de Honor</h1>
-                        <p className="text-[10px] font-black text-neutral-700 uppercase tracking-[0.5em] mt-3">Legado de Disciplina</p>
                     </header>
                     <div className="grid gap-8">
-                        {completedHabits.length > 0 ? completedHabits.map(v => (
+                        {completedHabits.map(v => (
                             <div key={v.id} className="TarjetaVictoriaOro p-8">
                                 <div className="DestelloMetalico"></div>
                                 <div className="flex justify-between items-start relative z-10 mb-8">
@@ -261,11 +378,9 @@
                                     <Icon name="Trophy" className="w-8 h-8 text-[#ffd700]" />
                                 </div>
                                 <h3 className="text-3xl font-black italic uppercase text-white relative z-10 leading-none">{v.name}</h3>
-                                <p className="text-[10px] font-black text-[#ffd700] uppercase tracking-widest mt-4 opacity-60">Consagrado tras {v.targetDays} días</p>
+                                <p className="text-[10px] font-black text-[#ffd700] uppercase tracking-widest mt-4 opacity-60">Consagrado en {v.targetDays} días</p>
                             </div>
-                        )) : (
-                            <div className="text-center py-20 opacity-20 uppercase font-black text-xs tracking-widest">Sin conquistas aún</div>
-                        )}
+                        ))}
                     </div>
                 </div>
             );
@@ -273,58 +388,78 @@
             const renderRuta = () => (
                 <div className="AnimacionEntrada pb-32 px-4">
                     <header className="py-10 border-b border-neutral-800 mb-12">
-                        <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase">Plan Maestro</h1>
-                        <p className="text-[10px] font-black text-neutral-700 uppercase tracking-[0.3em] mt-3">Arquitectura de Vida</p>
+                        <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase leading-none">PLAN MAESTRO</h1>
+                        <p className="text-[10px] font-black text-neutral-700 uppercase tracking-[0.3em] mt-3 italic">ARQUITECTURA DE VIDA</p>
                     </header>
                     <div className="relative">
-                        {/* CONTENEDOR DE PASOS CON LÍNEA CONTROLADA */}
-                        <div className="relative">
-                            <div 
-                                className="absolute left-[27px] top-0 bottom-6 w-1 rounded-full opacity-60 transition-all duration-1000"
-                                style={{ 
-                                    background: obtenerEnergiaDeLinea(),
-                                    boxShadow: `0 0 15px ${steps[0]?.aura || '#333'}33`
-                                }}
-                            ></div>
-                            
-                            <div className="space-y-10">
-                                {steps.map(s => {
-                                    const isOpen = expandedRoadmapId === s.id;
-                                    const tasks = s.tasks || [];
-                                    return (
-                                        <div key={s.id} className="flex items-start gap-6 relative z-10">
-                                            <div className="w-14 h-14 min-w-[3.5rem] rounded-[1.2rem] flex items-center justify-center border-2 bg-black shadow-2xl mt-1 transition-all duration-500" style={{ borderColor: s.aura || '#333', color: s.aura || '#FFF', boxShadow: isOpen ? `0 0 20px ${s.aura}44` : 'none' }}>
-                                                <span className="font-black italic text-xl">{s.id}</span>
-                                            </div>
-                                            <div onClick={() => setExpandedRoadmapId(isOpen ? null : s.id)} className="flex-1 p-8 rounded-[3rem] border-2 bg-neutral-900/30 backdrop-blur-md cursor-pointer transition-all" style={{ borderColor: `${s.aura || '#333'}33` }}>
+                        <div className="absolute left-[27px] top-0 bottom-6 w-1 rounded-full opacity-60" style={{ background: `linear-gradient(to bottom, ${steps.map(s=>s.aura).join(',')})` }}></div>
+                        
+                        <div className="space-y-12">
+                            {steps.map(s => {
+                                const isOpen = expandedRoadmapId === s.id;
+                                const tasks = s.tasks || [];
+                                return (
+                                    <div key={s.id} className="flex items-start gap-6 relative z-10">
+                                        <div className="w-14 h-14 min-w-[3.5rem] rounded-[1.2rem] flex items-center justify-center border-2 bg-black shadow-2xl mt-1" style={{ borderColor: s.aura, color: s.aura }}>
+                                            <span className="font-black italic text-xl">{s.id}</span>
+                                        </div>
+                                        <div onClick={() => setExpandedRoadmapId(isOpen ? null : s.id)} className={`flex-1 p-8 rounded-[3rem] border-2 bg-neutral-900/60 backdrop-blur-md cursor-pointer transition-all duration-500 overflow-hidden ${isOpen ? 'ring-1 ring-white/10 shadow-2xl' : ''}`} style={{ borderColor: isOpen ? s.aura : `${s.aura}33` }}>
+                                            
+                                            {/* CABECERA TARJETA DETALLADA */}
+                                            <div className="flex justify-between items-center mb-6">
                                                 <div className="flex items-center gap-5">
-                                                    <div className="p-3 bg-neutral-800 rounded-2xl shadow-inner border border-white/5"><Icon name={s.icon || 'Zap'} className="w-6 h-6" /></div>
+                                                    <div className="w-14 h-14 bg-neutral-800 rounded-2xl flex items-center justify-center border border-white/5 shadow-inner"><Icon name={s.icon} className="w-7 h-7" /></div>
                                                     <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none">{s.title}</h3>
                                                 </div>
-                                                <div className={`ContenedorDetallesRuta ${isOpen ? 'Abierto' : ''}`}>
-                                                    <div className="space-y-8 pt-4">
-                                                        <div><label className="text-[9px] font-black text-neutral-600 uppercase block mb-2">Propósito</label><p className="text-lg font-bold italic text-neutral-200">"{s.purpose}"</p></div>
+                                                <button onClick={(e) => { e.stopPropagation(); openEditRoadmap(s); }} className="w-10 h-10 bg-black/40 rounded-full flex items-center justify-center border border-white/5 opacity-40 hover:opacity-100 transition-opacity"><Icon name="Settings" className="w-4 h-4" /></button>
+                                            </div>
+
+                                            <div className={`ContenedorDetallesRuta ${isOpen ? 'Abierto' : ''}`}>
+                                                <div className="space-y-10">
+                                                    {/* PROPÓSITO MAESTRO */}
+                                                    <div>
+                                                        <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest block mb-3">Propósito Maestro</label>
+                                                        <p className="text-xl font-bold italic text-neutral-100 leading-relaxed">"{s.purpose}"</p>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                                                        {/* PASOS DE CONQUISTA */}
                                                         <div>
-                                                            <label className="text-[9px] font-black text-neutral-600 uppercase block mb-3">Conquistas Necesarias</label>
-                                                            {tasks.map((t, i) => <div key={i} className="flex items-center gap-3 text-xs font-bold text-neutral-400 uppercase mb-2"><div className="w-1.5 h-1.5 rounded-full" style={{background: s.aura}}></div>{t}</div>)}
+                                                            <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest block mb-4">Pasos de Conquista</label>
+                                                            <div className="space-y-3">
+                                                                {tasks.map((t, idx) => (
+                                                                    <div key={idx} className="flex items-center gap-3">
+                                                                        <div className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.2)]" style={{ backgroundColor: s.aura }}></div>
+                                                                        <span className="text-xs font-black text-neutral-300 italic uppercase">{t}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                        <div className="p-5 bg-neutral-800/50 rounded-2xl border border-white/5"><label className="text-[9px] font-black text-neutral-600 uppercase block mb-1">Criterio de Ascenso</label><p className="text-xs font-black text-white uppercase">{s.victory}</p></div>
+
+                                                        {/* CRITERIO DE ASCENSO */}
+                                                        <div className="CajaAscenso space-y-4">
+                                                            <label className="text-[9px] font-black text-neutral-600 uppercase tracking-widest block">Criterio de Ascenso</label>
+                                                            <p className="text-sm font-black text-white uppercase leading-snug tracking-tighter">{s.victory}</p>
+                                                            <div className="flex items-center gap-2 opacity-20 mt-4 pt-4 border-t border-white/10">
+                                                                <Icon name="Lock" className="w-3 h-3" />
+                                                                <span className="text-[8px] font-black uppercase tracking-widest">Bloqueado hasta cumplir hitos</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    );
-                                })}
+                                    </div>
+                                );
+                            })}
+
+                            <div onClick={() => { resetRoadmapForm(); setShowRoadmapModal(true); }} className="flex items-center gap-6 relative z-10 cursor-pointer group">
+                                <div className="w-14 h-14 min-w-[3.5rem] rounded-[1.2rem] flex items-center justify-center border-2 border-dashed border-neutral-700 bg-black text-neutral-500 group-hover:border-neutral-500 transition-all">
+                                    <span className="font-light text-2xl leading-none">+</span>
+                                </div>
+                                <span className="text-[10px] font-black uppercase text-neutral-700 tracking-[0.2em] group-hover:text-neutral-500">NUEVO HITO</span>
                             </div>
                         </div>
-
-                        {/* BOTÓN FUERA DEL FLUJO DE LA LÍNEA VERTICAL */}
-                        <button onClick={() => setShowRoadmapModal(true)} className="flex items-center gap-6 mt-10 opacity-60 hover:opacity-100 transition-all cursor-pointer group relative z-10">
-                            <div className="w-14 h-14 rounded-[1.2rem] border-2 border-dashed border-neutral-700 bg-black text-neutral-500 group-hover:border-neutral-400 group-hover:text-white transition-all flex items-center justify-center">
-                                <Icon name="Plus" />
-                            </div>
-                            <span className="text-[10px] font-black uppercase text-neutral-600 group-hover:text-neutral-400">Nuevo Hito</span>
-                        </button>
                     </div>
                 </div>
             );
@@ -335,67 +470,82 @@
                     {activeTab === 'victorias' && renderVictorias()}
                     {activeTab === 'ruta' && renderRuta()}
 
-                    <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-neutral-900/90 backdrop-blur-3xl border border-neutral-800 rounded-[3rem] p-2 flex gap-1 z-[100] w-[92%] max-sm:w-[95%] max-w-sm shadow-2xl">
-                        <button onClick={() => setActiveTab('metas')} className={`flex-1 py-4 rounded-[2.5rem] flex flex-col items-center gap-1 font-black uppercase text-[9px] transition-all ${activeTab === 'metas' ? 'bg-white text-black scale-105' : 'text-neutral-500 opacity-60'}`}><Icon name="Activity" className="w-4 h-4" /> Metas</button>
-                        <button onClick={() => setActiveTab('victorias')} className={`flex-1 py-4 rounded-[2.5rem] flex flex-col items-center gap-1 font-black uppercase text-[9px] transition-all ${activeTab === 'victorias' ? 'bg-[#ffd700] text-black scale-105 shadow-lg' : 'text-neutral-500 opacity-60'}`}><Icon name="Trophy" className="w-4 h-4" /> Victorias</button>
-                        <button onClick={() => setActiveTab('ruta')} className={`flex-1 py-4 rounded-[2.5rem] flex flex-col items-center gap-1 font-black uppercase text-[9px] transition-all ${activeTab === 'ruta' ? 'bg-white text-black scale-105' : 'text-neutral-500 opacity-60'}`}><Icon name="Map" className="w-4 h-4" /> Ruta</button>
+                    <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-neutral-900/90 backdrop-blur-3xl border border-neutral-800 rounded-[3rem] p-2 flex gap-1 z-[100] w-[92%] max-w-sm shadow-2xl">
+                        <button onClick={() => setActiveTab('metas')} className={`flex-1 py-4 rounded-[2.5rem] flex flex-col items-center gap-1 font-black uppercase text-[9px] transition-all ${activeTab === 'metas' ? 'bg-white text-black scale-105 shadow-xl' : 'text-neutral-500 opacity-60'}`}><Icon name="Activity" className="w-4 h-4" /> Metas</button>
+                        <button onClick={() => setActiveTab('victorias')} className={`flex-1 py-4 rounded-[2.5rem] flex flex-col items-center gap-1 font-black uppercase text-[9px] transition-all ${activeTab === 'victorias' ? 'bg-[#ffd700] text-black scale-105 shadow-xl' : 'text-neutral-500 opacity-60'}`}><Icon name="Trophy" className="w-4 h-4" /> Victorias</button>
+                        <button onClick={() => setActiveTab('ruta')} className={`flex-1 py-4 rounded-[2.5rem] flex flex-col items-center gap-1 font-black uppercase text-[9px] transition-all ${activeTab === 'ruta' ? 'bg-white text-black scale-105 shadow-xl' : 'text-neutral-500 opacity-60'}`}><Icon name="Map" className="w-4 h-4" /> Ruta</button>
                     </nav>
 
-                    {/* MODAL METAS */}
                     {showHabitModal && (
                         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm AnimacionEntrada">
-                            <div className="VentanaCristal w-full max-w-md rounded-[3.5rem] p-8 space-y-8 shadow-2xl">
-                                <div className="flex justify-between items-center"><h2 className="text-2xl font-black italic uppercase text-white">Nueva Meta</h2><button onClick={() => setShowHabitModal(false)} className="text-[10px] font-black uppercase text-neutral-500">Cerrar</button></div>
-                                <input value={fName} onChange={e => setFName(e.target.value)} className="w-full bg-black border border-neutral-800 p-5 rounded-2xl text-white italic font-bold outline-none focus:border-white/20" placeholder="Nombre de la Misión..." />
+                            <div className="VentanaCristal w-full max-w-md rounded-[3.5rem] p-8 space-y-8 shadow-2xl overflow-y-auto max-h-[90vh]">
+                                <div className="flex justify-between items-center"><h2 className="text-2xl font-black italic uppercase text-white">{editingId ? 'Editar' : 'Nueva'} Misión</h2><button onClick={() => setShowHabitModal(false)} className="text-[10px] font-black uppercase text-neutral-500">Cerrar</button></div>
+                                <input value={fName} onChange={e => setFName(e.target.value)} className="w-full bg-black border border-neutral-800 p-5 rounded-2xl text-white italic font-bold outline-none" placeholder="Nombre..." />
                                 <div className="grid grid-cols-2 gap-4">
                                     <input value={fIcon} onChange={e => setFIcon(e.target.value)} className="w-full h-[58px] bg-black border border-neutral-800 rounded-2xl text-white text-center text-2xl outline-none" />
-                                    <div className="h-[58px] rounded-2xl border border-neutral-800 bg-black flex items-center justify-center relative overflow-hidden">
-                                        <div className="w-6 h-6 rounded-full" style={{background: fColor, boxShadow: `0 0 10px ${fColor}66`}}></div>
-                                        <input type="color" className="absolute opacity-0 inset-0 cursor-pointer" value={fColor} onChange={e => setFColor(e.target.value)} />
+                                    <div className="h-[58px] rounded-2xl border border-neutral-800 bg-black flex items-center justify-center relative overflow-hidden"><div className="w-6 h-6 rounded-full" style={{background: fColor}}></div><input type="color" className="absolute opacity-0 inset-0 cursor-pointer" value={fColor} onChange={e => setFColor(e.target.value)} /></div>
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest block">Días de Aplicación</label>
+                                    <div className="flex justify-between">
+                                        {DIAS_SEMANA.map((d, i) => (
+                                            <button key={d} onClick={() => toggleFDay(d)} className={`w-10 h-10 rounded-xl font-black text-[10px] uppercase transition-all border ${fActiveDays.includes(d) ? 'bg-white text-black border-white' : 'bg-transparent text-neutral-700 border-neutral-800'}`}>{DIAS_LABELS[i]}</button>
+                                        ))}
                                     </div>
                                 </div>
-                                <div><div className="flex justify-between text-[10px] font-black uppercase text-neutral-500 mb-3"><span>Días para Consagrar</span><span>{fTarget}</span></div><input type="range" min="1" max="100" value={fTarget} onChange={e => setFTarget(parseInt(e.target.value))} /></div>
+                                <div><div className="flex justify-between text-[10px] font-black uppercase text-neutral-500 mb-3"><span>Éxitos para Victoria</span><span>{fTarget}</span></div><input type="range" min="1" max="100" value={fTarget} onChange={e => setFTarget(parseInt(e.target.value))} /></div>
                                 <button onClick={saveHabit} className="w-full py-6 bg-white text-black font-black rounded-3xl mt-4 uppercase text-sm shadow-2xl active:scale-95 transition-all">Sincronizar Misión</button>
                             </div>
                         </div>
                     )}
 
-                    {/* MODAL RUTA */}
                     {showRoadmapModal && (
                         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm AnimacionEntrada">
                             <div className="VentanaCristal w-full max-w-md rounded-[3.5rem] p-8 space-y-6 overflow-y-auto max-h-[90vh] shadow-2xl">
-                                <h2 className="text-2xl font-black italic uppercase text-white">Nuevo Hito</h2>
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-2xl font-black italic uppercase text-white">{editingRoadmapId ? 'Editar' : 'Nuevo'} Hito</h2>
+                                    <button onClick={() => setShowRoadmapModal(false)} className="text-[10px] font-black uppercase text-neutral-500">Cerrar</button>
+                                </div>
                                 <input value={fRTitle} onChange={e => setFRTitle(e.target.value)} className="w-full bg-black border border-neutral-800 p-5 rounded-2xl text-white font-bold italic uppercase outline-none" placeholder="Título del Nivel..." />
                                 <input value={fRIcon} onChange={e => setFRIcon(e.target.value)} className="w-full bg-black border border-neutral-800 p-5 rounded-2xl text-white text-center text-2xl outline-none" placeholder="Emoji..." />
                                 <textarea value={fRPurpose} onChange={e => setFRPurpose(e.target.value)} className="w-full bg-black border border-neutral-800 p-5 rounded-2xl text-white text-sm outline-none" rows="2" placeholder="Propósito Maestro..." />
                                 <textarea value={fRTasks} onChange={e => setFRTasks(e.target.value)} className="w-full bg-black border border-neutral-800 p-5 rounded-2xl text-white text-xs outline-none" rows="3" placeholder="Tareas (una por línea)..." />
                                 <input value={fRVictory} onChange={e => setFRVictory(e.target.value)} className="w-full bg-black border border-neutral-800 p-5 rounded-2xl text-white text-xs uppercase outline-none" placeholder="Criterio de Victoria..." />
-                                <div className="flex gap-4 pt-2">
-                                    <button onClick={() => setShowRoadmapModal(false)} className="flex-1 py-5 bg-neutral-800 text-white font-black rounded-2xl uppercase text-[10px]">Cancelar</button>
-                                    <button onClick={saveStep} className="flex-[2] py-5 bg-white text-black font-black rounded-2xl uppercase text-[10px] shadow-lg">Añadir</button>
+                                
+                                <div className="flex flex-col gap-3 pt-2">
+                                    <button onClick={saveStep} className="w-full py-5 bg-white text-black font-black rounded-2xl uppercase text-sm shadow-lg active:scale-95 transition-all">
+                                        {editingRoadmapId ? 'Actualizar Nivel' : 'Añadir a la Ruta'}
+                                    </button>
+                                    {editingRoadmapId && (
+                                        <button onClick={deleteStep} className="w-full py-3 bg-red-900/20 text-red-500 font-black rounded-2xl uppercase text-[10px] border border-red-900/30 active:scale-95 transition-all">
+                                            Eliminar Fase
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* MODAL AJUSTES */}
                     {showSettings && (
                         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm AnimacionEntrada">
                             <div className="VentanaCristal w-full max-w-md rounded-[3.5rem] p-10 space-y-6 shadow-2xl">
                                 <div className="flex justify-between items-center"><h2 className="text-3xl font-black italic uppercase text-white">Gestión</h2><button onClick={() => setShowSettings(false)} className="text-[10px] font-black uppercase text-neutral-500">Cerrar</button></div>
-                                <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
-                                    {habits.length > 0 ? habits.map(h => (
+                                <div className="space-y-4">
+                                    {habits.map(h => (
                                         <div key={h.id} className="bg-black border border-neutral-800 p-5 rounded-3xl flex justify-between items-center">
                                             <span className="text-sm font-bold flex items-center gap-3"><Icon name={h.icon} className="w-4 h-4" /> {h.name}</span>
-                                            <button onClick={() => setHabits(habits.filter(x => x.id !== h.id))} className="p-3 bg-red-900/20 rounded-xl text-red-500 hover:bg-red-900/40 transition-colors"><Icon name="Trash2" className="w-4 h-4" /></button>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => { setEditingId(h.id); setFName(h.name); setFIcon(h.icon); setFColor(h.color); setFTarget(h.targetDays); setFActiveDays(h.activeDays); setShowSettings(false); setShowHabitModal(true); }} className="p-3 bg-neutral-800 rounded-xl text-white"><Icon name="Pencil" className="w-4 h-4" /></button>
+                                                <button onClick={() => setHabits(habits.filter(x => x.id !== h.id))} className="p-3 bg-red-900/20 rounded-xl text-red-500"><Icon name="Trash2" className="w-4 h-4" /></button>
+                                            </div>
                                         </div>
-                                    )) : <div className="text-center py-10 opacity-40 font-black uppercase text-[10px]">Sin misiones</div>}
+                                    ))}
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    <footer className="mt-20 text-center pb-40 opacity-40"><p className="text-[10px] font-black text-neutral-800 uppercase tracking-[0.8em]">SPLENDOR • v13.1 • ARQUITECTURA</p></footer>
+                    <footer className="mt-20 text-center pb-40 opacity-40"><p className="text-[10px] font-black text-neutral-800 uppercase tracking-[0.8em]">SPLENDOR • v13.2 • DISCIPLINA TOTAL</p></footer>
                 </div>
             );
         };
