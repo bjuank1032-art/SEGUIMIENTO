@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Splendor v14.9 - Arquitectura de Legado</title>
+    <title>Splendor v15.0 - Edición Sensorial Estable</title>
     
     <!-- [CONFIGURACIÓN APPLE] -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://img.icons8.com/color/96/cannabis.png">
     
-    <!-- [DEPENDENCIAS] -->
+    <!-- [DEPENDENCIAS EXTENSO] -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -35,11 +35,44 @@
             overscroll-behavior-y: contain;
             padding-top: var(--espacio-superior-seguro);
             padding-bottom: calc(var(--espacio-inferior-seguro) + 140px);
+            margin: 0;
+        }
+
+        /* [SISTEMA SENSORIAL v15.0] */
+        .Particula {
+            position: absolute;
+            width: 6px; 
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            animation: particulaExplosion 0.8s ease-out forwards;
+        }
+
+        @keyframes particulaExplosion {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        @keyframes destelloVictoria {
+            0% { box-shadow: 0 0 0 0px rgba(255, 255, 255, 0); transform: scale(1); }
+            50% { box-shadow: 0 0 40px 10px rgba(255, 255, 255, 0.15); transform: scale(1.02); }
+            100% { box-shadow: 0 0 0 0px rgba(255, 255, 255, 0); transform: scale(1); }
+        }
+
+        .FeedbackVictoria { 
+            animation: destelloVictoria 0.5s cubic-bezier(0.23, 1, 0.32, 1); 
         }
 
         /* [ANIMACIONES Y EFECTOS VISUALES] */
-        .AnimacionEntrada { animation: aparecer 0.4s ease-out forwards; }
-        @keyframes aparecer { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .AnimacionEntrada { 
+            animation: aparecer 0.4s ease-out forwards; 
+        }
+
+        @keyframes aparecer { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
 
         .TarjetaVictoriaOro {
             background: linear-gradient(145deg, #0f0f0f 0%, #1a1a1a 100%);
@@ -57,7 +90,12 @@
             transform: skewX(-25deg);
             animation: destello 6s infinite;
         }
-        @keyframes destello { 0% { left: -120%; } 15% { left: 150%; } 100% { left: 150%; } }
+
+        @keyframes destello { 
+            0% { left: -120%; } 
+            15% { left: 150%; } 
+            100% { left: 150%; } 
+        }
 
         .VentanaCristal {
             background: rgba(15, 15, 15, 0.95);
@@ -77,17 +115,41 @@
             position: relative;
             padding: 2px;
         }
-        .SegmentoAura { height: 100%; border-radius: 20px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
-        .SegmentoFallo { height: 100%; background: #ef4444; border-radius: 20px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); margin-left: auto; }
 
-        .IndicadorDia { width: 12px; height: 12px; border-radius: 50%; transition: all 0.3s ease; }
+        .SegmentoAura { 
+            height: 100%; 
+            border-radius: 20px; 
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
 
+        .SegmentoFallo { 
+            height: 100%; 
+            background: #ef4444; 
+            border-radius: 20px; 
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); 
+            margin-left: auto; 
+        }
+
+        .IndicadorDia { 
+            width: 12px; 
+            height: 12px; 
+            border-radius: 50%; 
+            transition: all 0.3s ease; 
+        }
+
+        /* [ROADMAP STYLING] */
         .ContenedorDetallesRuta {
-            max-height: 0; overflow: hidden;
+            max-height: 0; 
+            overflow: hidden;
             transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
             opacity: 0;
         }
-        .ContenedorDetallesRuta.Abierto { max-height: 1200px; opacity: 1; margin-top: 1.5rem; }
+
+        .ContenedorDetallesRuta.Abierto { 
+            max-height: 1200px; 
+            opacity: 1; 
+            margin-top: 1.5rem; 
+        }
 
         .CajaAscenso {
             background: rgba(20, 20, 20, 0.8);
@@ -96,19 +158,52 @@
             padding: 1.8rem;
         }
 
-        .ContenedorIconoEmoji { font-family: "Apple Color Emoji", sans-serif; display: flex; align-items: center; justify-content: center; }
+        .ContenedorIconoEmoji { 
+            font-family: "Apple Color Emoji", sans-serif; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
 
         /* [FORMULARIO] */
-        input[type="range"] { -webkit-appearance: none; background: #111; height: 8px; border-radius: 10px; width: 100%; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; background: white; border-radius: 50%; border: 6px solid #000; cursor: pointer; }
+        input[type="range"] { 
+            -webkit-appearance: none; 
+            background: #111; 
+            height: 8px; 
+            border-radius: 10px; 
+            width: 100%; 
+        }
+
+        input[type="range"]::-webkit-slider-thumb { 
+            -webkit-appearance: none; 
+            width: 28px; 
+            height: 28px; 
+            background: white; 
+            border-radius: 50%; 
+            border: 6px solid #000; 
+            cursor: pointer; 
+        }
 
         .SelectorDia {
-            width: 44px; height: 44px; border-radius: 14px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 11px; font-weight: 900; text-transform: uppercase;
-            transition: all 0.2s; border: 1px solid #1a1a1a;
+            width: 44px; 
+            height: 44px; 
+            border-radius: 14px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-size: 11px; 
+            font-weight: 900; 
+            text-transform: uppercase;
+            transition: all 0.2s; 
+            border: 1px solid #1a1a1a;
         }
-        .SelectorDia.Activo { background: white; color: black; border-color: white; transform: scale(1.1); }
+
+        .SelectorDia.Activo { 
+            background: white; 
+            color: black; 
+            border-color: white; 
+            transform: scale(1.1); 
+        }
 
         /* [HEATMAP LEGADO] */
         .GridLegado {
@@ -116,11 +211,16 @@
             grid-template-columns: repeat(12, 1fr);
             gap: 4px;
         }
+
         .DiaLegado {
             aspect-ratio: 1/1;
             border-radius: 3px;
             background: #111;
             transition: all 0.3s;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
         }
     </style>
 </head>
@@ -130,6 +230,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
 
+        // [COMPONENTE ICONO INTEGRAL - OPTIMIZADO]
         const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
             const iconRef = useRef(null);
             useEffect(() => {
@@ -137,13 +238,16 @@
                 iconRef.current.innerHTML = '';
                 const cleanName = name || "Zap";
                 const isEmoji = /\p{Emoji}/u.test(cleanName) && !/^[a-zA-Z0-9-]+$/.test(cleanName);
+                
                 if (isEmoji) {
                     iconRef.current.innerHTML = `<span class="ContenedorIconoEmoji ${className.includes('w-10') ? 'text-4xl' : (className.includes('w-8') ? 'text-3xl' : 'text-xl')}">${cleanName}</span>`;
                 } else if (window.lucide) {
                     const i = document.createElement('i');
                     const lucideName = cleanName.replace(/([a-z])([A-Z0-9])/g, '$1-$2').toLowerCase();
                     i.setAttribute('data-lucide', lucideName);
-                    i.className = className; i.style.stroke = color; i.style.strokeWidth = "2.5";
+                    i.className = className; 
+                    i.style.stroke = color; 
+                    i.style.strokeWidth = "2.5";
                     iconRef.current.appendChild(i);
                     window.lucide.createIcons();
                 }
@@ -151,6 +255,7 @@
             return <span ref={iconRef} className="flex items-center justify-center pointer-events-none"></span>;
         };
 
+        // [CONSTANTES GLOBALES]
         const KEY_H = 'splendor_v14_9_habits';
         const KEY_R = 'splendor_v14_9_roadmap';
         const DIAS_SEMANA = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
@@ -167,22 +272,34 @@
         };
 
         const App = () => {
+            // [ESTADOS BASE]
             const [activeTab, setActiveTab] = useState('metas');
             const [habits, setHabits] = useState([]);
             const [steps, setSteps] = useState([
-                { id: 1, title: "RESET BIOQUÍMICO", icon: '🔥', aura: PALETA[0], purpose: "Limpiar el ruido químico del cuerpo para recuperar la voluntad y claridad mental.", tasks: ["AYUNO DOPAMINA", "LIMPIEZA HEPÁTICA"], victory: "15 DÍAS CONSECUTIVOS SIN DOPAMINA BARATA." }
+                { 
+                    id: 1, 
+                    title: "RESET BIOQUÍMICO", 
+                    icon: '🔥', 
+                    aura: PALETA[0], 
+                    purpose: "Limpiar el ruido químico del cuerpo para recuperar la voluntad y claridad mental.", 
+                    tasks: ["AYUNO DOPAMINA", "LIMPIEZA HEPÁTICA"], 
+                    victory: "15 DÍAS CONSECUTIVOS SIN DOPAMINA BARATA." 
+                }
             ]);
             
-            // UI States
+            // [ESTADOS SENSORIALES]
+            const [animatingHabit, setAnimatingHabit] = useState(null);
+            const [particles, setParticles] = useState([]);
+
+            // [ESTADOS DE UI MODAL]
             const [showHabitModal, setShowHabitModal] = useState(false);
             const [showRoadmapModal, setShowRoadmapModal] = useState(false);
             const [showSettings, setShowSettings] = useState(false);
             const [showStats, setShowStats] = useState(false);
             const [expandedRoadmapId, setExpandedRoadmapId] = useState(1);
-            const [expandedMonth, setExpandedMonth] = useState(null);
             const [juicioModal, setJuicioModal] = useState(null);
 
-            // Form States
+            // [ESTADOS DE FORMULARIO HÁBITOS]
             const [editingId, setEditingId] = useState(null);
             const [fName, setFName] = useState("");
             const [fIcon, setFIcon] = useState("🔥");
@@ -190,6 +307,7 @@
             const [fTarget, setFTarget] = useState(21);
             const [fActiveDays, setFActiveDays] = useState(DIAS_SEMANA);
 
+            // [ESTADOS DE FORMULARIO RUTA]
             const [editingStepId, setEditingStepId] = useState(null);
             const [fRTitle, setFRTitle] = useState("");
             const [fRIcon, setFRIcon] = useState("⚡");
@@ -197,7 +315,7 @@
             const [fRTasks, setFRTasks] = useState("");
             const [fRVictory, setFRVictory] = useState("");
 
-            // Persistencia
+            // [PERSISTENCIA]
             useEffect(() => {
                 const h = JSON.parse(localStorage.getItem(KEY_H)) || [];
                 const r = JSON.parse(localStorage.getItem(KEY_R)) || steps;
@@ -209,78 +327,129 @@
                 localStorage.setItem(KEY_R, JSON.stringify(steps));
             }, [habits, steps]);
 
-            // Motor de Auditoría v14 con sincronización LOCAL mejorada
+            // [LÓGICA SENSORIAL v15.0 - REPARADA]
+            const triggerSensoryFeedback = (coords, color) => {
+                if (!coords) return;
+                
+                if (window.navigator.vibrate) window.navigator.vibrate([20, 10, 20]);
+
+                const newParticles = Array.from({ length: 15 }).map(() => ({
+                    id: Math.random().toString(36).substr(2, 9),
+                    x: coords.x,
+                    y: coords.y,
+                    tx: (Math.random() - 0.5) * 350,
+                    ty: (Math.random() - 0.5) * 350,
+                    color: color
+                }));
+
+                setParticles(prev => [...prev, ...newParticles]);
+                setTimeout(() => {
+                    setParticles(prev => prev.filter(p => !newParticles.some(np => np.id === p.id)));
+                }, 850);
+            };
+
+            // [MOTOR DE AUDITORÍA v14.9]
             const getHabitStats = (h) => {
                 const hoyStr = getTodayStr();
-                const hoyDate = new Date();
-                hoyDate.setHours(0,0,0,0);
-                const inicio = new Date(h.createdAt + "T12:00:00");
+                const dActual = new Date();
+                dActual.setHours(0,0,0,0);
+                
+                const inicioStr = h.createdAt || hoyStr;
+                const inicioDate = new Date(inicioStr + "T12:00:00");
+                
                 let successes = h.history.length;
                 let fails = 0;
                 let dots = [];
 
-                // Puntos de historial (7 días) - Sincronizado LOCAL
+                // Generación de puntos de historial de 7 días
                 for (let i = 6; i >= 0; i--) {
-                    const temp = new Date();
-                    temp.setHours(0,0,0,0);
+                    const temp = new Date(); 
+                    temp.setHours(0,0,0,0); 
                     temp.setDate(temp.getDate() - i);
                     
-                    const y = temp.getFullYear();
+                    const y = temp.getFullYear(); 
                     const m = String(temp.getMonth() + 1).padStart(2, '0');
                     const d = String(temp.getDate()).padStart(2, '0');
                     const tStr = `${y}-${m}-${d}`;
+                    const tDiaSem = DIAS_SEMANA[temp.getDay()];
                     
-                    const tDia = DIAS_SEMANA[temp.getDay()];
-                    const esAplica = h.activeDays.includes(tDia);
+                    const esAplica = h.activeDays.includes(tDiaSem);
                     const esHecho = h.history.includes(tStr);
                     const esPasado = tStr < hoyStr;
+                    const esAntesDeCreacion = tStr < inicioStr;
 
                     let status = 'neutral';
                     if (esAplica) {
                         if (esHecho) status = 'success';
+                        else if (esAntesDeCreacion) status = 'neutral';
                         else if (esPasado) status = 'fail';
                         else status = 'pending';
                     }
                     dots.push({ date: tStr, status, diaLabel: DIAS_LABELS[temp.getDay()] });
                 }
 
-                // Cálculo de fallos totales (desde creación hasta ayer)
-                let iter = new Date(inicio);
+                // Cálculo de fallos totales desde la creación
+                let iter = new Date(inicioDate); 
                 iter.setHours(0,0,0,0);
-                while (iter < hoyDate) {
-                    const y = iter.getFullYear();
+                while (iter < dActual) {
+                    const y = iter.getFullYear(); 
                     const m = String(iter.getMonth() + 1).padStart(2, '0');
                     const d = String(iter.getDate()).padStart(2, '0');
                     const iterStr = `${y}-${m}-${d}`;
-                    
                     const iterDia = DIAS_SEMANA[iter.getDay()];
-                    if (h.activeDays.includes(iterDia) && !h.history.includes(iterStr)) fails++;
+                    
+                    if (h.activeDays.includes(iterDia) && !h.history.includes(iterStr)) {
+                        fails++;
+                    }
                     iter.setDate(iter.getDate() + 1);
                 }
 
-                const efficiency = successes + fails > 0 ? Math.round((successes / (successes + fails)) * 100) : 0;
+                const totalIntentos = successes + fails;
+                const efficiency = totalIntentos > 0 ? Math.round((successes / totalIntentos) * 100) : 0;
                 const progress = Math.min(100, Math.round((successes / h.targetDays) * 100));
                 const failProgress = Math.min(100, Math.round((fails / h.targetDays) * 100));
-                const isOver = successes >= h.targetDays;
-
-                return { successes, fails, efficiency, progress, failProgress, isOver, dots };
+                
+                return { successes, fails, efficiency, progress, failProgress, isOver: successes >= h.targetDays, dots };
             };
 
-            const handleMark = (id) => {
+            // [MANEJADOR DE MARCADO - SOLUCIÓN DEFINITIVA PANTALLA NEGRA]
+            const handleMark = (id, e) => {
+                // CAPTURA INMEDIATA DE DATOS DEL EVENTO (Importante para evitar null pointers en React 18)
+                const rect = e.currentTarget.getBoundingClientRect();
+                const coords = {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2
+                };
+
                 const hoy = getTodayStr();
-                setHabits(prev => prev.map(h => {
-                    if (h.id === id) {
-                        const d = new Date();
-                        const diaNombre = DIAS_SEMANA[d.getDay()];
-                        if (h.activeDays.includes(diaNombre) && !h.history.includes(hoy)) {
+                const hIndex = habits.findIndex(h => h.id === id);
+                if (hIndex === -1) return;
+                
+                const habitToMark = habits[hIndex];
+                const d = new Date();
+                const diaNombre = DIAS_SEMANA[d.getDay()];
+
+                if (habitToMark.activeDays.includes(diaNombre) && !habitToMark.history.includes(hoy)) {
+                    // 1. Iniciamos animación visual local
+                    setAnimatingHabit(id);
+                    triggerSensoryFeedback(coords, habitToMark.color);
+                    
+                    // 2. Limpieza de animación después de 500ms
+                    setTimeout(() => setAnimatingHabit(null), 500);
+
+                    // 3. Actualización de estado central
+                    setHabits(prev => prev.map(h => {
+                        if (h.id === id) {
                             const newHistory = [...h.history, hoy];
                             const stats = getHabitStats({...h, history: newHistory});
-                            if (stats.isOver) setJuicioModal({id, efficiency: stats.efficiency});
+                            if (stats.isOver) {
+                                setTimeout(() => setJuicioModal({id, efficiency: stats.efficiency}), 600);
+                            }
                             return { ...h, history: newHistory };
                         }
-                    }
-                    return h;
-                }));
+                        return h;
+                    }));
+                }
             };
 
             const handleUndo = (id, e) => {
@@ -289,96 +458,114 @@
                 setHabits(prev => prev.map(h => h.id === id ? { ...h, history: h.history.filter(d => d !== hoy) } : h));
             };
 
+            // [LÓGICA DE NEGOCIO - HÁBITOS]
             const saveHabit = () => {
+                if (!fName.trim()) return;
                 const data = { name: fName, icon: fIcon, color: fColor, targetDays: fTarget, activeDays: fActiveDays };
-                if (editingId) setHabits(habits.map(h => h.id === editingId ? { ...h, ...data } : h));
-                else setHabits([...habits, { id: 'h'+Date.now(), ...data, history: [], createdAt: getTodayStr() }]);
+                if (editingId) {
+                    setHabits(habits.map(h => h.id === editingId ? { ...h, ...data } : h));
+                } else {
+                    setHabits([...habits, { id: 'h'+Date.now(), ...data, history: [], createdAt: getTodayStr() }]);
+                }
                 setShowHabitModal(false); setEditingId(null); setFName("");
             };
 
+            // [LÓGICA DE NEGOCIO - RUTA]
             const saveStep = () => {
+                if (!fRTitle.trim()) return;
                 const tasksArr = fRTasks.split('\n').filter(t => t.trim()).map(t => t.toUpperCase());
                 const data = { 
-                    id: editingStepId || (steps.length + 1), title: fRTitle.toUpperCase(), icon: fRIcon, 
-                    purpose: fRPurpose, tasks: tasksArr, victory: fRVictory.toUpperCase(), 
+                    id: editingStepId || (steps.length + 1), 
+                    title: fRTitle.toUpperCase(), 
+                    icon: fRIcon, 
+                    purpose: fRPurpose, 
+                    tasks: tasksArr, 
+                    victory: fRVictory.toUpperCase(), 
                     aura: editingStepId ? steps.find(s=>s.id===editingStepId).aura : PALETA[steps.length % PALETA.length]
                 };
-                if (editingStepId) setSteps(steps.map(s => s.id === editingStepId ? data : s));
-                else setSteps([...steps, data]);
+                if (editingStepId) {
+                    setSteps(steps.map(s => s.id === editingStepId ? data : s));
+                } else {
+                    setSteps([...steps, data]);
+                }
                 setShowRoadmapModal(false); setEditingStepId(null);
             };
 
             const deleteStep = (id) => {
-                const confirmDelete = confirm("¿Seguro que deseas eliminar este hito?");
-                if (confirmDelete) {
+                if (confirm("¿Seguro que deseas eliminar este hito del Plan Maestro?")) {
                     setSteps(steps.filter(s => s.id !== id).map((s, idx) => ({ ...s, id: idx + 1 })));
-                    setShowRoadmapModal(false);
-                    setEditingStepId(null);
+                    setShowRoadmapModal(false); setEditingStepId(null);
                 }
             };
 
             const activeHabits = habits.filter(h => h.history.length < h.targetDays);
             const completedHabits = habits.filter(h => h.history.length >= h.targetDays);
 
-            // --- Renders ---
+            // --- [RENDERS DE ARQUITECTURA VISUAL] ---
+
             const renderMetas = () => (
                 <div className="AnimacionEntrada pb-32">
                     <header className="px-6 py-10 flex justify-between items-center">
-                        <div><h1 className="text-4xl font-black italic tracking-tighter uppercase text-white leading-none">Disciplina</h1><p className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.3em] mt-3">Rigor • {activeHabits.length} Misiones</p></div>
+                        <div>
+                            <h1 className="text-4xl font-black italic tracking-tighter uppercase text-white leading-none">Disciplina</h1>
+                            <p className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.3em] mt-3">Rigor • {activeHabits.length} Misiones</p>
+                        </div>
                         <div className="flex gap-3">
-                            <button onClick={() => setShowStats(true)} className="w-14 h-14 VentanaCristal rounded-full flex items-center justify-center"><Icon name="BarChart3" /></button>
-                            <button onClick={() => setShowSettings(true)} className="w-14 h-14 bg-neutral-900 border border-neutral-800 rounded-full flex items-center justify-center"><Icon name="Settings" /></button>
+                            <button onClick={() => setShowStats(true)} className="w-14 h-14 VentanaCristal rounded-full flex items-center justify-center border border-white/5 shadow-2xl transition-transform active:scale-90"><Icon name="BarChart3" /></button>
+                            <button onClick={() => setShowSettings(true)} className="w-14 h-14 bg-neutral-900 border border-neutral-800 rounded-full flex items-center justify-center shadow-2xl transition-transform active:scale-90"><Icon name="Settings" /></button>
                         </div>
                     </header>
 
                     <div className="px-4 space-y-8">
                         {activeHabits.map(h => {
                             const { successes, fails, progress, failProgress, dots } = getHabitStats(h);
-                            const doneToday = h.history.includes(getTodayStr());
-                            const tocaHoy = h.activeDays.includes(DIAS_SEMANA[new Date().getDay()]);
+                            const hoyLocal = getTodayStr();
+                            const doneToday = h.history.includes(hoyLocal);
+                            const d = new Date();
+                            const tocaHoy = h.activeDays.includes(DIAS_SEMANA[d.getDay()]);
 
                             return (
-                                <div key={h.id} onClick={() => handleMark(h.id)} className={`VentanaCristal rounded-[3rem] p-8 relative transition-all ${!tocaHoy ? 'opacity-30' : (doneToday ? 'opacity-50' : 'active:scale-95 cursor-pointer')}`} style={{ borderLeft: `12px solid ${h.color}` }}>
+                                <div key={h.id} 
+                                     onClick={(e) => handleMark(h.id, e)} 
+                                     className={`VentanaCristal rounded-[3rem] p-8 relative transition-all duration-300 ${animatingHabit === h.id ? 'FeedbackVictoria' : ''} ${!tocaHoy ? 'opacity-30 pointer-events-none' : (doneToday ? 'opacity-50' : 'active:scale-[0.98] cursor-pointer')}`} 
+                                     style={{ borderLeft: `12px solid ${h.color}` }}>
+                                    
                                     <div className="flex justify-between items-start mb-8">
                                         <div className="flex items-center gap-5">
                                             <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center border border-neutral-800 shadow-inner"><Icon name={h.icon} className="w-10 h-10" /></div>
                                             <div>
                                                 <h3 className="text-2xl font-black text-white italic leading-none uppercase tracking-tighter mb-1">{h.name}</h3>
-                                                <div className="flex gap-3 items-center">
-                                                    <span className="text-[10px] font-black text-neutral-500 uppercase">{successes} / {h.targetDays}</span>
-                                                </div>
+                                                <span className="text-[10px] font-black text-neutral-500 uppercase">{successes} / {h.targetDays} ÉXITOS</span>
                                             </div>
                                         </div>
-                                        <button onClick={(e) => handleUndo(h.id, e)} className="w-12 h-12 bg-black rounded-xl border border-neutral-800 flex items-center justify-center text-neutral-600 hover:text-red-500 transition-colors"><Icon name="RotateCcw" className="w-5 h-5" /></button>
+                                        <button onClick={(e) => handleUndo(h.id, e)} className="w-12 h-12 bg-black rounded-xl border border-neutral-800 flex items-center justify-center text-neutral-600 hover:text-red-500 transition-colors">
+                                            <Icon name="RotateCcw" className="w-5 h-5" />
+                                        </button>
                                     </div>
 
-                                    {/* PUNTOS SEMANALES CON CONTADORES LATERALES */}
                                     <div className="flex justify-between items-center mb-8 px-1">
                                         <div className="flex flex-col items-center">
                                             <span className="text-xs font-black text-red-500">{fails}</span>
                                             <span className="text-[7px] font-black text-neutral-600 uppercase">FALLOS</span>
                                         </div>
-                                        
                                         <div className="flex justify-center gap-2 flex-1 mx-4">
                                             {dots.map((d, i) => (
                                                 <div key={i} className="flex flex-col items-center gap-2">
                                                     <div className="IndicadorDia" style={{ 
-                                                        backgroundColor: d.status === 'success' ? h.color : (d.status === 'fail' ? '#ef4444' : '#1a1a1a'),
-                                                        boxShadow: d.status === 'success' ? `0 0 10px ${h.color}88` : 'none',
-                                                        border: d.status === 'pending' ? `1px solid ${h.color}44` : 'none'
+                                                        backgroundColor: d.status === 'success' ? h.color : (d.status === 'fail' ? '#ef4444' : '#1a1a1a'), 
+                                                        boxShadow: d.status === 'success' ? `0 0 10px ${h.color}88` : 'none', 
+                                                        border: d.status === 'pending' ? `1px solid ${h.color}44` : 'none' 
                                                     }} />
                                                     <span className="text-[8px] font-black text-neutral-700 uppercase">{d.diaLabel}</span>
                                                 </div>
                                             ))}
                                         </div>
-
                                         <div className="flex flex-col items-center">
                                             <span className="text-xs font-black text-white">{successes}</span>
                                             <span className="text-[7px] font-black text-neutral-600 uppercase">ÉXITOS</span>
                                         </div>
                                     </div>
 
-                                    {/* BARRA DE TENSIÓN DUAL */}
                                     <div className="BarraTensionContainer">
                                         <div className="SegmentoAura" style={{ width: `${progress}%`, backgroundColor: h.color, boxShadow: `0 0 20px ${h.color}66` }} />
                                         <div className="SegmentoFallo" style={{ width: `${failProgress}%`, boxShadow: `0 0 20px #ef444466` }} />
@@ -393,7 +580,8 @@
                             );
                         })}
                         <button onClick={() => setShowHabitModal(true)} className="w-full border-2 border-dashed border-neutral-800 rounded-[3rem] p-16 flex flex-col items-center gap-4 text-neutral-700 bg-neutral-900/10 hover:border-neutral-500 transition-colors">
-                            <Icon name="Plus" className="w-10 h-10" /><span className="text-[12px] font-black uppercase tracking-widest">Nueva Misión de Disciplina</span>
+                            <Icon name="Plus" className="w-10 h-10" />
+                            <span className="text-[12px] font-black uppercase tracking-widest">Nueva Misión de Disciplina</span>
                         </button>
                     </div>
                 </div>
@@ -423,7 +611,10 @@
                                 </div>
                             </div>
                         )) : (
-                            <div className="py-32 text-center opacity-10 font-black uppercase text-sm tracking-[1em]">Vacio</div>
+                            <div className="py-40 text-center opacity-10 flex flex-col items-center gap-6">
+                                <Icon name="ShieldAlert" className="w-20 h-20" />
+                                <span className="font-black uppercase text-sm tracking-[1em]">Sin Consagraciones</span>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -436,9 +627,7 @@
                         <p className="text-[10px] font-black text-neutral-700 uppercase tracking-[0.5em] mt-3 italic">Arquitectura de Vida Profesional</p>
                     </header>
                     <div className="relative">
-                        {/* Línea de conexión dinámica adaptada al centro del círculo móvil */}
                         <div className="absolute left-[27px] sm:left-[31px] top-0 bottom-6 w-1 rounded-full opacity-40" style={{ background: `linear-gradient(to bottom, ${steps.map(s=>s.aura).join(',')})` }} />
-                        
                         <div className="space-y-16">
                             {steps.map(s => {
                                 const isOpen = expandedRoadmapId === s.id;
@@ -446,7 +635,6 @@
                                     <div key={s.id} className="flex items-start gap-4 sm:gap-8 relative z-10">
                                         <div className="w-14 h-14 sm:w-16 sm:h-16 min-w-[3.5rem] sm:min-w-[4rem] rounded-[1.5rem] flex items-center justify-center border-2 bg-black text-white italic font-black text-xl sm:text-2xl shadow-2xl" style={{ borderColor: s.aura, color: s.aura }}>{s.id}</div>
                                         <div onClick={() => setExpandedRoadmapId(isOpen ? null : s.id)} className={`flex-1 p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3.5rem] border-2 bg-neutral-900/60 backdrop-blur-md cursor-pointer transition-all duration-500 overflow-hidden ${isOpen ? 'ring-1 ring-white/10 shadow-2xl scale-[1.01]' : ''}`} style={{ borderColor: isOpen ? s.aura : `${s.aura}33` }}>
-                                            
                                             <div className="flex justify-between items-center mb-8">
                                                 <div className="flex items-center gap-4 sm:gap-6">
                                                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-neutral-800 rounded-2xl flex items-center justify-center border border-white/5 shadow-inner"><Icon name={s.icon} className="w-6 h-6 sm:w-8 sm:h-8" /></div>
@@ -454,14 +642,12 @@
                                                 </div>
                                                 <button onClick={(e) => { e.stopPropagation(); setEditingStepId(s.id); setFRTitle(s.title); setFRIcon(s.icon); setFRPurpose(s.purpose); setFRTasks(s.tasks.join('\n')); setFRVictory(s.victory); setShowRoadmapModal(true); }} className="w-10 h-10 sm:w-12 sm:h-12 VentanaCristal rounded-full flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"><Icon name="Settings" className="w-4 h-4 sm:w-5 sm:h-5" /></button>
                                             </div>
-
                                             <div className={`ContenedorDetallesRuta ${isOpen ? 'Abierto' : ''}`}>
                                                 <div className="space-y-12">
                                                     <div>
                                                         <label className="text-[10px] font-black text-neutral-500 uppercase block mb-4 tracking-widest">Propósito Maestro</label>
                                                         <p className="text-xl sm:text-2xl font-bold italic text-neutral-100 leading-relaxed">"{s.purpose}"</p>
                                                     </div>
-
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
                                                         <div>
                                                             <label className="text-[10px] font-black text-neutral-500 uppercase block mb-6 tracking-widest">Pasos de Conquista</label>
@@ -491,7 +677,7 @@
                             })}
                             <div onClick={() => { setEditingStepId(null); setFRTitle(""); setFRIcon("⚡"); setFRPurpose(""); setFRTasks(""); setFRVictory(""); setShowRoadmapModal(true); }} className="flex items-center gap-6 sm:gap-8 cursor-pointer group pt-4">
                                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[1.2rem] sm:rounded-[1.5rem] border-2 border-dashed border-neutral-700 bg-black text-neutral-500 flex items-center justify-center group-hover:border-neutral-500 transition-all text-2xl sm:text-3xl font-light">+</div>
-                                <span className="text-[10px] sm:text-[12px] font-black uppercase text-neutral-700 tracking-[0.3em] group-hover:text-neutral-500">Añadir Nueva Fase</span>
+                                <span className="text-[10px] sm:text-[12px] font-black uppercase text-neutral-700 tracking-[0.3em] group-hover:text-neutral-500">Añadir Nueva Fase de Ruta</span>
                             </div>
                         </div>
                     </div>
@@ -499,54 +685,45 @@
             );
 
             const renderLegado = () => {
-                // Cálculo de Tasa Global Real
                 const allStats = habits.map(h => getHabitStats(h));
-                const globalEfficiency = habits.length > 0 
-                    ? Math.round(allStats.reduce((acc, curr) => acc + curr.efficiency, 0) / habits.length)
-                    : 0;
-
-                // Generación de Historial (Matriz de Actividad - 84 días / 12 semanas)
-                const activityGrid = [];
-                const totalDays = 84; 
-                for (let i = totalDays - 1; i >= 0; i--) {
-                    const d = new Date();
-                    d.setDate(d.getDate() - i);
+                const globalEfficiency = habits.length > 0 ? Math.round(allStats.reduce((acc, curr) => acc + curr.efficiency, 0) / habits.length) : 0;
+                
+                const activityGrid = []; 
+                const totalDaysGrid = 108; 
+                for (let i = totalDaysGrid - 1; i >= 0; i--) {
+                    const d = new Date(); 
+                    d.setDate(d.getDate() - i); 
                     const dStr = d.toISOString().split('T')[0];
-                    
-                    // Contamos cuántos hábitos se marcaron ese día
                     const marksCount = habits.reduce((acc, h) => h.history.includes(dStr) ? acc + 1 : acc, 0);
-                    let intensity = 0;
-                    if (marksCount > 0) {
-                        intensity = Math.min(4, Math.ceil((marksCount / Math.max(1, habits.length)) * 4));
-                    }
+                    let intensity = marksCount > 0 ? Math.min(4, Math.ceil((marksCount / Math.max(1, habits.length)) * 4)) : 0;
                     activityGrid.push({ date: dStr, intensity });
                 }
 
                 return (
                     <div className="AnimacionEntrada pb-32 px-6">
                         <header className="py-10 flex justify-between items-center">
-                            <div><h1 className="text-4xl font-black italic text-[#ffd700] uppercase tracking-tighter">Legado</h1><p className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.3em] mt-3">Análisis de Historial</p></div>
-                            <button onClick={() => setShowStats(false)} className="w-14 h-14 VentanaCristal rounded-full flex items-center justify-center"><Icon name="X" /></button>
+                            <div>
+                                <h1 className="text-4xl font-black italic text-[#ffd700] uppercase tracking-tighter">Legado</h1>
+                                <p className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.3em] mt-3">Análisis de Historial Global</p>
+                            </div>
+                            <button onClick={() => setShowStats(false)} className="w-14 h-14 VentanaCristal rounded-full flex items-center justify-center border border-white/5 shadow-2xl transition-transform active:scale-90"><Icon name="X" /></button>
                         </header>
-                        
+
                         <div className="space-y-8">
-                            {/* Tasa Real Calculada */}
                             <div className="p-10 VentanaCristal rounded-[3rem] border border-neutral-800 text-center space-y-4">
                                 <span className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.5em]">Tasa de Victoria Global</span>
-                                <div className="text-6xl font-black italic text-white tracking-tighter">{globalEfficiency}%</div>
+                                <div className="text-7xl font-black italic text-white tracking-tighter">{globalEfficiency}%</div>
                                 <div className="BarraTensionContainer">
-                                    <div className="SegmentoAura bg-white" style={{ width: `${globalEfficiency}%` }} />
+                                    <div className="SegmentoAura bg-white" style={{ width: `${globalEfficiency}%`, boxShadow: '0 0 20px rgba(255,255,255,0.3)' }} />
                                 </div>
                                 <p className="text-[9px] font-bold text-neutral-700 uppercase tracking-widest italic pt-2">Basado en {habits.length} misiones activas y consagradas</p>
                             </div>
 
-                            {/* Historial Visual (Semanas a Meses) */}
                             <div className="VentanaCristal rounded-[3rem] p-8 space-y-6">
                                 <div className="flex justify-between items-center">
                                     <span className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.3em]">Densidad de Disciplina</span>
-                                    <span className="text-[9px] font-bold text-neutral-700 uppercase italic">Últimos 3 meses</span>
+                                    <span className="text-[9px] font-bold text-neutral-700 uppercase italic">Últimos 108 días</span>
                                 </div>
-                                
                                 <div className="GridLegado">
                                     {activityGrid.map((day, idx) => (
                                         <div 
@@ -554,39 +731,66 @@
                                             className="DiaLegado" 
                                             style={{ 
                                                 backgroundColor: day.intensity === 0 ? '#0a0a0a' : 
-                                                                day.intensity === 1 ? '#1e293b' :
-                                                                day.intensity === 2 ? '#334155' :
-                                                                day.intensity === 3 ? '#64748b' : '#f1f5f9',
+                                                                 day.intensity === 1 ? '#1e293b' : 
+                                                                 day.intensity === 2 ? '#334155' : 
+                                                                 day.intensity === 3 ? '#64748b' : '#f1f5f9',
                                                 boxShadow: day.intensity === 4 ? '0 0 8px rgba(255,255,255,0.2)' : 'none'
-                                            }}
-                                            title={`${day.date}: Nivel ${day.intensity}`}
+                                            }} 
+                                            title={`${day.date}: Nivel ${day.intensity}`} 
                                         />
                                     ))}
                                 </div>
-
                                 <div className="flex justify-between items-center pt-2 px-1">
-                                    <span className="text-[8px] font-black text-neutral-800 uppercase italic">Hace 12 semanas</span>
+                                    <span className="text-[8px] font-black text-neutral-800 uppercase italic">Inicio del Periodo</span>
                                     <div className="flex gap-1 items-center">
-                                        <span className="text-[8px] font-black text-neutral-800 uppercase mr-1">Rigor</span>
-                                        <div className="w-2 h-2 rounded-sm bg-[#0a0a0a]"></div>
-                                        <div className="w-2 h-2 rounded-sm bg-[#1e293b]"></div>
-                                        <div className="w-2 h-2 rounded-sm bg-[#64748b]"></div>
-                                        <div className="w-2 h-2 rounded-sm bg-white"></div>
+                                        {[0,1,2,3,4].map(v => (
+                                            <div key={v} className="w-2 h-2 rounded-sm" style={{ 
+                                                backgroundColor: v === 0 ? '#0a0a0a' : v === 1 ? '#1e293b' : v === 2 ? '#334155' : v === 3 ? '#64748b' : '#f1f5f9'
+                                            }} />
+                                        ))}
                                     </div>
                                     <span className="text-[8px] font-black text-neutral-800 uppercase italic">Hoy</span>
                                 </div>
                             </div>
 
-                            <div className="p-8 border border-dashed border-neutral-900 rounded-[2.5rem] opacity-20 text-center">
-                                <p className="text-[10px] font-black uppercase tracking-[0.5em]">Registro de Ascensión Completo</p>
+                            <div className="space-y-4">
+                                <h4 className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-4">Desglose de Eficiencia</h4>
+                                {habits.map(h => {
+                                    const st = getHabitStats(h);
+                                    return (
+                                        <div key={h.id} className="VentanaCristal p-6 rounded-3xl flex justify-between items-center">
+                                            <div className="flex items-center gap-4">
+                                                <Icon name={h.icon} className="w-6 h-6" color={h.color} />
+                                                <span className="text-xs font-black uppercase text-neutral-300">{h.name}</span>
+                                            </div>
+                                            <span className="text-sm font-black italic" style={{ color: h.color }}>{st.efficiency}%</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
                 );
             };
 
+            // --- [ESTRUCTURA DE NAVEGACIÓN Y CAPAS] ---
+
             return (
-                <div className="min-h-screen max-w-xl mx-auto overflow-x-hidden">
+                <div className="min-h-screen max-w-xl mx-auto overflow-x-hidden relative">
+                    
+                    {/* [PARTÍCULAS v15.0 - CAPA SUPERIOR] */}
+                    <div className="fixed inset-0 pointer-events-none z-[9999]">
+                        {particles.map(p => (
+                            <div key={p.id} className="Particula" style={{ 
+                                left: p.x, top: p.y, 
+                                backgroundColor: p.color, 
+                                boxShadow: `0 0 10px ${p.color}`, 
+                                '--tx': `${p.tx}px`, '--ty': `${p.ty}px` 
+                            }} />
+                        ))}
+                    </div>
+
+                    {/* [CONTENIDO PRINCIPAL] */}
                     {showStats ? renderLegado() : (
                         <>
                             {activeTab === 'metas' && renderMetas()}
@@ -595,85 +799,128 @@
                         </>
                     )}
 
+                    {/* [BARRA DE NAVEGACIÓN] */}
                     <nav className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-neutral-900/95 backdrop-blur-3xl border border-neutral-800 rounded-[3.5rem] p-2 flex gap-1 z-[100] w-[94%] max-w-sm shadow-2xl">
-                        <button onClick={() => {setActiveTab('metas'); setShowStats(false);}} className={`flex-1 py-5 rounded-[3rem] flex flex-col items-center gap-1 font-black uppercase text-[10px] transition-all ${activeTab === 'metas' && !showStats ? 'bg-white text-black scale-105 shadow-xl' : 'text-neutral-500 opacity-60'}`}><Icon name="Activity" className="w-4 h-4" /> Metas</button>
-                        <button onClick={() => {setActiveTab('victorias'); setShowStats(false);}} className={`flex-1 py-5 rounded-[3rem] flex flex-col items-center gap-1 font-black uppercase text-[10px] transition-all ${activeTab === 'victorias' && !showStats ? 'bg-[#ffd700] text-black scale-105 shadow-xl' : 'text-neutral-500 opacity-60'}`}><Icon name="Trophy" className="w-4 h-4" /> Honor</button>
-                        <button onClick={() => {setActiveTab('ruta'); setShowStats(false);}} className={`flex-1 py-5 rounded-[3rem] flex flex-col items-center gap-1 font-black uppercase text-[10px] transition-all ${activeTab === 'ruta' && !showStats ? 'bg-white text-black scale-105 shadow-xl' : 'text-neutral-500 opacity-60'}`}><Icon name="Map" className="w-4 h-4" /> Ruta</button>
+                        <button onClick={() => {setActiveTab('metas'); setShowStats(false);}} className={`flex-1 py-5 rounded-[3rem] flex flex-col items-center gap-1 font-black uppercase text-[10px] transition-all ${activeTab === 'metas' && !showStats ? 'bg-white text-black scale-105 shadow-xl' : 'text-neutral-500 opacity-60 hover:opacity-100'}`}><Icon name="Activity" className="w-4 h-4" /> Metas</button>
+                        <button onClick={() => {setActiveTab('victorias'); setShowStats(false);}} className={`flex-1 py-5 rounded-[3rem] flex flex-col items-center gap-1 font-black uppercase text-[10px] transition-all ${activeTab === 'victorias' && !showStats ? 'bg-[#ffd700] text-black scale-105 shadow-xl' : 'text-neutral-500 opacity-60 hover:opacity-100'}`}><Icon name="Trophy" className="w-4 h-4" /> Honor</button>
+                        <button onClick={() => {setActiveTab('ruta'); setShowStats(false);}} className={`flex-1 py-5 rounded-[3rem] flex flex-col items-center gap-1 font-black uppercase text-[10px] transition-all ${activeTab === 'ruta' && !showStats ? 'bg-white text-black scale-105 shadow-xl' : 'text-neutral-500 opacity-60 hover:opacity-100'}`}><Icon name="Map" className="w-4 h-4" /> Ruta</button>
                     </nav>
 
-                    {/* MODALES COMPLETOS */}
+                    {/* [MODALES DEL SISTEMA] */}
+                    
+                    {/* Modal: Crear/Editar Hábito */}
                     {showHabitModal && (
                         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md AnimacionEntrada">
                             <div className="VentanaCristal w-full max-w-md rounded-[4rem] p-10 space-y-8 overflow-y-auto max-h-[90vh] shadow-[0_0_100px_rgba(0,0,0,1)]">
-                                <div className="flex justify-between items-center"><h2 className="text-3xl font-black italic uppercase text-white tracking-tighter">Nueva Misión</h2><button onClick={() => setShowHabitModal(false)} className="text-[11px] font-black uppercase text-neutral-500">Cerrar</button></div>
-                                <input value={fName} onChange={e => setFName(e.target.value)} className="w-full bg-black border border-neutral-800 p-6 rounded-3xl text-white italic font-black uppercase outline-none" placeholder="Identidad de la Misión..." />
-                                <div className="grid grid-cols-2 gap-6">
-                                    <input value={fIcon} onChange={e => setFIcon(e.target.value)} className="w-full h-[70px] bg-black border border-neutral-800 rounded-3xl text-white text-center text-4xl outline-none" placeholder="Icono" />
-                                    <div className="h-[70px] rounded-3xl border border-neutral-800 bg-black flex items-center justify-center relative overflow-hidden"><div className="w-8 h-8 rounded-full shadow-[0_0_20px]" style={{background: fColor, boxShadow: `0 0 20px ${fColor}88`}}/><input type="color" className="absolute opacity-0 inset-0 cursor-pointer" value={fColor} onChange={e => setFColor(e.target.value)} /></div>
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-3xl font-black italic uppercase text-white tracking-tighter">Nueva Misión</h2>
+                                    <button onClick={() => setShowHabitModal(false)} className="w-10 h-10 bg-neutral-900 rounded-full flex items-center justify-center"><Icon name="X" className="w-4 h-4" /></button>
                                 </div>
-                                <div className="space-y-4">
-                                    <label className="text-[11px] font-black text-neutral-500 uppercase tracking-[0.3em] block">Días de Rigor</label>
-                                    <div className="flex justify-between">{DIAS_SEMANA.map((d, i) => <button key={d} onClick={() => setFActiveDays(prev => prev.includes(d) ? prev.filter(x=>x!==d) : [...prev, d])} className={`SelectorDia ${fActiveDays.includes(d) ? 'Activo' : ''}`}>{DIAS_LABELS[i]}</button>)}</div>
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-4">Nombre de la Misión</label>
+                                        <input value={fName} onChange={e => setFName(e.target.value)} className="w-full bg-black border border-neutral-800 p-6 rounded-3xl text-white italic font-black uppercase outline-none focus:border-white/20 transition-colors" placeholder="EJ. RESET BIOQUÍMICO..." />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-4">Icono/Emoji</label>
+                                            <input value={fIcon} onChange={e => setFIcon(e.target.value)} className="w-full h-[70px] bg-black border border-neutral-800 rounded-3xl text-white text-center text-4xl outline-none" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-4">Color Aura</label>
+                                            <div className="h-[70px] rounded-3xl border border-neutral-800 bg-black flex items-center justify-center relative overflow-hidden">
+                                                <div className="w-8 h-8 rounded-full shadow-[0_0_20px]" style={{background: fColor, boxShadow: `0 0 20px ${fColor}88`}}/>
+                                                <input type="color" className="absolute opacity-0 inset-0 cursor-pointer" value={fColor} onChange={e => setFColor(e.target.value)} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <label className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.3em] block ml-4">Días de Rigor Semanal</label>
+                                        <div className="flex justify-between">
+                                            {DIAS_SEMANA.map((d, i) => (
+                                                <button key={d} onClick={() => setFActiveDays(prev => prev.includes(d) ? prev.filter(x=>x!==d) : [...prev, d])} className={`SelectorDia ${fActiveDays.includes(d) ? 'Activo' : ''}`}>{DIAS_LABELS[i]}</button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between text-[11px] font-black uppercase text-neutral-500 mb-2 ml-4">
+                                            <span>Objetivo de Consagración</span>
+                                            <span>{fTarget} DÍAS</span>
+                                        </div>
+                                        <input type="range" min="1" max="100" value={fTarget} onChange={e => setFTarget(parseInt(e.target.value))} />
+                                    </div>
                                 </div>
-                                <div><div className="flex justify-between text-[11px] font-black uppercase text-neutral-500 mb-4"><span>Objetivo de Consagración</span><span>{fTarget} DÍAS</span></div><input type="range" min="1" max="100" value={fTarget} onChange={e => setFTarget(parseInt(e.target.value))} /></div>
-                                <button onClick={saveHabit} className="w-full py-7 bg-white text-black font-black rounded-[2.5rem] mt-6 uppercase text-md shadow-2xl active:scale-95 transition-all">Sincronizar con el Sistema</button>
+                                <button onClick={saveHabit} className="w-full py-7 bg-white text-black font-black rounded-[2.5rem] mt-6 uppercase shadow-2xl transition-transform active:scale-95">Sincronizar Misión</button>
                             </div>
                         </div>
                     )}
 
+                    {/* Modal: Crear/Editar Paso de Ruta */}
                     {showRoadmapModal && (
                         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md AnimacionEntrada">
                             <div className="VentanaCristal w-full max-w-md rounded-[4rem] p-10 space-y-6 overflow-y-auto max-h-[90vh]">
                                 <div className="flex justify-between items-center mb-4">
                                     <h2 className="text-3xl font-black italic uppercase text-white tracking-tighter">{editingStepId ? 'Actualizar' : 'Nuevo'} Hito</h2>
-                                    <button onClick={() => setShowRoadmapModal(false)} className="text-[11px] font-black uppercase text-neutral-500">Cerrar</button>
+                                    <button onClick={() => setShowRoadmapModal(false)} className="w-10 h-10 bg-neutral-900 rounded-full flex items-center justify-center"><Icon name="X" className="w-4 h-4" /></button>
                                 </div>
-                                <input value={fRTitle} onChange={e => setFRTitle(e.target.value)} className="w-full bg-black border border-neutral-800 p-6 rounded-3xl text-white font-black italic uppercase outline-none" placeholder="Nombre de la Fase..." />
-                                <input value={fRIcon} onChange={e => setFRIcon(e.target.value)} className="w-full bg-black border border-neutral-800 rounded-3xl text-white text-center text-4xl outline-none" placeholder="⚡" />
-                                <textarea value={fRPurpose} onChange={e => setFRPurpose(e.target.value)} className="w-full bg-black border border-neutral-800 p-6 rounded-3xl text-white text-sm outline-none font-bold" rows="3" placeholder="Propósito de este nivel..." />
-                                <textarea value={fRTasks} onChange={e => setFRTasks(e.target.value)} className="w-full bg-black border border-neutral-800 p-6 rounded-3xl text-white text-xs outline-none" rows="4" placeholder="Tareas Obligatorias (una por línea)..." />
-                                <input value={fRVictory} onChange={e => setFRVictory(e.target.value)} className="w-full bg-black border border-neutral-800 p-6 rounded-3xl text-white text-xs uppercase outline-none font-black" placeholder="Condición de Victoria..." />
+                                <input value={fRTitle} onChange={e => setFRTitle(e.target.value)} className="w-full bg-black border border-neutral-800 p-6 rounded-3xl text-white font-black italic uppercase outline-none" placeholder="Título del Hito..." />
+                                <input value={fRIcon} onChange={e => setFRIcon(e.target.value)} className="w-full bg-black border border-neutral-800 p-6 rounded-3xl text-white text-center text-4xl outline-none" placeholder="Icono..." />
+                                <textarea value={fRPurpose} onChange={e => setFRPurpose(e.target.value)} className="w-full bg-black border border-neutral-800 p-6 rounded-3xl text-white text-sm outline-none font-bold" rows="3" placeholder="Propósito Maestro de esta fase..." />
+                                <textarea value={fRTasks} onChange={e => setFRTasks(e.target.value)} className="w-full bg-black border border-neutral-800 p-6 rounded-3xl text-white text-xs outline-none" rows="4" placeholder="Pasos de Conquista (uno por línea)..." />
+                                <input value={fRVictory} onChange={e => setFRVictory(e.target.value)} className="w-full bg-black border border-neutral-800 p-6 rounded-3xl text-white text-xs uppercase outline-none font-black" placeholder="Criterio Inflexible de Victoria..." />
                                 <div className="space-y-4 pt-4">
-                                    <button onClick={saveStep} className="w-full py-6 bg-white text-black font-black rounded-3xl uppercase text-sm shadow-2xl active:scale-95 transition-all">Sincronizar Ruta</button>
+                                    <button onClick={saveStep} className="w-full py-6 bg-white text-black font-black rounded-3xl uppercase text-sm shadow-2xl transition-transform active:scale-95">Sincronizar Ruta</button>
                                     {editingStepId && (
-                                        <button onClick={() => deleteStep(editingStepId)} className="w-full py-4 bg-red-900/10 text-red-500 border border-red-900/30 font-black rounded-3xl uppercase text-[10px] tracking-[0.4em] active:scale-95 transition-all">Eliminar Hito</button>
+                                        <button onClick={() => deleteStep(editingStepId)} className="w-full py-4 bg-red-900/10 text-red-500 border border-red-900/30 font-black rounded-3xl uppercase text-[10px] tracking-[0.4em] transition-transform active:scale-95">Eliminar de la Historia</button>
                                     )}
                                 </div>
                             </div>
                         </div>
                     )}
 
+                    {/* Modal: Configuración / Gestión */}
                     {showSettings && (
                         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md AnimacionEntrada">
                             <div className="VentanaCristal w-full max-w-md rounded-[4rem] p-12 space-y-10">
-                                <div className="flex justify-between items-center"><h2 className="text-4xl font-black italic uppercase text-white tracking-tighter">Gestión</h2><button onClick={() => setShowSettings(false)} className="text-[11px] font-black uppercase text-neutral-500">Cerrar</button></div>
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-4xl font-black italic uppercase text-white tracking-tighter">Gestión</h2>
+                                    <button onClick={() => setShowSettings(false)} className="w-10 h-10 bg-neutral-900 rounded-full flex items-center justify-center"><Icon name="X" className="w-4 h-4" /></button>
+                                </div>
                                 <div className="max-h-[40vh] overflow-y-auto space-y-4 pr-2">
                                     {habits.map(h => (
-                                        <div key={h.id} className="flex justify-between items-center p-6 bg-black border border-neutral-900 rounded-[2rem]">
-                                            <span className="text-sm font-black uppercase italic">{h.name}</span>
-                                            <div className="flex gap-3"><button onClick={() => { setEditingId(h.id); setFName(h.name); setFIcon(h.icon); setFColor(h.color); setFTarget(h.targetDays); setFActiveDays(h.activeDays); setShowSettings(false); setShowHabitModal(true); }} className="p-3 bg-neutral-900 rounded-xl"><Icon name="Pencil" className="w-4 h-4"/></button><button onClick={() => setHabits(habits.filter(x=>x.id!==h.id))} className="p-3 bg-red-900/20 text-red-500 rounded-xl"><Icon name="Trash2" className="w-4 h-4"/></button></div>
+                                        <div key={h.id} className="flex justify-between items-center p-6 bg-black border border-neutral-800 rounded-[2rem]">
+                                            <div className="flex items-center gap-4">
+                                                <Icon name={h.icon} className="w-6 h-6" />
+                                                <span className="text-sm font-black uppercase italic">{h.name}</span>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <button onClick={() => { setEditingId(h.id); setFName(h.name); setFIcon(h.icon); setFColor(h.color); setFTarget(h.targetDays); setFActiveDays(h.activeDays); setShowSettings(false); setShowHabitModal(true); }} className="p-3 bg-neutral-900 rounded-xl hover:bg-white/10 transition-colors"><Icon name="Pencil" className="w-4 h-4"/></button>
+                                                <button onClick={() => { if(confirm("¿Eliminar definitivamente?")) setHabits(habits.filter(x=>x.id!==h.id)) }} className="p-3 bg-red-900/20 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-colors"><Icon name="Trash2" className="w-4 h-4"/></button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
+                                <button onClick={() => { if(confirm("¿RESET TOTAL? Esta acción es irreversible.")) { localStorage.clear(); location.reload(); } }} className="w-full py-4 text-red-500 font-black uppercase text-[10px] border border-red-900/30 rounded-full">BORRAR TODO EL LEGADO</button>
                             </div>
                         </div>
                     )}
 
+                    {/* Modal: El Juicio (Victoria de Hábito) */}
                     {juicioModal && (
-                        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md AnimacionEntrada">
+                        <div className="fixed inset-0 z-[6000] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md AnimacionEntrada">
                             <div className="VentanaCristal w-full max-w-sm rounded-[4rem] p-12 text-center space-y-10 border-white/10 border-2">
                                 <Icon name="Trophy" className="w-20 h-20 text-[#ffd700] mx-auto" />
                                 <h2 className="text-4xl font-black italic uppercase text-white tracking-tighter leading-none">Misión Consagrada</h2>
-                                <p className="text-neutral-500 text-xs font-bold uppercase tracking-widest leading-loose">Has cumplido el objetivo de rigor. El sistema ha registrado tu victoria con <span className="text-white">{juicioModal.efficiency}%</span> de eficiencia.</p>
+                                <p className="text-neutral-500 text-xs font-bold uppercase tracking-widest leading-loose">Has cumplido el objetivo de rigor con <span className="text-white text-lg">{juicioModal.efficiency}%</span> de eficiencia global.</p>
                                 <div className="space-y-4 pt-4">
-                                    <button onClick={() => { setHabits(habits.map(h=>h.id===juicioModal.id?{...h, targetDays: h.targetDays+15}:h)); setJuicioModal(null); }} className="w-full py-6 bg-white text-black font-black rounded-3xl uppercase text-[11px] tracking-widest">Extender +15 Días</button>
-                                    <button onClick={() => setJuicioModal(null)} className="w-full py-4 text-neutral-600 font-black uppercase text-[10px] tracking-[0.4em]">Ver en Honor</button>
+                                    <button onClick={() => { setHabits(habits.map(h=>h.id===juicioModal.id?{...h, targetDays: h.targetDays+15}:h)); setJuicioModal(null); }} className="w-full py-6 bg-white text-black font-black rounded-3xl uppercase text-[11px] tracking-widest">Extender Misión +15 Días</button>
+                                    <button onClick={() => setJuicioModal(null)} className="w-full py-4 text-neutral-600 font-black uppercase text-[10px]">Cerrar Juicio</button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    <footer className="mt-24 text-center pb-48 opacity-30"><p className="text-[11px] font-black text-neutral-800 uppercase tracking-[1em]">SPLENDOR • v14.9 • ARQUITECTURA DE LEGADO</p></footer>
+                    <footer className="mt-24 text-center pb-48 opacity-30"><p className="text-[11px] font-black text-neutral-800 uppercase tracking-[1em]">SPLENDOR • v15.0 • ARQUITECTURA SENSORIAL ESTABLE</p></footer>
                 </div>
             );
         };
