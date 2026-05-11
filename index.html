@@ -412,9 +412,8 @@
                 return { successes, fails, efficiency, progress, failProgress, isOver: successes >= h.targetDays, dots };
             };
 
-            // [MANEJADOR DE MARCADO - SOLUCIÓN DEFINITIVA PANTALLA NEGRA]
+            // [MANEJADOR DE MARCADO - SOLUCIÓN DEFINITIVA]
             const handleMark = (id, e) => {
-                // CAPTURA INMEDIATA DE DATOS DEL EVENTO (Importante para evitar null pointers en React 18)
                 const rect = e.currentTarget.getBoundingClientRect();
                 const coords = {
                     x: rect.left + rect.width / 2,
@@ -430,14 +429,11 @@
                 const diaNombre = DIAS_SEMANA[d.getDay()];
 
                 if (habitToMark.activeDays.includes(diaNombre) && !habitToMark.history.includes(hoy)) {
-                    // 1. Iniciamos animación visual local
                     setAnimatingHabit(id);
                     triggerSensoryFeedback(coords, habitToMark.color);
                     
-                    // 2. Limpieza de animación después de 500ms
                     setTimeout(() => setAnimatingHabit(null), 500);
 
-                    // 3. Actualización de estado central
                     setHabits(prev => prev.map(h => {
                         if (h.id === id) {
                             const newHistory = [...h.history, hoy];
@@ -773,8 +769,6 @@
                 );
             };
 
-            // --- [ESTRUCTURA DE NAVEGACIÓN Y CAPAS] ---
-
             return (
                 <div className="min-h-screen max-w-xl mx-auto overflow-x-hidden relative">
                     
@@ -861,7 +855,7 @@
                             <div className="VentanaCristal w-full max-w-md rounded-[4rem] p-10 space-y-6 overflow-y-auto max-h-[90vh]">
                                 <div className="flex justify-between items-center mb-4">
                                     <h2 className="text-3xl font-black italic uppercase text-white tracking-tighter">{editingStepId ? 'Actualizar' : 'Nuevo'} Hito</h2>
-                                    <button onClick={() => setShowRoadmapModal(false)} className="w-10 h-10 bg-neutral-900 rounded-full flex items-center justify-center"><Icon name="X" className="w-4 h-4" /></button>
+                                    <button onClick={() => setShowRoadmapModal(false)} className="w-10 h-10 bg-neutral-900 rounded-full flex items-center justify-center active:scale-90"><Icon name="X" className="w-4 h-4" /></button>
                                 </div>
                                 <input value={fRTitle} onChange={e => setFRTitle(e.target.value)} className="w-full bg-black border border-neutral-800 p-6 rounded-3xl text-white font-black italic uppercase outline-none" placeholder="Título del Hito..." />
                                 <input value={fRIcon} onChange={e => setFRIcon(e.target.value)} className="w-full bg-black border border-neutral-800 p-6 rounded-3xl text-white text-center text-4xl outline-none" placeholder="Icono..." />
@@ -884,7 +878,7 @@
                             <div className="VentanaCristal w-full max-w-md rounded-[4rem] p-12 space-y-10">
                                 <div className="flex justify-between items-center">
                                     <h2 className="text-4xl font-black italic uppercase text-white tracking-tighter">Gestión</h2>
-                                    <button onClick={() => setShowSettings(false)} className="w-10 h-10 bg-neutral-900 rounded-full flex items-center justify-center"><Icon name="X" className="w-4 h-4" /></button>
+                                    <button onClick={() => setShowSettings(false)} className="w-10 h-10 bg-neutral-900 rounded-full flex items-center justify-center active:scale-90"><Icon name="X" className="w-4 h-4" /></button>
                                 </div>
                                 <div className="max-h-[40vh] overflow-y-auto space-y-4 pr-2">
                                     {habits.map(h => (
